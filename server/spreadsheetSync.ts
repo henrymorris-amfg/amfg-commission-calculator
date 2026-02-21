@@ -25,6 +25,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { UNAUTHED_ERR_MSG } from "@shared/const";
 import {
   getAllAeProfiles,
   getAeProfileByName,
@@ -297,7 +298,7 @@ export const spreadsheetSyncRouter = router({
         } catch { return null; }
       })() : null;
 
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
 
       const { getAeProfileById: _getAe } = await import("./db");
       const profile = await _getAe(aeId);
@@ -349,7 +350,7 @@ export const spreadsheetSyncRouter = router({
         } catch { return null; }
       })() : null;
 
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
 
       const { getAeProfileById: _getAe } = await import("./db");
       const profile = await _getAe(aeId);
@@ -439,7 +440,7 @@ export const spreadsheetSyncRouter = router({
         return typeof p.aeId === "number" ? p.aeId : null;
       } catch { return null; }
     })() : null;
-    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const { getAeProfileById: _getAe } = await import("./db");
     const profile = await _getAe(aeId);
     if (!profile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
@@ -487,7 +488,7 @@ export const spreadsheetSyncRouter = router({
         return typeof p.aeId === "number" ? p.aeId : null;
       } catch { return null; }
     })() : null;
-    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const { getAeProfileById: _getAe } = await import("./db");
     const profile = await _getAe(aeId);
     if (!profile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });

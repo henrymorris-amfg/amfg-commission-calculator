@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -420,14 +420,14 @@ export default function SpreadsheetSyncPage() {
                       &nbsp;
                     </th>
                     {allMonths.map(({ key }) => (
-                      <>
-                        <th key={`${key}-dials`} className="text-center px-2 py-2 text-xs text-muted-foreground/70">
+                      <React.Fragment key={key}>
+                        <th className="text-center px-2 py-2 text-xs text-muted-foreground/70">
                           Dials
                         </th>
-                        <th key={`${key}-demos`} className="text-center px-2 py-2 text-xs text-muted-foreground/70">
+                        <th className="text-center px-2 py-2 text-xs text-muted-foreground/70">
                           Demos
                         </th>
-                      </>
+                      </React.Fragment>
                     ))}
                   </tr>
                 </thead>
@@ -462,11 +462,8 @@ export default function SpreadsheetSyncPage() {
                         {allMonths.map(({ year, month, key }) => {
                           const data = monthMap.get(`${year}-${month}`);
                           return (
-                            <>
-                              <td
-                                key={`${key}-dials`}
-                                className="text-center px-2 py-3 text-sm"
-                              >
+                            <React.Fragment key={key}>
+                              <td className="text-center px-2 py-3 text-sm">
                                 {data ? (
                                   <span className="font-medium text-foreground">
                                     {Math.round(data.totalDials)}
@@ -475,10 +472,7 @@ export default function SpreadsheetSyncPage() {
                                   <span className="text-muted-foreground/40">—</span>
                                 )}
                               </td>
-                              <td
-                                key={`${key}-demos`}
-                                className="text-center px-2 py-3 text-sm"
-                              >
+                              <td className="text-center px-2 py-3 text-sm">
                                 {data ? (
                                   <span className="font-medium text-foreground">
                                     {Math.round(data.totalDemos)}
@@ -487,7 +481,7 @@ export default function SpreadsheetSyncPage() {
                                   <span className="text-muted-foreground/40">—</span>
                                 )}
                               </td>
-                            </>
+                            </React.Fragment>
                           );
                         })}
                       </tr>

@@ -624,10 +624,11 @@ export default function DashboardPage() {
 function PipedriveDealsWidget() {
   const myDealsQuery = trpc.pipedriveSync.myDeals.useQuery(
     { months: 3 },
-    { retry: false }
+    { retry: false, throwOnError: false }
   );
 
   if (myDealsQuery.isLoading) return null;
+  if (myDealsQuery.isError) return null;
   if (!myDealsQuery.data?.pipedriveUserFound) return null;
 
   const { deals, monthlyArr } = myDealsQuery.data;

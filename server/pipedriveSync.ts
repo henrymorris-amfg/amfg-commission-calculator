@@ -19,6 +19,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
+import { UNAUTHED_ERR_MSG } from "@shared/const";
 import {
   getAllAeProfiles,
   getAeProfileById,
@@ -321,7 +322,7 @@ export const pipedriveSyncRouter = router({
     .query(async ({ input, ctx }) => {
       // Auth check
       const aeId = getAeIdFromCookie(ctx);
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const profile = await getAeProfileById(aeId);
       if (!profile?.isTeamLeader) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
@@ -410,7 +411,7 @@ export const pipedriveSyncRouter = router({
     .mutation(async ({ input, ctx }) => {
       // Auth check
       const aeId = getAeIdFromCookie(ctx);
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const profile = await getAeProfileById(aeId);
       if (!profile?.isTeamLeader) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
@@ -488,7 +489,7 @@ export const pipedriveSyncRouter = router({
     )
     .query(async ({ input, ctx }) => {
       const aeId = getAeIdFromCookie(ctx);
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
 
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError({ code: "NOT_FOUND" });
