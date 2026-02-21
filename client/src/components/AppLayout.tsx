@@ -14,6 +14,7 @@ import {
   Sheet,
   TrendingUp,
   X,
+  Zap,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ const navItems = [
   { path: "/payout-calendar", label: "Payout Calendar", icon: Calendar, adminOnly: false },
   { path: "/commission-structure", label: "Commission Structure", icon: Settings2, adminOnly: true },
   { path: "/spreadsheet-sync", label: "Spreadsheet Sync", icon: Sheet, adminOnly: true },
+  { path: "/pipedrive-sync", label: "Pipedrive Sync", icon: Zap, adminOnly: true },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

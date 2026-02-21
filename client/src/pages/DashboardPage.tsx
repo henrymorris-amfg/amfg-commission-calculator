@@ -18,6 +18,7 @@ import {
   Calculator,
   ChevronUp,
   Minus,
+  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -612,7 +613,70 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Pipedrive Won Deals */}
+        <PipedriveDealsWidget />
       </div>
     </AppLayout>
+  );
+}
+
+function PipedriveDealsWidget() {
+  const myDealsQuery = trpc.pipedriveSync.myDeals.useQuery(
+    { months: 3 },
+    { retry: false }
+  );
+
+  if (myDealsQuery.isLoading) return null;
+  if (!myDealsQuery.data?.pipedriveUserFound) return null;
+
+  const { deals, monthlyArr } = myDealsQuery.data;
+  if (deals.length === 0) return null;
+
+  const totalArr = monthlyArr.reduce((s, m) => s + m.totalArrUsd, 0);
+
+  return (
+    <div className="rounded-2xl bg-card border border-border p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Won Deals (Pipedrive)</h3>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Last 3 months</p>
+          <p className="text-sm font-bold text-foreground">
+            ${totalArr.toLocaleString(undefined, { maximumFractionDigits: 0 })} ARR
+          </p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {deals.slice(0, 8).map((deal) => (
+          <div
+            key={deal.id}
+            className="flex items-center justify-between px-4 py-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{deal.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {deal.wonDate} &middot; {deal.pipeline}
+                </p>
+              </div>
+            </div>
+            <div className="text-right flex-shrink-0 ml-4">
+              <p className="text-sm font-semibold text-foreground">
+                {deal.value.toLocaleString(undefined, { maximumFractionDigits: 0 })} {deal.currency}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      {deals.length > 8 && (
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          +{deals.length - 8} more deals
+        </p>
+      )}
+    </div>
   );
 }
