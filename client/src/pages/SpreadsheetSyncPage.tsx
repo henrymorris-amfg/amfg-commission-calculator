@@ -65,12 +65,6 @@ export default function SpreadsheetSyncPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  // Redirect non-team-leaders
-  if (ae && !ae.isTeamLeader) {
-    navigate("/dashboard");
-    return null;
-  }
-
   // Auto-sync status
   const syncStatusQuery = trpc.spreadsheetSync.syncStatus.useQuery(undefined, {
     refetchInterval: 60_000, // refresh every minute
@@ -114,6 +108,12 @@ export default function SpreadsheetSyncPage() {
       toast.error(`Import failed: ${err.message}`);
     },
   });
+
+  // Redirect non-team-leaders (after all hooks)
+  if (ae && !ae.isTeamLeader) {
+    navigate("/dashboard");
+    return null;
+  }
 
   const handlePreview = () => {
     previewQuery.refetch();

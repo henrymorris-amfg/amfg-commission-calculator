@@ -46,12 +46,6 @@ export default function PipedriveSyncPage() {
   const [mergeMode, setMergeMode] = useState<"replace" | "add">("replace");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  // Redirect non-team-leaders
-  if (ae && !ae.isTeamLeader) {
-    navigate("/dashboard");
-    return null;
-  }
-
   // Status check
   const statusQuery = trpc.pipedriveSync.status.useQuery(undefined, {
     retry: false,
@@ -75,6 +69,12 @@ export default function PipedriveSyncPage() {
       toast.error(`Sync failed: ${err.message}`);
     },
   });
+
+  // Redirect non-team-leaders (after all hooks)
+  if (ae && !ae.isTeamLeader) {
+    navigate("/dashboard");
+    return null;
+  }
 
   const handlePreview = () => {
     previewQuery.refetch();
