@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
@@ -46,11 +46,14 @@ export default function LoginPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  // If already logged in, redirect
-  if (!isLoading && ae) {
-    navigate("/dashboard");
-    return null;
-  }
+  // If already logged in, redirect — must be in useEffect to avoid setState-during-render
+  useEffect(() => {
+    if (!isLoading && ae) {
+      navigate("/dashboard");
+    }
+  }, [ae, isLoading]);
+
+  if (!isLoading && ae) return null;
 
   const handleLogin = () => {
     if (!selectedName) return toast.error("Please select your name.");
