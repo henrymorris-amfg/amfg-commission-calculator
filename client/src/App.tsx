@@ -11,6 +11,7 @@ import DealsPage from "./pages/DealsPage";
 import SummaryPage from "./pages/SummaryPage";
 import CommissionStructurePage from "./pages/CommissionStructurePage";
 import PayoutCalendarPage from "./pages/PayoutCalendarPage";
+import SpreadsheetSyncPage from "./pages/SpreadsheetSyncPage";
 import { AeAuthProvider } from "./contexts/AeAuthContext";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/deals" component={DealsPage} />
       <Route path="/summary" component={SummaryPage} />
       <Route path="/commission-structure" component={CommissionStructurePage} />
+      <Route path="/spreadsheet-sync" component={SpreadsheetSyncPage} />
       <Route path="/payout-calendar" component={PayoutCalendarPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

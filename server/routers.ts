@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import * as bcrypt from "bcryptjs";
 import { z } from "zod";
 import {
@@ -727,6 +728,9 @@ export const appRouter = router({
       };
     }),
   }),
+
+  // ─── Spreadsheet Sync ────────────────────────────────────────────────────
+  spreadsheetSync: spreadsheetSyncRouter,
 
   // ─── Commission Structure Management ──────────────────────────────────────
   commissionStructure: router({

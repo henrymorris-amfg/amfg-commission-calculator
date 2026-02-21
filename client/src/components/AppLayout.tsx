@@ -11,6 +11,7 @@ import {
   Medal,
   Menu,
   Settings2,
+  Sheet,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const navItems = [
   { path: "/summary", label: "Commission Summary", icon: TrendingUp, adminOnly: false },
   { path: "/payout-calendar", label: "Payout Calendar", icon: Calendar, adminOnly: false },
   { path: "/commission-structure", label: "Commission Structure", icon: Settings2, adminOnly: true },
+  { path: "/spreadsheet-sync", label: "Spreadsheet Sync", icon: Sheet, adminOnly: true },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
