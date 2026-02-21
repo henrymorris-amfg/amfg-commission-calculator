@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { setAeToken } from "../main";
+import { setAeToken } from "@/lib/aeToken";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

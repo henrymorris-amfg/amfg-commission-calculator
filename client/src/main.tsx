@@ -1,11 +1,10 @@
 import { trpc } from "@/lib/trpc";
-import { UNAUTHED_ERR_MSG } from '@shared/const';
+import { getAeToken } from "@/lib/aeToken";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, TRPCClientError } from "@trpc/client";
+import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -25,18 +24,6 @@ queryClient.getMutationCache().subscribe(event => {
     console.error("[API Mutation Error]", event.mutation.state.error);
   }
 });
-
-const AE_TOKEN_KEY = "ae_token";
-
-export function getAeToken(): string | null {
-  return localStorage.getItem(AE_TOKEN_KEY);
-}
-export function setAeToken(token: string): void {
-  localStorage.setItem(AE_TOKEN_KEY, token);
-}
-export function clearAeToken(): void {
-  localStorage.removeItem(AE_TOKEN_KEY);
-}
 
 const trpcClient = trpc.createClient({
   links: [

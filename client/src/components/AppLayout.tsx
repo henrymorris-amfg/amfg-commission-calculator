@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { clearAeToken } from "../main";
+import { clearAeToken } from "@/lib/aeToken";
 import { trpc } from "@/lib/trpc";
 import {
   BarChart3,

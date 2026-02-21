@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from "react";
 import { trpc } from "@/lib/trpc";
-import { getAeToken } from "../main";
+import { getAeToken } from "@/lib/aeToken";
 
 interface AeProfile {
   id: number;
