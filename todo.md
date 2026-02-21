@@ -54,3 +54,7 @@
 - [x] Activate version dialog with confirmation warning
 - [x] Commission Structure nav item (team leader only)
 - [x] Version control explainer card on page
+
+## Handover & Export
+- [x] Write HANDOVER.md for new agent onboarding
+- [x] Export project to GitHub
