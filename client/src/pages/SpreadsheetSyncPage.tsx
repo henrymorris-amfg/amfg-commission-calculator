@@ -18,6 +18,10 @@ import {
   RefreshCw,
   UserPlus,
   Users,
+  Clock,
+  Play,
+  CalendarClock,
+  Zap,
 } from "lucide-react";
 
 const MONTH_NAMES = [
@@ -66,6 +70,30 @@ export default function SpreadsheetSyncPage() {
     navigate("/dashboard");
     return null;
   }
+
+  // Auto-sync status
+  const syncStatusQuery = trpc.spreadsheetSync.syncStatus.useQuery(undefined, {
+    refetchInterval: 60_000, // refresh every minute
+    retry: false,
+  });
+
+  // Manual trigger mutation
+  const triggerSyncMutation = trpc.spreadsheetSync.triggerSync.useMutation({
+    onSuccess: (data) => {
+      syncStatusQuery.refetch();
+      if (data.success) {
+        toast.success(
+          `Sync complete — ${data.spreadsheet.recordsUpdated} spreadsheet records, ` +
+          `${data.pipedrive.recordsUpdated} Pipedrive records updated.`
+        );
+      } else {
+        toast.warning("Sync completed with some errors. Check the status panel for details.");
+      }
+    },
+    onError: (err) => {
+      toast.error(`Sync failed: ${err.message}`);
+    },
+  });
 
   // Preview query
   const previewQuery = trpc.spreadsheetSync.preview.useQuery(
@@ -147,6 +175,14 @@ export default function SpreadsheetSyncPage() {
             Team Leader Only
           </Badge>
         </div>
+
+        {/* Auto-sync status card */}
+        <AutoSyncStatusCard
+          status={syncStatusQuery.data ?? null}
+          isLoading={syncStatusQuery.isLoading}
+          isTriggerPending={triggerSyncMutation.isPending}
+          onTrigger={() => triggerSyncMutation.mutate()}
+        />
 
         {/* Info card */}
         <div className="rounded-2xl bg-card border border-border p-5">
@@ -490,5 +526,170 @@ export default function SpreadsheetSyncPage() {
         )}
       </div>
     </AppLayout>
+  );
+}
+
+// ─── Auto-Sync Status Card ────────────────────────────────────────────────────
+
+interface SyncStatusData {
+  schedule: {
+    cronExpression: string;
+    description: string;
+    nextRunAt: string | null;
+  };
+  lastRun: {
+    timestamp: string;
+    spreadsheet: { success: boolean; recordsUpdated: number; latestWeek: number; error: string | null };
+    pipedrive: { success: boolean; recordsUpdated: number; skippedAes: string[]; error: string | null };
+  } | null;
+}
+
+function AutoSyncStatusCard({
+  status,
+  isLoading,
+  isTriggerPending,
+  onTrigger,
+}: {
+  status: SyncStatusData | null;
+  isLoading: boolean;
+  isTriggerPending: boolean;
+  onTrigger: () => void;
+}) {
+  function formatRelativeTime(isoString: string): string {
+    const diff = Date.now() - new Date(isoString).getTime();
+    const mins = Math.floor(diff / 60_000);
+    const hours = Math.floor(diff / 3_600_000);
+    const days = Math.floor(diff / 86_400_000);
+    if (mins < 2) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  }
+
+  function formatNextRun(isoString: string | null): string {
+    if (!isoString) return "Unknown";
+    const d = new Date(isoString);
+    return d.toLocaleString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+      timeZoneName: "short",
+    });
+  }
+
+  const lastRunOk =
+    status?.lastRun?.spreadsheet.success && status?.lastRun?.pipedrive.success;
+  const lastRunPartial =
+    status?.lastRun &&
+    (status.lastRun.spreadsheet.success !== status.lastRun.pipedrive.success);
+
+  return (
+    <div className="rounded-2xl bg-card border border-border overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <CalendarClock className="w-4 h-4 text-primary" />
+          <p className="text-sm font-semibold text-foreground">Weekly Auto-Sync</p>
+          <Badge variant="outline" className="text-xs border-green-500/30 text-green-400">
+            Active
+          </Badge>
+        </div>
+        <Button
+          onClick={onTrigger}
+          disabled={isTriggerPending}
+          size="sm"
+          variant="outline"
+          className="gap-2 text-xs"
+        >
+          {isTriggerPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Play className="w-3.5 h-3.5" />
+          )}
+          {isTriggerPending ? "Running..." : "Run Now"}
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Schedule */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <Clock className="w-3 h-3" />
+            Schedule
+          </div>
+          {isLoading ? (
+            <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+          ) : (
+            <>
+              <p className="text-sm font-medium text-foreground">
+                Every Monday at 8pm UTC
+              </p>
+              <p className="text-xs text-muted-foreground">
+                After the 7pm Sales Report update
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Next run */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <CalendarClock className="w-3 h-3" />
+            Next run
+          </div>
+          {isLoading ? (
+            <div className="h-4 w-40 rounded bg-muted animate-pulse" />
+          ) : (
+            <p className="text-sm font-medium text-foreground">
+              {formatNextRun(status?.schedule.nextRunAt ?? null)}
+            </p>
+          )}
+        </div>
+
+        {/* Last run */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <Zap className="w-3 h-3" />
+            Last run
+          </div>
+          {isLoading ? (
+            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+          ) : status?.lastRun ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                {lastRunOk ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                ) : lastRunPartial ? (
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                )}
+                <p className="text-sm font-medium text-foreground">
+                  {formatRelativeTime(status.lastRun.timestamp)}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sheet: {status.lastRun.spreadsheet.recordsUpdated} records
+                {status.lastRun.spreadsheet.latestWeek > 0 &&
+                  ` (wk ${status.lastRun.spreadsheet.latestWeek})`}
+                {" · "}
+                Pipedrive: {status.lastRun.pipedrive.recordsUpdated} records
+              </p>
+              {(status.lastRun.spreadsheet.error || status.lastRun.pipedrive.error) && (
+                <p className="text-xs text-destructive mt-0.5">
+                  {status.lastRun.spreadsheet.error || status.lastRun.pipedrive.error}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Not run yet since last deploy</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

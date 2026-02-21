@@ -32,6 +32,7 @@ import {
   upsertMonthlyMetric,
 } from "./db";
 import * as bcrypt from "bcryptjs";
+import { runWeeklySync, getLastSyncResult, getNextSyncTime } from "./weeklySync";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SPREADSHEET_ID = "11HPOZ7mkkN-OwhlALdGWicQUzCI0Fkuq_tz9tl1N1qc";
@@ -422,6 +423,81 @@ export const spreadsheetSyncRouter = router({
     return {
       hasToken: !!token,
       tokenPrefix: token ? token.substring(0, 20) + "..." : null,
+    };
+  }),
+
+  /**
+   * Get the weekly auto-sync schedule status — last run result and next scheduled time.
+   * Team leader only.
+   */
+  syncStatus: publicProcedure.query(async ({ ctx }) => {
+    const cookieHeader = (ctx as any).req?.headers?.["cookie"] as string | undefined;
+    const match = cookieHeader?.match(/ae_session=([^;]+)/);
+    const aeId = match ? (() => {
+      try {
+        const p = JSON.parse(Buffer.from(match[1], "base64url").toString());
+        return typeof p.aeId === "number" ? p.aeId : null;
+      } catch { return null; }
+    })() : null;
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+    const { getAeProfileById: _getAe } = await import("./db");
+    const profile = await _getAe(aeId);
+    if (!profile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+
+    const lastResult = getLastSyncResult();
+    const nextTime = getNextSyncTime();
+    const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 20 * * 1";
+
+    return {
+      schedule: {
+        cronExpression,
+        description: "Every Monday at 20:00 UTC (after the 7pm Sales Report update)",
+        nextRunAt: nextTime?.toISOString() ?? null,
+      },
+      lastRun: lastResult
+        ? {
+            timestamp: lastResult.timestamp,
+            spreadsheet: {
+              success: lastResult.spreadsheetSync.success,
+              recordsUpdated: lastResult.spreadsheetSync.recordsUpdated,
+              latestWeek: lastResult.spreadsheetSync.latestWeek,
+              error: lastResult.spreadsheetSync.error ?? null,
+            },
+            pipedrive: {
+              success: lastResult.pipedriveSync.success,
+              recordsUpdated: lastResult.pipedriveSync.recordsUpdated,
+              skippedAes: lastResult.pipedriveSync.skippedAes,
+              error: lastResult.pipedriveSync.error ?? null,
+            },
+          }
+        : null,
+    };
+  }),
+
+  /**
+   * Manually trigger the weekly sync immediately.
+   * Team leader only.
+   */
+  triggerSync: publicProcedure.mutation(async ({ ctx }) => {
+    const cookieHeader = (ctx as any).req?.headers?.["cookie"] as string | undefined;
+    const match = cookieHeader?.match(/ae_session=([^;]+)/);
+    const aeId = match ? (() => {
+      try {
+        const p = JSON.parse(Buffer.from(match[1], "base64url").toString());
+        return typeof p.aeId === "number" ? p.aeId : null;
+      } catch { return null; }
+    })() : null;
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+    const { getAeProfileById: _getAe } = await import("./db");
+    const profile = await _getAe(aeId);
+    if (!profile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+
+    const result = await runWeeklySync();
+    return {
+      success: result.spreadsheetSync.success && result.pipedriveSync.success,
+      timestamp: result.timestamp,
+      spreadsheet: result.spreadsheetSync,
+      pipedrive: result.pipedriveSync,
     };
   }),
 });
