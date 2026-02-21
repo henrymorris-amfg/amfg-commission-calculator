@@ -8,16 +8,18 @@ import {
   LayoutDashboard,
   LogOut,
   Medal,
+  Settings2,
   TrendingUp,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/metrics", label: "Activity Metrics", icon: BarChart3 },
-  { path: "/deals", label: "Deals", icon: DollarSign },
-  { path: "/summary", label: "Commission Summary", icon: TrendingUp },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
+  { path: "/metrics", label: "Activity Metrics", icon: BarChart3, adminOnly: false },
+  { path: "/deals", label: "Deals", icon: DollarSign, adminOnly: false },
+  { path: "/summary", label: "Commission Summary", icon: TrendingUp, adminOnly: false },
+  { path: "/commission-structure", label: "Commission Structure", icon: Settings2, adminOnly: true },
 ];
 
 const TIER_COLORS = {
@@ -81,7 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
+          {navItems.filter((item) => !item.adminOnly || ae?.isTeamLeader).map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
             return (

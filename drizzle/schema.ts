@@ -2,6 +2,7 @@ import {
   boolean,
   decimal,
   int,
+  json,
   mysqlEnum,
   mysqlTable,
   text,
@@ -24,6 +25,36 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+// ─── Commission Structure Versions ──────────────────────────────────────────
+// Each row is a versioned snapshot of the full tier threshold + rate config.
+// The active version is used for new deals; historical deals reference their own version.
+export const commissionStructures = mysqlTable("commission_structures", {
+  id: int("id").autoincrement().primaryKey(),
+  versionLabel: varchar("versionLabel", { length: 128 }).notNull(), // e.g. "Q1 2026"
+  effectiveFrom: timestamp("effectiveFrom").notNull(), // when this version takes effect
+  isActive: boolean("isActive").default(false).notNull(),
+  // Tier commission rates (stored as decimals, e.g. 0.13)
+  bronzeRate: decimal("bronzeRate", { precision: 5, scale: 4 }).notNull().default("0.1300"),
+  silverRate: decimal("silverRate", { precision: 5, scale: 4 }).notNull().default("0.1600"),
+  goldRate: decimal("goldRate", { precision: 5, scale: 4 }).notNull().default("0.1900"),
+  // Standard targets (JSON blob for flexibility)
+  standardTargets: json("standardTargets").notNull(),
+  // Team leader targets (JSON blob)
+  teamLeaderTargets: json("teamLeaderTargets").notNull(),
+  // Payout rules
+  monthlyPayoutMonths: int("monthlyPayoutMonths").notNull().default(13),
+  onboardingDeductionGbp: decimal("onboardingDeductionGbp", { precision: 10, scale: 2 }).notNull().default("500.00"),
+  onboardingArrReductionUsd: decimal("onboardingArrReductionUsd", { precision: 12, scale: 2 }).notNull().default("5000.00"),
+  // Audit
+  createdBy: varchar("createdBy", { length: 128 }).notNull().default("system"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CommissionStructure = typeof commissionStructures.$inferSelect;
+export type InsertCommissionStructure = typeof commissionStructures.$inferInsert;
 
 // ─── AE Profiles (PIN-based, no OAuth required) ──────────────────────────────
 export const aeProfiles = mysqlTable("ae_profiles", {
@@ -75,6 +106,8 @@ export const deals = mysqlTable("deals", {
   tierAtStart: mysqlEnum("tierAtStart", ["bronze", "silver", "gold"]).notNull(),
   // Snapshot of FX rate at time of deal entry (USD→GBP)
   fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
+  // Reference to the commission structure version active when the deal was created
+  commissionStructureId: int("commissionStructureId"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

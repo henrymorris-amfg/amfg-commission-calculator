@@ -16,14 +16,19 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import {
+  activateCommissionStructure,
   createAeProfile,
+  createCommissionStructure,
   createDeal,
   createPayoutsForDeal,
   deletePayoutsForDeal,
   deleteDeal,
+  getActiveCommissionStructure,
   getAeProfileByName,
   getAeProfileById,
   getAllAeProfiles,
+  getAllCommissionStructures,
+  getCommissionStructureById,
   getDealById,
   getDealsForAe,
   getMetricsForAe,
@@ -31,9 +36,26 @@ import {
   getPayoutsForAe,
   getPayoutsForDeal,
   getPayoutsForMonth,
+  seedInitialCommissionStructure,
+  updateCommissionStructure,
   upsertMonthlyMetric,
   updateAeProfile,
 } from "./db";
+
+// Seed the initial commission structure on first startup
+seedInitialCommissionStructure().catch(console.error);
+
+// ─── Commission Structure Target Types ───────────────────────────────────────
+interface TierTargets {
+  arrUsd: number;
+  demosPw: number;
+  dialsPw: number;
+  retentionMin: number;
+}
+interface StructureTargets {
+  silver: TierTargets;
+  gold: TierTargets;
+}
 
 // ─── FX Rate Helper ───────────────────────────────────────────────────────────
 
@@ -432,6 +454,9 @@ export const appRouter = router({
         // Fetch live FX rate
         const fxRate = await fetchUsdToGbpRate();
 
+        // Get active commission structure for payout rules
+        const activeStructure = await getActiveCommissionStructure();
+
         // Calculate commission
         const commResult = calculateCommission({
           contractType: input.contractType,
@@ -440,9 +465,12 @@ export const appRouter = router({
           onboardingFeePaid: input.onboardingFeePaid,
           isReferral: input.isReferral,
           fxRateUsdToGbp: fxRate,
+          monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
+          onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
+          onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
         });
 
-        // Save deal
+        // Save deal (with reference to the active commission structure)
         const dealId = await createDeal({
           aeId,
           customerName: input.customerName,
@@ -455,6 +483,7 @@ export const appRouter = router({
           isReferral: input.isReferral,
           tierAtStart: tier,
           fxRateAtEntry: String(fxRate),
+          commissionStructureId: activeStructure?.id ?? null,
           notes: null,
         });
 
@@ -602,6 +631,131 @@ export const appRouter = router({
       const rate = await fetchUsdToGbpRate();
       return { usdToGbp: rate, fetchedAt: new Date().toISOString() };
     }),
+  }),
+
+  // ─── Commission Structure Management ──────────────────────────────────────
+  commissionStructure: router({
+    // List all versions
+    list: publicProcedure.query(async () => {
+      const structures = await getAllCommissionStructures();
+      return structures.map((s) => ({
+        ...s,
+        bronzeRate: Number(s.bronzeRate),
+        silverRate: Number(s.silverRate),
+        goldRate: Number(s.goldRate),
+        onboardingDeductionGbp: Number(s.onboardingDeductionGbp),
+        onboardingArrReductionUsd: Number(s.onboardingArrReductionUsd),
+        standardTargets: s.standardTargets as StructureTargets,
+        teamLeaderTargets: s.teamLeaderTargets as StructureTargets,
+      }));
+    }),
+
+    // Get the currently active version
+    getActive: publicProcedure.query(async () => {
+      const s = await getActiveCommissionStructure();
+      if (!s) return null;
+      return {
+        ...s,
+        bronzeRate: Number(s.bronzeRate),
+        silverRate: Number(s.silverRate),
+        goldRate: Number(s.goldRate),
+        onboardingDeductionGbp: Number(s.onboardingDeductionGbp),
+        onboardingArrReductionUsd: Number(s.onboardingArrReductionUsd),
+        standardTargets: s.standardTargets as StructureTargets,
+        teamLeaderTargets: s.teamLeaderTargets as StructureTargets,
+      };
+    }),
+
+    // Create a new version (draft, not yet active)
+    create: publicProcedure
+      .input(
+        z.object({
+          versionLabel: z.string().min(1).max(128),
+          effectiveFrom: z.string(), // ISO date string
+          bronzeRate: z.number().min(0).max(1),
+          silverRate: z.number().min(0).max(1),
+          goldRate: z.number().min(0).max(1),
+          standardTargets: z.object({
+            silver: z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+            gold:   z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+          }),
+          teamLeaderTargets: z.object({
+            silver: z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+            gold:   z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+          }),
+          monthlyPayoutMonths: z.number().int().min(1).max(60).default(13),
+          onboardingDeductionGbp: z.number().min(0),
+          onboardingArrReductionUsd: z.number().min(0),
+          notes: z.string().optional(),
+          createdBy: z.string().min(1).max(128).default("admin"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const id = await createCommissionStructure({
+          versionLabel: input.versionLabel,
+          effectiveFrom: new Date(input.effectiveFrom),
+          isActive: false,
+          bronzeRate: String(input.bronzeRate),
+          silverRate: String(input.silverRate),
+          goldRate: String(input.goldRate),
+          standardTargets: input.standardTargets,
+          teamLeaderTargets: input.teamLeaderTargets,
+          monthlyPayoutMonths: input.monthlyPayoutMonths,
+          onboardingDeductionGbp: String(input.onboardingDeductionGbp),
+          onboardingArrReductionUsd: String(input.onboardingArrReductionUsd),
+          notes: input.notes ?? null,
+          createdBy: input.createdBy,
+        });
+        return { id };
+      }),
+
+    // Update a draft version (cannot edit active version's rates — create a new one)
+    update: publicProcedure
+      .input(
+        z.object({
+          id: z.number().int(),
+          versionLabel: z.string().min(1).max(128).optional(),
+          effectiveFrom: z.string().optional(),
+          bronzeRate: z.number().min(0).max(1).optional(),
+          silverRate: z.number().min(0).max(1).optional(),
+          goldRate: z.number().min(0).max(1).optional(),
+          standardTargets: z.object({
+            silver: z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+            gold:   z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+          }).optional(),
+          teamLeaderTargets: z.object({
+            silver: z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+            gold:   z.object({ arrUsd: z.number(), demosPw: z.number(), dialsPw: z.number(), retentionMin: z.number() }),
+          }).optional(),
+          monthlyPayoutMonths: z.number().int().min(1).max(60).optional(),
+          onboardingDeductionGbp: z.number().min(0).optional(),
+          onboardingArrReductionUsd: z.number().min(0).optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, effectiveFrom, bronzeRate, silverRate, goldRate,
+                onboardingDeductionGbp, onboardingArrReductionUsd, ...rest } = input;
+        const patch: Record<string, unknown> = { ...rest };
+        if (effectiveFrom) patch.effectiveFrom = new Date(effectiveFrom);
+        if (bronzeRate !== undefined) patch.bronzeRate = String(bronzeRate);
+        if (silverRate !== undefined) patch.silverRate = String(silverRate);
+        if (goldRate !== undefined) patch.goldRate = String(goldRate);
+        if (onboardingDeductionGbp !== undefined) patch.onboardingDeductionGbp = String(onboardingDeductionGbp);
+        if (onboardingArrReductionUsd !== undefined) patch.onboardingArrReductionUsd = String(onboardingArrReductionUsd);
+        await updateCommissionStructure(id, patch);
+        return { success: true };
+      }),
+
+    // Activate a version (deactivates all others)
+    activate: publicProcedure
+      .input(z.object({ id: z.number().int() }))
+      .mutation(async ({ input }) => {
+        const structure = await getCommissionStructureById(input.id);
+        if (!structure) throw new TRPCError({ code: "NOT_FOUND", message: "Commission structure not found." });
+        await activateCommissionStructure(input.id);
+        return { success: true, activatedId: input.id };
+      }),
   }),
 });
 

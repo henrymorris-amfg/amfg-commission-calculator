@@ -175,6 +175,10 @@ export interface CommissionInput {
   onboardingFeePaid: boolean;
   isReferral: boolean;
   fxRateUsdToGbp: number; // e.g. 0.79 means 1 USD = 0.79 GBP
+  // Optional overrides from versioned commission structure
+  monthlyPayoutMonths?: number;         // default: MONTHLY_CONTRACT_PAYOUT_MONTHS
+  onboardingDeductionGbp?: number;      // default: ONBOARDING_DEDUCTION_GBP
+  onboardingArrReductionUsd?: number;   // default: 5000
 }
 
 export interface PayoutScheduleItem {
@@ -199,15 +203,20 @@ export interface CommissionResult {
 export function calculateCommission(input: CommissionInput): CommissionResult {
   const rate = TIER_COMMISSION_RATE[input.tier];
 
-  // If onboarding fee not paid, ARR is reduced by $5,000 for commission calculation
+  // Use versioned overrides if provided, otherwise fall back to constants
+  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5_000;
+  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
+  const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
+
+  // If onboarding fee not paid, ARR is reduced for commission calculation
   const effectiveArrUsd = input.onboardingFeePaid
     ? input.arrUsd
-    : Math.max(0, input.arrUsd - 5_000);
+    : Math.max(0, input.arrUsd - arrReductionUsd);
 
   const numPayouts =
     input.contractType === "annual"
       ? ANNUAL_CONTRACT_PAYOUT_MONTHS
-      : MONTHLY_CONTRACT_PAYOUT_MONTHS;
+      : payoutMonths;
 
   // For annual: full year ARR paid upfront in one payout
   // For monthly: monthly ARR (annual / 12) paid each month for 13 months
@@ -224,9 +233,9 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     // Referral: 50% reduction on commission
     const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
 
-    // Onboarding deduction: £500 on first payout only
+    // Onboarding deduction: on first payout only (uses versioned amount)
     const onboardingDeductionGbp =
-      !input.onboardingFeePaid && i === 1 ? ONBOARDING_DEDUCTION_GBP : 0;
+      !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
 
     const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
     const netCommissionGbp =

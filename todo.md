@@ -40,3 +40,17 @@
 - [x] New joiner exception tests
 - [x] Team leader halved targets tests
 - [x] FX conversion integration test (via commission calculation tests)
+
+## Commission Structure Version Control
+- [x] commission_structures table (versionLabel, effectiveFrom, isActive, rates, targets JSON, payout rules)
+- [x] commissionStructureId FK added to deals table
+- [x] Schema migration pushed
+- [x] Seed initial v1 structure on server startup
+- [x] Backend: list, create, update, activate, getActive procedures
+- [x] Deal creation wired to active structure (payout rules + rates from DB)
+- [x] calculateCommission updated to accept versioned override params
+- [x] CommissionStructurePage frontend (version list, rates, targets, payout rules)
+- [x] Create new version dialog with full form
+- [x] Activate version dialog with confirmation warning
+- [x] Commission Structure nav item (team leader only)
+- [x] Version control explainer card on page

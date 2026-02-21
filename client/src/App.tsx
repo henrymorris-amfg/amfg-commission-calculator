@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import MetricsPage from "./pages/MetricsPage";
 import DealsPage from "./pages/DealsPage";
 import SummaryPage from "./pages/SummaryPage";
+import CommissionStructurePage from "./pages/CommissionStructurePage";
 import { AeAuthProvider } from "./contexts/AeAuthContext";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/metrics" component={MetricsPage} />
       <Route path="/deals" component={DealsPage} />
       <Route path="/summary" component={SummaryPage} />
+      <Route path="/commission-structure" component={CommissionStructurePage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -3,15 +3,18 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   AeProfile,
   CommissionPayout,
+  CommissionStructure,
   Deal,
   InsertAeProfile,
   InsertCommissionPayout,
+  InsertCommissionStructure,
   InsertDeal,
   InsertMonthlyMetric,
   InsertUser,
   MonthlyMetric,
   aeProfiles,
   commissionPayouts,
+  commissionStructures,
   deals,
   monthlyMetrics,
   users,
@@ -259,4 +262,93 @@ export async function getPayoutsForDeal(dealId: number): Promise<CommissionPayou
     .from(commissionPayouts)
     .where(eq(commissionPayouts.dealId, dealId))
     .orderBy(commissionPayouts.payoutNumber);
+}
+
+// ─── Commission Structures ────────────────────────────────────────────────────
+
+export async function getActiveCommissionStructure(): Promise<CommissionStructure | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(commissionStructures)
+    .where(eq(commissionStructures.isActive, true))
+    .limit(1);
+  return result[0];
+}
+
+export async function getAllCommissionStructures(): Promise<CommissionStructure[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(commissionStructures)
+    .orderBy(desc(commissionStructures.effectiveFrom));
+}
+
+export async function getCommissionStructureById(id: number): Promise<CommissionStructure | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(commissionStructures)
+    .where(eq(commissionStructures.id, id))
+    .limit(1);
+  return result[0];
+}
+
+export async function createCommissionStructure(data: InsertCommissionStructure): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(commissionStructures).values(data);
+  return (result[0] as { insertId: number }).insertId;
+}
+
+export async function updateCommissionStructure(
+  id: number,
+  data: Partial<InsertCommissionStructure>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(commissionStructures).set(data).where(eq(commissionStructures.id, id));
+}
+
+/** Deactivate all versions, then activate the given one. */
+export async function activateCommissionStructure(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Deactivate all
+  await db.update(commissionStructures).set({ isActive: false });
+  // Activate the chosen one
+  await db.update(commissionStructures).set({ isActive: true }).where(eq(commissionStructures.id, id));
+}
+
+/** Seed the initial v1 structure if no structures exist yet. */
+export async function seedInitialCommissionStructure(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(commissionStructures).limit(1);
+  if (existing.length > 0) return; // already seeded
+
+  await db.insert(commissionStructures).values({
+    versionLabel: "Q1 2026 — Initial",
+    effectiveFrom: new Date("2026-01-01"),
+    isActive: true,
+    bronzeRate: "0.1300",
+    silverRate: "0.1600",
+    goldRate: "0.1900",
+    standardTargets: {
+      silver: { arrUsd: 20000, demosPw: 3, dialsPw: 100, retentionMin: 61 },
+      gold:   { arrUsd: 25000, demosPw: 4, dialsPw: 200, retentionMin: 71 },
+    },
+    teamLeaderTargets: {
+      silver: { arrUsd: 10000, demosPw: 2, dialsPw: 50, retentionMin: 61 },
+      gold:   { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 },
+    },
+    monthlyPayoutMonths: 13,
+    onboardingDeductionGbp: "500.00",
+    onboardingArrReductionUsd: "5000.00",
+    createdBy: "system",
+    notes: "Initial commission structure seeded from hardcoded constants.",
+  });
 }
