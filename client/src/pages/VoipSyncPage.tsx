@@ -56,13 +56,7 @@ export default function VoipSyncPage() {
   );
   const importMutation = trpc.voipSync.import.useMutation();
 
-  useEffect(() => {
-    if (!isLoading && !ae) navigate("/");
-    if (!isLoading && ae && !ae.isTeamLeader) navigate("/dashboard");
-  }, [ae, isLoading]);
-
-  if (isLoading || !ae || !ae.isTeamLeader) return null;
-
+  // useMemo hooks — MUST be above any early return
   const previewData = previewQuery.data;
 
   // Group monthly data by AE
@@ -91,6 +85,13 @@ export default function VoipSyncPage() {
     }
     return result.sort((a, b) => a.year - b.year || a.month - b.month);
   }, [previewData]);
+
+  useEffect(() => {
+    if (!isLoading && !ae) navigate("/");
+    if (!isLoading && ae && !ae.isTeamLeader) navigate("/dashboard");
+  }, [ae, isLoading]);
+
+  if (isLoading || !ae || !ae.isTeamLeader) return null;
 
   const handleImport = async () => {
     try {

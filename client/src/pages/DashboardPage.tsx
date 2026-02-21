@@ -93,6 +93,20 @@ export default function DashboardPage() {
     if (!isLoading && !ae) navigate("/");
   }, [ae, isLoading]);
 
+  // ── Forecast calculation (useMemo MUST be above early return) ────────────────
+  const forecastArrNum = parseFloat(forecastArr.replace(/,/g, "")) || 0;
+  const forecastGbp = useMemo(() => {
+    if (!forecastArrNum || forecastArrNum <= 0) return null;
+    const fxRate = fxData?.usdToGbp ?? 0.79;
+    const commRate = TIER_COMMISSION_RATE[tierData?.tier ?? "bronze"];
+    if (forecastType === "annual") {
+      return forecastArrNum * commRate * fxRate;
+    } else {
+      const perMonth = (forecastArrNum / 12) * commRate * fxRate;
+      return { perMonth, total: perMonth * 13 };
+    }
+  }, [forecastArrNum, forecastType, fxData, tierData]);
+
   if (isLoading || !ae) return null;
 
   const tier = tierData?.tier ?? "bronze";
@@ -157,20 +171,7 @@ export default function DashboardPage() {
       ]
     : [];
 
-  // ── Forecast calculation ─────────────────────────────────────────────────────
-  const forecastArrNum = parseFloat(forecastArr.replace(/,/g, "")) || 0;
-  const forecastGbp = useMemo(() => {
-    if (!forecastArrNum || forecastArrNum <= 0) return null;
-    if (forecastType === "annual") {
-      return forecastArrNum * commRate * fxRate;
-    } else {
-      // Monthly: per-month payout × 13 months
-      const perMonth = (forecastArrNum / 12) * commRate * fxRate;
-      return { perMonth, total: perMonth * 13 };
-    }
-  }, [forecastArrNum, forecastType, commRate, fxRate]);
-
-  return (
+   return (
     <AppLayout>
       <div className="p-4 sm:p-8 pb-24 md:pb-8 space-y-6 max-w-6xl">
         {/* Header */}
