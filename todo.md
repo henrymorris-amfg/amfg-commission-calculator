@@ -58,3 +58,8 @@
 ## Handover & Export
 - [x] Write HANDOVER.md for new agent onboarding
 - [x] Export project to GitHub
+
+## UX Improvements (Round 1)
+- [x] Tier progress indicators on dashboard (distance to next tier for ARR, demos, dials, retention)
+- [x] Commission forecast calculator on dashboard (enter deal ARR → see estimated GBP payout)
+- [x] Mobile-responsive layout (collapsible sidebar, bottom nav on mobile)
