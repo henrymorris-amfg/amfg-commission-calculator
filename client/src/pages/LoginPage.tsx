@@ -29,8 +29,10 @@ export default function LoginPage() {
   const { data: aeNames = [] } = trpc.ae.listNames.useQuery();
 
   const loginMutation = trpc.ae.login.useMutation({
-    onSuccess: () => {
-      refetch();
+    onSuccess: async () => {
+      // Wait for the AE context to refresh before navigating — avoids the
+      // race condition where the auth guard fires before ae is populated.
+      await refetch();
       navigate("/dashboard");
     },
     onError: (err) => toast.error(err.message),
