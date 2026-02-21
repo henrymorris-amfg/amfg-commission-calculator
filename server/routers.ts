@@ -76,9 +76,10 @@ async function fetchUsdToGbpRate(): Promise<number> {
   }
 }
 
-// ─── AE Session Token (simple JWT-like using base64) ─────────────────────────
-// We use a simple signed token stored in a cookie to identify the AE session.
-// This is NOT OAuth — it's a lightweight PIN-based session.
+// ─── AE Session Token ────────────────────────────────────────────────────────
+// Token is stored in localStorage on the client and sent via the
+// X-AE-Token header on every tRPC request.
+// This avoids cross-origin cookie issues on the Manus production gateway.
 
 function makeAeToken(aeId: number): string {
   const payload = { aeId, ts: Date.now() };
@@ -95,15 +96,23 @@ function parseAeToken(token: string): { aeId: number } | null {
   }
 }
 
-const AE_COOKIE = "ae_session";
-
 function getAeIdFromCtx(ctx: { req: { headers: Record<string, string | string[] | undefined> } }): number | null {
+  // Accept token from X-AE-Token header (localStorage-based, production-safe)
+  const headerToken = ctx.req.headers["x-ae-token"] as string | undefined;
+  if (headerToken) {
+    const parsed = parseAeToken(headerToken);
+    if (parsed) return parsed.aeId;
+  }
+  // Fallback: also accept from cookie for backward compatibility
   const cookieHeader = ctx.req.headers["cookie"] as string | undefined;
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`${AE_COOKIE}=([^;]+)`));
-  if (!match) return null;
-  const parsed = parseAeToken(match[1]);
-  return parsed?.aeId ?? null;
+  if (cookieHeader) {
+    const match = cookieHeader.match(/ae_session=([^;]+)/);
+    if (match?.[1]) {
+      const parsed = parseAeToken(match[1]);
+      if (parsed) return parsed.aeId;
+    }
+  }
+  return null;
 }
 
 // ─── Routers ──────────────────────────────────────────────────────────────────
@@ -157,7 +166,7 @@ export const appRouter = router({
         return { id, name: input.name };
       }),
 
-    // Login with name + PIN, sets AE session cookie
+    // Login with name + PIN — returns a token to be stored in localStorage
     login: publicProcedure
       .input(
         z.object({
@@ -165,7 +174,7 @@ export const appRouter = router({
           pin: z.string().length(4),
         })
       )
-      .mutation(async ({ input, ctx }) => {
+      .mutation(async ({ input }) => {
         const profile = await getAeProfileByName(input.name);
         if (!profile) {
           throw new TRPCError({ code: "NOT_FOUND", message: "AE not found." });
@@ -175,14 +184,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect PIN." });
         }
         const token = makeAeToken(profile.id);
-        ctx.res.cookie(AE_COOKIE, token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          path: "/",
-          maxAge: 60 * 60 * 24 * 30, // 30 days
-        });
+        // Return token in response body — client stores in localStorage and
+        // sends as X-AE-Token header on every subsequent request.
         return {
+          token,
           id: profile.id,
           name: profile.name,
           joinDate: profile.joinDate,
@@ -190,9 +195,8 @@ export const appRouter = router({
         };
       }),
 
-    // Logout AE session
-    logout: publicProcedure.mutation(({ ctx }) => {
-      ctx.res.clearCookie(AE_COOKIE, { path: "/" });
+    // Logout AE session (client clears localStorage)
+    logout: publicProcedure.mutation(() => {
       return { success: true };
     }),
 

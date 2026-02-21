@@ -1,5 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAeAuth } from "@/contexts/AeAuthContext";
+import { clearAeToken } from "../main";
 import { trpc } from "@/lib/trpc";
 import {
   BarChart3,
@@ -39,6 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const logoutMutation = trpc.ae.logout.useMutation({
     onSuccess: () => {
+      clearAeToken();
       refetch();
       navigate("/");
     },

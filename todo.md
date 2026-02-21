@@ -72,3 +72,4 @@
 
 ## Bug Fixes
 - [x] Fix login loop — race condition in LoginPage: await refetch() before navigate("/dashboard")
+- [x] Fix Manus OAuth redirect — switched AE session from httpOnly cookie to localStorage token sent via X-AE-Token header; removed global OAuth redirect from main.tsx; ae.me query disabled when no token present

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
+import { setAeToken } from "../main";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,9 +30,11 @@ export default function LoginPage() {
   const { data: aeNames = [] } = trpc.ae.listNames.useQuery();
 
   const loginMutation = trpc.ae.login.useMutation({
-    onSuccess: async () => {
-      // Wait for the AE context to refresh before navigating — avoids the
-      // race condition where the auth guard fires before ae is populated.
+    onSuccess: async (data) => {
+      // Store the session token in localStorage so it's sent on every
+      // subsequent tRPC request via the X-AE-Token header.
+      setAeToken(data.token);
+      // Wait for the AE context to refresh before navigating.
       await refetch();
       navigate("/dashboard");
     },
