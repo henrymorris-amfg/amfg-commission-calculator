@@ -19,6 +19,9 @@ import {
   ChevronUp,
   Minus,
   Building2,
+  Phone,
+  PhoneCall,
+  Activity,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -216,6 +219,9 @@ export default function DashboardPage() {
             </span>
           )}
         </div>
+
+        {/* Live Dials from VOIP Studio */}
+        <LiveDialsWidget />
 
         {/* Tier Card + Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -618,6 +624,99 @@ export default function DashboardPage() {
         <PipedriveDealsWidget />
       </div>
     </AppLayout>
+  );
+}
+
+/* ─── Live Dials Widget (VOIP Studio) ──────────────────────────────────────── */
+
+function LiveDialsWidget() {
+  const todayQuery = trpc.voipSync.myDialsToday.useQuery(undefined, {
+    retry: false,
+    throwOnError: false,
+    refetchInterval: 60_000, // refresh every 60 seconds
+  });
+  const weekQuery = trpc.voipSync.myDialsThisWeek.useQuery(undefined, {
+    retry: false,
+    throwOnError: false,
+    refetchInterval: 120_000, // refresh every 2 minutes
+  });
+
+  if (todayQuery.isLoading && weekQuery.isLoading) return null;
+  if (todayQuery.isError && weekQuery.isError) return null;
+  if (todayQuery.data && !todayQuery.data.found && weekQuery.data && !weekQuery.data.found) return null;
+
+  const today = todayQuery.data?.found ? todayQuery.data : null;
+  const week = weekQuery.data?.found ? weekQuery.data : null;
+
+  return (
+    <div className="rounded-2xl bg-card border border-border p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: "oklch(0.55 0.18 145 / 0.15)" }}>
+          <Phone className="w-4 h-4" style={{ color: "oklch(0.70 0.18 145)" }} />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Live Dials</h3>
+          <p className="text-xs text-muted-foreground">Real-time data from VoIPstudio</p>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-xs text-muted-foreground">Live</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Today's Dials */}
+        <div className="rounded-xl p-4 border border-border bg-secondary/30">
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs text-muted-foreground font-medium">Today's Dials</p>
+            <PhoneCall className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground">{today?.totalDials ?? "—"}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {today ? `${today.connected} connected` : "Loading..."}
+          </p>
+        </div>
+
+        {/* Today's Connection Rate */}
+        <div className="rounded-xl p-4 border border-border bg-secondary/30">
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs text-muted-foreground font-medium">Connect Rate</p>
+            <Activity className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground">
+            {today ? `${today.connectionRate.toFixed(1)}%` : "—"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">Today</p>
+        </div>
+
+        {/* This Week's Dials */}
+        <div className="rounded-xl p-4 border border-border bg-secondary/30">
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs text-muted-foreground font-medium">This Week</p>
+            <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground">{week?.totalDials ?? "—"}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {week ? `${week.connected} connected` : "Loading..."}
+          </p>
+        </div>
+
+        {/* This Week's Talk Time */}
+        <div className="rounded-xl p-4 border border-border bg-secondary/30">
+          <div className="flex items-start justify-between mb-2">
+            <p className="text-xs text-muted-foreground font-medium">Talk Time</p>
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+          </div>
+          <p className="text-2xl font-bold text-foreground">
+            {week?.totalTalkTimeFormatted ?? "—"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {week ? `${week.connectionRate.toFixed(1)}% connect rate` : "This week"}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 

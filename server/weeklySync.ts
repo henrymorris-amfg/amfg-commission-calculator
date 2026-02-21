@@ -271,6 +271,12 @@ async function findPipedriveUserId(aeName: string): Promise<number | null> {
 
 interface SyncResult {
   timestamp: string;
+  voipSync: {
+    success: boolean;
+    recordsUpdated: number;
+    unmatchedAes: string[];
+    error?: string;
+  };
   spreadsheetSync: {
     success: boolean;
     recordsUpdated: number;
@@ -422,10 +428,58 @@ async function runPipedriveSync(months = 2): Promise<SyncResult["pipedriveSync"]
 
 // ─── Main sync runner ─────────────────────────────────────────────────────────
 
+async function runVoipSync(months = 2): Promise<SyncResult["voipSync"]> {
+  if (!process.env.VOIP_STUDIO_API_KEY) {
+    return { success: false, recordsUpdated: 0, unmatchedAes: [], error: "No VOIP_STUDIO_API_KEY" };
+  }
+
+  try {
+    const { pullVoipMonthlyData } = await import("./voipSync");
+    const { data, unmatchedAes } = await pullVoipMonthlyData(months);
+    let recordsUpdated = 0;
+
+    for (const d of data) {
+      const existing = await getMetricsForMonth(d.aeId, d.year, d.month);
+      await upsertMonthlyMetric({
+        aeId: d.aeId,
+        year: d.year,
+        month: d.month,
+        arrUsd: existing?.arrUsd ?? "0",
+        demosTotal: existing?.demosTotal ?? 0,
+        dialsTotal: d.totalDials, // VOIP Studio is the source of truth for dials
+        retentionRate: existing?.retentionRate ?? null,
+        connectedDials: d.connected,
+        connectionRate: String(d.connectionRate),
+        talkTimeSecs: d.totalTalkTimeSecs,
+      });
+      recordsUpdated++;
+    }
+
+    return { success: true, recordsUpdated, unmatchedAes };
+  } catch (err) {
+    return {
+      success: false,
+      recordsUpdated: 0,
+      unmatchedAes: [],
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 export async function runWeeklySync(): Promise<SyncResult> {
   const timestamp = new Date().toISOString();
   console.log(`[WeeklySync] Starting sync at ${timestamp}`);
 
+  // Step 1: VOIP Studio — primary source for dials, connection rate, talk time
+  const voipResult = await runVoipSync(2);
+  console.log(
+    `[WeeklySync] VOIP Studio sync: ${voipResult.success ? "✓" : "✗"} ` +
+    `${voipResult.recordsUpdated} records` +
+    (voipResult.unmatchedAes.length > 0 ? `, unmatched: ${voipResult.unmatchedAes.join(", ")}` : "") +
+    (voipResult.error ? ` — ${voipResult.error}` : "")
+  );
+
+  // Step 2: Spreadsheet — still used for demos (not available in VOIP Studio)
   const spreadsheetResult = await runSpreadsheetSync(2);
   console.log(
     `[WeeklySync] Spreadsheet sync: ${spreadsheetResult.success ? "✓" : "✗"} ` +
@@ -433,6 +487,7 @@ export async function runWeeklySync(): Promise<SyncResult> {
     (spreadsheetResult.error ? ` — ${spreadsheetResult.error}` : "")
   );
 
+  // Step 3: Pipedrive — source for ARR (won deals)
   const pipedriveResult = await runPipedriveSync(2);
   console.log(
     `[WeeklySync] Pipedrive sync: ${pipedriveResult.success ? "✓" : "✗"} ` +
@@ -443,6 +498,7 @@ export async function runWeeklySync(): Promise<SyncResult> {
 
   const result: SyncResult = {
     timestamp,
+    voipSync: voipResult,
     spreadsheetSync: spreadsheetResult,
     pipedriveSync: pipedriveResult,
   };

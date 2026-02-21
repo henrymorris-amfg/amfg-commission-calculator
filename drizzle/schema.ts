@@ -82,6 +82,10 @@ export const monthlyMetrics = mysqlTable("monthly_metrics", {
   demosTotal: int("demosTotal").notNull().default(0),
   dialsTotal: int("dialsTotal").notNull().default(0),
   retentionRate: decimal("retentionRate", { precision: 5, scale: 2 }), // % e.g. 71.50
+  // VOIP Studio metrics
+  connectedDials: int("connectedDials").default(0),
+  connectionRate: decimal("connectionRate", { precision: 5, scale: 2 }), // % e.g. 74.60
+  talkTimeSecs: int("talkTimeSecs").default(0), // total connected talk time in seconds
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

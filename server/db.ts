@@ -126,17 +126,21 @@ export async function updateAeProfile(
 export async function upsertMonthlyMetric(data: InsertMonthlyMetric): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = {
+    arrUsd: data.arrUsd,
+    demosTotal: data.demosTotal,
+    dialsTotal: data.dialsTotal,
+    retentionRate: data.retentionRate,
+  };
+  // Only update VOIP Studio fields if they are provided
+  if (data.connectedDials !== undefined) updateSet.connectedDials = data.connectedDials;
+  if (data.connectionRate !== undefined) updateSet.connectionRate = data.connectionRate;
+  if (data.talkTimeSecs !== undefined) updateSet.talkTimeSecs = data.talkTimeSecs;
+
   await db
     .insert(monthlyMetrics)
     .values(data)
-    .onDuplicateKeyUpdate({
-      set: {
-        arrUsd: data.arrUsd,
-        demosTotal: data.demosTotal,
-        dialsTotal: data.dialsTotal,
-        retentionRate: data.retentionRate,
-      },
-    });
+    .onDuplicateKeyUpdate({ set: updateSet });
 }
 
 export async function getMetricsForAe(
