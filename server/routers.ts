@@ -631,6 +631,101 @@ export const appRouter = router({
       const rate = await fetchUsdToGbpRate();
       return { usdToGbp: rate, fetchedAt: new Date().toISOString() };
     }),
+
+    // Payout calendar: all payouts grouped by month, split into past/current/future
+    payoutCalendar: publicProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+
+      const allPayouts = await getPayoutsForAe(aeId);
+      const allDeals = await getDealsForAe(aeId);
+      const dealMap = new Map(allDeals.map((d) => [d.id, d]));
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      // Group by year+month
+      type CalendarMonth = {
+        year: number;
+        month: number;
+        totalGbp: number;
+        status: "past" | "current" | "future";
+        payouts: Array<{
+          dealId: number;
+          customerName: string;
+          contractType: string;
+          tierAtStart: string;
+          netCommissionGbp: number;
+          payoutNumber: number;
+          totalPayouts: number;
+          isReferral: boolean;
+          onboardingFeePaid: boolean;
+        }>;
+      };
+
+      const monthMap = new Map<string, CalendarMonth>();
+
+      for (const p of allPayouts) {
+        const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
+        if (!monthMap.has(key)) {
+          const yr = p.payoutYear;
+          const mo = p.payoutMonth;
+          let status: "past" | "current" | "future";
+          if (yr < currentYear || (yr === currentYear && mo < currentMonth)) {
+            status = "past";
+          } else if (yr === currentYear && mo === currentMonth) {
+            status = "current";
+          } else {
+            status = "future";
+          }
+          monthMap.set(key, { year: yr, month: mo, totalGbp: 0, status, payouts: [] });
+        }
+        const entry = monthMap.get(key)!;
+        const netGbp = Number(p.netCommissionGbp);
+        entry.totalGbp += netGbp;
+        const deal = dealMap.get(p.dealId);
+
+        // Count total payouts for this deal
+        const dealPayoutCount = allPayouts.filter(pp => pp.dealId === p.dealId).length;
+
+        entry.payouts.push({
+          dealId: p.dealId,
+          customerName: deal?.customerName ?? "Unknown",
+          contractType: deal?.contractType ?? "monthly",
+          tierAtStart: deal?.tierAtStart ?? "bronze",
+          netCommissionGbp: netGbp,
+          payoutNumber: p.payoutNumber,
+          totalPayouts: dealPayoutCount,
+          isReferral: deal?.isReferral ?? false,
+          onboardingFeePaid: deal?.onboardingFeePaid ?? true,
+        });
+      }
+
+      const sorted = Array.from(monthMap.values()).sort(
+        (a, b) => a.year * 100 + a.month - (b.year * 100 + b.month)
+      );
+
+      // Also compute running totals
+      let runningTotal = 0;
+      const withRunning = sorted.map((m) => {
+        if (m.status !== "past") runningTotal += m.totalGbp;
+        return { ...m, runningFutureTotal: runningTotal };
+      });
+
+      return {
+        months: withRunning,
+        totalFutureGbp: sorted
+          .filter((m) => m.status === "future" || m.status === "current")
+          .reduce((sum, m) => sum + m.totalGbp, 0),
+        totalPastGbp: sorted
+          .filter((m) => m.status === "past")
+          .reduce((sum, m) => sum + m.totalGbp, 0),
+        currentMonthGbp: sorted
+          .filter((m) => m.status === "current")
+          .reduce((sum, m) => sum + m.totalGbp, 0),
+      };
+    }),
   }),
 
   // ─── Commission Structure Management ──────────────────────────────────────

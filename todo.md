@@ -63,3 +63,9 @@
 - [x] Tier progress indicators on dashboard (distance to next tier for ARR, demos, dials, retention)
 - [x] Commission forecast calculator on dashboard (enter deal ARR → see estimated GBP payout)
 - [x] Mobile-responsive layout (collapsible sidebar, bottom nav on mobile)
+
+## Payout Calendar
+- [x] Backend: payoutCalendar procedure (future payout schedule grouped by month)
+- [x] PayoutCalendarPage frontend (timeline, monthly totals, deal breakdown per month)
+- [x] Nav item added for Payout Calendar
+- [x] Dashboard links to Payout Calendar via summary cards

@@ -3,6 +3,7 @@ import { useAeAuth } from "@/contexts/AeAuthContext";
 import { trpc } from "@/lib/trpc";
 import {
   BarChart3,
+  Calendar,
   ChevronRight,
   DollarSign,
   LayoutDashboard,
@@ -21,6 +22,7 @@ const navItems = [
   { path: "/metrics", label: "Activity Metrics", icon: BarChart3, adminOnly: false },
   { path: "/deals", label: "Deals", icon: DollarSign, adminOnly: false },
   { path: "/summary", label: "Commission Summary", icon: TrendingUp, adminOnly: false },
+  { path: "/payout-calendar", label: "Payout Calendar", icon: Calendar, adminOnly: false },
   { path: "/commission-structure", label: "Commission Structure", icon: Settings2, adminOnly: true },
 ];
 
