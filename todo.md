@@ -119,8 +119,16 @@
 - [x] Final validation — all data confirmed correct for Monday
 
 ## Tier Re-assignment & Commission Recalculation
-- [ ] Verify 12-weeks-per-quarter is used consistently in all tier/rolling-average calculations
-- [ ] Build getTierAtDate(aeId, contractStartDate) function using historical monthly_metrics
-- [ ] Update importDeals to look up tier at contract start date (not current month)
-- [ ] Clear and re-import all 44 deals with correct historical tiers
-- [ ] Recalculate all commission payouts using the correct tier rate per deal
+- [x] Verify 12-weeks-per-quarter is used consistently in all tier/rolling-average calculations
+- [x] Build getTierAtDate(aeId, contractStartDate) function using historical monthly_metrics
+- [x] Update importDeals to look up tier at contract start date (not current month)
+- [x] Clear and re-import all 44 deals with correct historical tiers (41 Bronze, 3 Silver)
+- [x] Recalculate all commission payouts using the correct tier rate per deal
+- [x] Fix calculateTier to skip retention check when null (no data yet)
+- [x] Fix DashboardPage Retention Rate display to show 'No data yet' when null
+
+## New Joiner Tier Fix (Feb 22 2026)
+- [ ] Validate Joe Payne's Q4 2025 dials/demos against Silver/Gold thresholds with ARR waiver
+- [ ] Fix calculateTier new joiner logic — ARR waived, only activity metrics count during 6-month window
+- [ ] Re-import Joe's Q4 deals with corrected tiers
+- [ ] Verify Toby Greer and Julian Earl new joiner tiers are also correct

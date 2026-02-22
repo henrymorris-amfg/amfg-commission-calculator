@@ -1,0 +1,64 @@
+{
+  "query": "\nSELECT ae.name, mm.year, mm.month, mm.dialsTotal, mm.demosTotal, mm.arrUsd, mm.demosFromPipedrive\nFROM monthly_metrics mm\nJOIN ae_profiles ae ON mm.aeId = ae.id\nWHERE ae.name LIKE '%Joe%' OR ae.name LIKE '%Payne%'\nORDER BY mm.year, mm.month;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT ae.name, mm.year, mm.month, mm.dialsTotal, mm.demosTotal, mm.arrUsd, mm.demosFromPipedrive\nFROM monthly_metrics mm\nJOIN ae_profiles ae ON mm.aeId = ae.id\nWHERE ae.name LIKE '%Joe%' OR ae.name LIKE '%Payne%'\nORDER BY mm.year, mm.month;\n",
+  "rows": [
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "9",
+      "dialsTotal": "575",
+      "demosTotal": "0",
+      "arrUsd": "0.00",
+      "demosFromPipedrive": "0"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "10",
+      "dialsTotal": "779",
+      "demosTotal": "0",
+      "arrUsd": "0.00",
+      "demosFromPipedrive": "0"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "11",
+      "dialsTotal": "963",
+      "demosTotal": "16",
+      "arrUsd": "7067.00",
+      "demosFromPipedrive": "16"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "12",
+      "dialsTotal": "385",
+      "demosTotal": "7",
+      "arrUsd": "42434.00",
+      "demosFromPipedrive": "7"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "1",
+      "dialsTotal": "655",
+      "demosTotal": "17",
+      "arrUsd": "43521.00",
+      "demosFromPipedrive": "17"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "2",
+      "dialsTotal": "629",
+      "demosTotal": "13",
+      "arrUsd": "25659.00",
+      "demosFromPipedrive": "13"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tyear\tmonth\tdialsTotal\tdemosTotal\tarrUsd\tdemosFromPipedrive\nJoe Payne\t2025\t9\t575\t0\t0.00\t0\nJoe Payne\t2025\t10\t779\t0\t0.00\t0\nJoe Payne\t2025\t11\t963\t16\t7067.00\t16\nJoe Payne\t2025\t12\t385\t7\t42434.00\t7\nJoe Payne\t2026\t1\t655\t17\t43521.00\t17\nJoe Payne\t2026\t2\t629\t13\t25659.00\t13\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}
