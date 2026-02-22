@@ -136,6 +136,8 @@ export async function upsertMonthlyMetric(data: InsertMonthlyMetric): Promise<vo
   if (data.connectedDials !== undefined) updateSet.connectedDials = data.connectedDials;
   if (data.connectionRate !== undefined) updateSet.connectionRate = data.connectionRate;
   if (data.talkTimeSecs !== undefined) updateSet.talkTimeSecs = data.talkTimeSecs;
+  // Only update demosFromPipedrive if provided
+  if (data.demosFromPipedrive !== undefined) updateSet.demosFromPipedrive = data.demosFromPipedrive;
 
   await db
     .insert(monthlyMetrics)

@@ -79,7 +79,8 @@ export const monthlyMetrics = mysqlTable("monthly_metrics", {
   year: int("year").notNull(),
   month: int("month").notNull(), // 1–12
   arrUsd: decimal("arrUsd", { precision: 12, scale: 2 }).notNull().default("0"),
-  demosTotal: int("demosTotal").notNull().default(0),
+  demosTotal: int("demosTotal").notNull().default(0), // from spreadsheet
+  demosFromPipedrive: int("demosFromPipedrive").notNull().default(0),
   dialsTotal: int("dialsTotal").notNull().default(0),
   retentionRate: decimal("retentionRate", { precision: 5, scale: 2 }), // % e.g. 71.50
   // VOIP Studio metrics

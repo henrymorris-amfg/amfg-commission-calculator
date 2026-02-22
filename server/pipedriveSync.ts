@@ -50,6 +50,17 @@ interface PipedriveDeal {
   user_id: { id: number; name: string } | number;
 }
 
+interface PipedriveActivity {
+  id: number;
+  done: boolean;
+  type: string;
+  subject: string;
+  due_date: string;
+  marked_as_done_time: string | null;
+  user_id: number;
+  owner_name: string;
+}
+
 interface PipedriveUser {
   id: number;
   name: string;
@@ -64,6 +75,7 @@ interface MonthlyArrAggregate {
   calMonth: number;
   totalArrUsd: number;
   dealCount: number;
+  totalDemos: number;
   deals: Array<{
     id: number;
     title: string;
@@ -239,6 +251,31 @@ async function fetchWonDealsForUser(
 }
 
 /**
+ * Fetch all completed "Demo" activities for a specific Pipedrive user,
+ * filtered to a date range.
+ */
+async function fetchCompletedDemosForUser(
+  pipedriveUserId: number,
+  fromDate: string, // YYYY-MM-DD
+  toDate: string    // YYYY-MM-DD
+): Promise<PipedriveActivity[]> {
+  const activities = await pipedriveGetAll("activities", {
+    user_id: pipedriveUserId,
+    type: "demo",
+    done: 1,
+  }) as unknown as PipedriveActivity[];
+
+  // The API doesn't filter activities by date, so we do it manually.
+  // We use `marked_as_done_time` as the source of truth for completion date.
+  return activities.filter(a => {
+    const doneTime = a.marked_as_done_time;
+    if (!doneTime) return false;
+    const doneDate = doneTime.substring(0, 10);
+    return doneDate >= fromDate && doneDate <= toDate;
+  });
+}
+
+/**
  * Aggregate won deals into monthly ARR totals for a single AE.
  */
 async function aggregateDealsToMonthlyArr(
@@ -268,6 +305,7 @@ async function aggregateDealsToMonthlyArr(
         calMonth: month,
         totalArrUsd: 0,
         dealCount: 0,
+        totalDemos: 0,
         deals: [],
       });
     }
@@ -284,6 +322,44 @@ async function aggregateDealsToMonthlyArr(
       wonDate: wonDate.substring(0, 10),
       pipeline: pipelineName,
     });
+  }  return Array.from(map.values()).sort(
+    (a, b) => a.calYear * 100 + a.calMonth - (b.calYear * 100 + b.calMonth)
+  );
+}
+
+/**
+ * Aggregate won dealsed demos into monthly totals for a single AE.
+ */
+async function aggregateDemosToMonthly(
+  aeId: number,
+  aeName: string,
+  demos: PipedriveActivity[]
+): Promise<MonthlyArrAggregate[]> {
+  const map = new Map<string, MonthlyArrAggregate>();
+
+  for (const demo of demos) {
+    const doneTime = demo.marked_as_done_time;
+    if (!doneTime) continue;
+
+    const year = parseInt(doneTime.substring(0, 4), 10);
+    const month = parseInt(doneTime.substring(5, 7), 10);
+    const key = `${year}-${month}`;
+
+    if (!map.has(key)) {
+      map.set(key, {
+        aeId,
+        aeName,
+        calYear: year,
+        calMonth: month,
+        totalArrUsd: 0, // Not used for demos
+        dealCount: 0, // Not used for demos
+        deals: [], // Not used for demos
+        totalDemos: 0,
+      });
+    }
+
+    const entry = map.get(key)!;
+    entry.totalDemos += 1;
   }
 
   return Array.from(map.values()).sort(
@@ -350,7 +426,9 @@ export const pipedriveSyncRouter = router({
         monthlyArr: MonthlyArrAggregate[];
         totalDeals: number;
         totalArrUsd: number;
+        totalDemos: number;
         notFound: boolean;
+        monthlyDemos: any[];
       }> = [];
 
       for (const ae of allProfiles) {
@@ -364,13 +442,17 @@ export const pipedriveSyncRouter = router({
             monthlyArr: [],
             totalDeals: 0,
             totalArrUsd: 0,
+            totalDemos: 0,
             notFound: true,
+            monthlyDemos: [],
           });
           continue;
         }
 
         const deals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
+        const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
+        const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
 
         results.push({
           aeId: ae.id,
@@ -379,6 +461,8 @@ export const pipedriveSyncRouter = router({
           monthlyArr,
           totalDeals: deals.length,
           totalArrUsd: monthlyArr.reduce((sum, m) => sum + m.totalArrUsd, 0),
+          totalDemos: demos.length,
+          monthlyDemos,
           notFound: false,
         });
       }
@@ -444,30 +528,51 @@ export const pipedriveSyncRouter = router({
 
         const deals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
+        const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
+        const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
 
-        for (const agg of monthlyArr) {
+                const allMonthlyData = new Map<string, { arr: MonthlyArrAggregate | null, demos: MonthlyArrAggregate | null }>();
+
+        monthlyArr.forEach(m => {
+          const key = `${m.calYear}-${m.calMonth}`;
+          if (!allMonthlyData.has(key)) allMonthlyData.set(key, { arr: null, demos: null });
+          allMonthlyData.get(key)!.arr = m;
+        });
+
+        monthlyDemos.forEach(m => {
+          const key = `${m.calYear}-${m.calMonth}`;
+          if (!allMonthlyData.has(key)) allMonthlyData.set(key, { arr: null, demos: null });
+          allMonthlyData.get(key)!.demos = m;
+        });
+
+        for (const [key, { arr, demos }] of Array.from(allMonthlyData.entries())) {
           // Get existing metrics for this month
-          const existing = await getMetricsForMonth(ae.id, agg.calYear, agg.calMonth);
+                    const [year, month] = key.split('-').map(Number);
+          const existing = await getMetricsForMonth(ae.id, year, month);
+
+                    const arrUsd = arr?.totalArrUsd ?? 0;
+          const demosFromPipedrive = demos?.totalDemos ?? 0;
 
           let newArrUsd: number;
           if (input.mergeMode === "add" && existing) {
-            newArrUsd = Number(existing.arrUsd) + agg.totalArrUsd;
+            newArrUsd = Number(existing.arrUsd) + arrUsd;
           } else {
-            newArrUsd = agg.totalArrUsd;
+            newArrUsd = arrUsd;
           }
 
           await upsertMonthlyMetric({
             aeId: ae.id,
-            year: agg.calYear,
-            month: agg.calMonth,
+            year: year,
+            month: month,
             arrUsd: String(Math.round(newArrUsd)),
+            demosFromPipedrive,
             demosTotal: existing?.demosTotal ?? 0,
             dialsTotal: existing?.dialsTotal ?? 0,
             retentionRate: existing?.retentionRate ?? null,
           });
 
-          updatedMetrics.push(
-            `${ae.name} ${agg.calYear}-${String(agg.calMonth).padStart(2, "0")} ($${Math.round(newArrUsd).toLocaleString()})`
+                    updatedMetrics.push(
+            `${ae.name} ${year}-${String(month).padStart(2, "0")} (ARR: $${Math.round(newArrUsd).toLocaleString()}, Demos: ${demosFromPipedrive})`
           );
         }
       }

@@ -89,6 +89,7 @@ export default function PipedriveSyncPage() {
   // Compute summary stats from preview
   const totalDeals = previewData?.results.reduce((s, r) => s + r.totalDeals, 0) ?? 0;
   const totalArr = previewData?.results.reduce((s, r) => s + r.totalArrUsd, 0) ?? 0;
+  const totalDemos = previewData?.results.reduce((s, r) => s + (r.totalDemos ?? 0), 0) ?? 0;
   const notFoundAes = previewData?.results.filter((r) => r.notFound) ?? [];
   const foundAes = previewData?.results.filter((r) => !r.notFound) ?? [];
 
@@ -98,6 +99,14 @@ export default function PipedriveSyncPage() {
     const seen = new Set<string>();
     for (const r of previewData.results) {
       for (const m of r.monthlyArr) {
+        const key = `${m.calYear}-${m.calMonth}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          allMonths.push({ year: m.calYear, month: m.calMonth, key });
+        }
+      }
+      // Also include months from demo data
+      for (const m of (r.monthlyDemos ?? [])) {
         const key = `${m.calYear}-${m.calMonth}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -378,10 +387,10 @@ export default function PipedriveSyncPage() {
               </div>
               <div className="rounded-2xl bg-card border border-border p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Not in Pipedrive</p>
+                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Demos Done</p>
                 </div>
-                <p className="text-xl font-bold text-foreground">{notFoundAes.length}</p>
+                <p className="text-xl font-bold text-foreground">{totalDemos}</p>
               </div>
             </div>
 
@@ -389,7 +398,7 @@ export default function PipedriveSyncPage() {
             <div className="rounded-2xl bg-card border border-border overflow-hidden">
               <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-3">
                 <p className="text-sm font-semibold text-foreground">
-                  Preview — Won Deals ARR by AE
+                  Preview — Won Deals ARR & Demos Done by AE
                 </p>
                 <div className="flex gap-2 ml-auto flex-wrap">
                   <Badge variant="outline" className="text-xs">
@@ -419,10 +428,13 @@ export default function PipedriveSyncPage() {
                         </th>
                       ))}
                       <th className="text-right px-5 py-3 text-xs font-medium text-muted-foreground">
-                        Total
+                        Total ARR
                       </th>
                       <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">
                         Deals
+                      </th>
+                      <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground text-emerald-400">
+                        Demos Done
                       </th>
                     </tr>
                   </thead>
@@ -478,6 +490,9 @@ export default function PipedriveSyncPage() {
                           <td className="text-center px-4 py-3 text-sm text-muted-foreground">
                             {r.totalDeals > 0 ? r.totalDeals : "—"}
                           </td>
+                          <td className="text-center px-4 py-3 text-sm font-semibold text-emerald-400">
+                            {(r.totalDemos ?? 0) > 0 ? r.totalDemos : "—"}
+                          </td>
                         </tr>
                       );
                     })}
@@ -505,6 +520,9 @@ export default function PipedriveSyncPage() {
                       <td className="text-center px-4 py-3 text-sm font-semibold text-foreground">
                         {totalDeals}
                       </td>
+                      <td className="text-center px-4 py-3 text-sm font-bold text-emerald-400">
+                        {totalDemos}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -513,10 +531,8 @@ export default function PipedriveSyncPage() {
               {/* Footer */}
               <div className="px-5 py-3 border-t border-border bg-secondary/10">
                 <p className="text-xs text-muted-foreground">
-                  <strong className="text-foreground">Note:</strong> Values are converted to USD
-                  using live exchange rates. Deal counts shown as{" "}
-                  <span className="font-mono">(Nd)</span> next to each value. Dials and demos
-                  data are preserved — only ARR is updated by this sync.
+                  <strong className="text-foreground">Note:</strong> ARR values are converted to USD using live exchange rates. Deal counts shown as{" "}
+                  <span className="font-mono">(Nd)</span> next to each ARR value. Demos Done are pulled from completed Pipedrive activities of type "Demo". Both ARR and Demos Done are written to the database on import; dials data is preserved.
                 </p>
               </div>
             </div>
