@@ -226,7 +226,10 @@ export interface VoipMonthlyData {
  * Pull monthly dial data from VOIP Studio for all registered AEs.
  * Used by the weekly auto-sync and the manual sync page.
  */
-export async function pullVoipMonthlyData(months: number): Promise<{
+export async function pullVoipMonthlyData(
+  months: number,
+  useJoinDate = true
+): Promise<{
   data: VoipMonthlyData[];
   unmatchedAes: string[];
 }> {
@@ -235,6 +238,8 @@ export async function pullVoipMonthlyData(months: number): Promise<{
   const unmatchedAes: string[] = [];
 
   const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1-indexed
 
   for (const ae of allProfiles) {
     const voipUserId = await findVoipUserId(ae.name);
@@ -243,13 +248,28 @@ export async function pullVoipMonthlyData(months: number): Promise<{
       continue;
     }
 
-    // For each month in the range
-    for (let i = 0; i < months; i++) {
-      const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = targetDate.getFullYear();
-      const month = targetDate.getMonth() + 1;
-      const firstDay = formatDate(new Date(year, month - 1, 1));
-      const lastDay = formatDate(new Date(year, month, 0)); // last day of month
+    // Determine start month: either join date or fixed lookback
+    let startYear: number;
+    let startMonth: number;
+    if (useJoinDate) {
+      const joinDate = new Date(ae.joinDate);
+      startYear = joinDate.getFullYear();
+      startMonth = joinDate.getMonth() + 1; // 1-indexed
+    } else {
+      const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      startYear = startDate.getFullYear();
+      startMonth = startDate.getMonth() + 1;
+    }
+
+    // Iterate from startYear/startMonth to current month
+    let iterYear = startYear;
+    let iterMonth = startMonth;
+    while (
+      iterYear < currentYear ||
+      (iterYear === currentYear && iterMonth <= currentMonth)
+    ) {
+      const firstDay = formatDate(new Date(iterYear, iterMonth - 1, 1));
+      const lastDay = formatDate(new Date(iterYear, iterMonth, 0)); // last day of month
 
       const stats = await getDialCount(voipUserId, firstDay, lastDay);
       const connectionRate = stats.total > 0 ? Math.round((stats.connected / stats.total) * 10000) / 100 : 0;
@@ -257,13 +277,20 @@ export async function pullVoipMonthlyData(months: number): Promise<{
       results.push({
         aeName: ae.name,
         aeId: ae.id,
-        year,
-        month,
+        year: iterYear,
+        month: iterMonth,
         totalDials: stats.total,
         connected: stats.connected,
         connectionRate,
         totalTalkTimeSecs: stats.talkTimeSecs,
       });
+
+      // Advance to next month
+      iterMonth++;
+      if (iterMonth > 12) {
+        iterMonth = 1;
+        iterYear++;
+      }
     }
   }
 
@@ -299,14 +326,17 @@ export const voipSyncRouter = router({
 
   /** Preview dial data for all AEs for a date range (team leader only) */
   preview: publicProcedure
-    .input(z.object({ months: z.number().min(1).max(6).default(2) }))
+    .input(z.object({
+      months: z.number().min(1).max(24).default(2),
+      useJoinDate: z.boolean().default(true),
+    }))
     .query(async ({ ctx, input }) => {
       const aeId = getAeIdFromCtx(ctx) ?? undefined;
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const ae = await getAeProfileById(aeId);
       if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
 
-      const { data, unmatchedAes } = await pullVoipMonthlyData(input.months);
+      const { data, unmatchedAes } = await pullVoipMonthlyData(input.months, input.useJoinDate);
 
       return {
         monthlyData: data.map((d) => ({
@@ -320,14 +350,17 @@ export const voipSyncRouter = router({
 
   /** Import VOIP Studio dial data into monthly_metrics (team leader only) */
   import: publicProcedure
-    .input(z.object({ months: z.number().min(1).max(6).default(2) }))
+    .input(z.object({
+      months: z.number().min(1).max(24).default(2),
+      useJoinDate: z.boolean().default(true),
+    }))
     .mutation(async ({ ctx, input }) => {
       const aeId = getAeIdFromCtx(ctx) ?? undefined;
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const ae = await getAeProfileById(aeId);
       if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
 
-      const { data, unmatchedAes } = await pullVoipMonthlyData(input.months);
+      const { data, unmatchedAes } = await pullVoipMonthlyData(input.months, input.useJoinDate);
       let recordsUpdated = 0;
 
       for (const d of data) {

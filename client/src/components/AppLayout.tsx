@@ -18,6 +18,7 @@ import {
   X,
   Zap,
   Phone,
+  ShieldAlert,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ const navItems = [
   { path: "/spreadsheet-sync", label: "Spreadsheet Sync", icon: Sheet, adminOnly: true },
   { path: "/pipedrive-sync", label: "Pipedrive Sync", icon: Zap, adminOnly: true },
   { path: "/voip-sync", label: "VOIP Studio", icon: Phone, adminOnly: true },
+  { path: "/data-audit", label: "Data Audit", icon: ShieldAlert, adminOnly: true },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

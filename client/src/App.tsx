@@ -14,6 +14,7 @@ import PayoutCalendarPage from "./pages/PayoutCalendarPage";
 import SpreadsheetSyncPage from "./pages/SpreadsheetSyncPage";
 import PipedriveSyncPage from "./pages/PipedriveSyncPage";
 import VoipSyncPage from "./pages/VoipSyncPage";
+import DataAuditPage from "./pages/DataAuditPage";
 import { AeAuthProvider } from "./contexts/AeAuthContext";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/spreadsheet-sync" component={SpreadsheetSyncPage} />
       <Route path="/pipedrive-sync" component={PipedriveSyncPage} />
       <Route path="/voip-sync" component={VoipSyncPage} />
+      <Route path="/data-audit" component={DataAuditPage} />
       <Route path="/payout-calendar" component={PayoutCalendarPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

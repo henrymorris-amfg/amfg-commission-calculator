@@ -393,11 +393,15 @@ export const pipedriveSyncRouter = router({
    * Preview won deals from Pipedrive for all registered AEs.
    * Returns aggregated monthly ARR per AE without writing to DB.
    * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
+   * When useJoinDate=false, the months parameter is used as a fixed lookback.
    */
   preview: publicProcedure
     .input(
       z.object({
-        months: z.number().int().min(1).max(12).default(4),
+        months: z.number().int().min(1).max(24).default(4),
+        useJoinDate: z.boolean().default(true),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -409,16 +413,14 @@ export const pipedriveSyncRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
       }
 
-      // Compute date range
       const now = new Date();
       const toDate = now.toISOString().substring(0, 10);
-      const fromDate = new Date(
+      // Global fromDate used only when useJoinDate=false
+      const globalFromDate = new Date(
         now.getFullYear(),
         now.getMonth() - (input.months - 1),
         1
-      )
-        .toISOString()
-        .substring(0, 10);
+      ).toISOString().substring(0, 10);
 
       const allProfiles = await getAllAeProfiles();
       const results: Array<{
@@ -431,10 +433,16 @@ export const pipedriveSyncRouter = router({
         totalDemos: number;
         notFound: boolean;
         monthlyDemos: any[];
+        fromDate: string;
       }> = [];
 
       for (const ae of allProfiles) {
         const pdUserId = await findPipedriveUserId(ae.name);
+
+        // Use join date as fromDate when useJoinDate=true
+        const aeFromDate = input.useJoinDate
+          ? new Date(ae.joinDate).toISOString().substring(0, 10)
+          : globalFromDate;
 
         if (!pdUserId) {
           results.push({
@@ -447,13 +455,14 @@ export const pipedriveSyncRouter = router({
             totalDemos: 0,
             notFound: true,
             monthlyDemos: [],
+            fromDate: aeFromDate,
           });
           continue;
         }
 
-        const deals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+        const deals = await fetchWonDealsForUser(pdUserId, aeFromDate, toDate);
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
-        const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
+        const demos = await fetchCompletedDemosForUser(pdUserId, aeFromDate, toDate);
         const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
 
         results.push({
@@ -466,13 +475,15 @@ export const pipedriveSyncRouter = router({
           totalDemos: demos.length,
           monthlyDemos,
           notFound: false,
+          fromDate: aeFromDate,
         });
       }
 
       return {
         results,
-        fromDate,
+        fromDate: globalFromDate,
         toDate,
+        useJoinDate: input.useJoinDate,
         targetPipelines: Object.entries(PIPELINE_NAMES).map(([id, name]) => ({
           id: Number(id),
           name,
@@ -484,11 +495,14 @@ export const pipedriveSyncRouter = router({
    * Import won deal ARR from Pipedrive into monthly_metrics for all AEs.
    * Merges ARR into existing metrics (preserving dials/demos).
    * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
    */
   import: publicProcedure
     .input(
       z.object({
-        months: z.number().int().min(1).max(12).default(4),
+        months: z.number().int().min(1).max(24).default(4),
+        useJoinDate: z.boolean().default(true),
         mergeMode: z
           .enum(["replace", "add"])
           .default("replace")
@@ -506,16 +520,14 @@ export const pipedriveSyncRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
       }
 
-      // Compute date range
       const now = new Date();
       const toDate = now.toISOString().substring(0, 10);
-      const fromDate = new Date(
+      // Global fallback fromDate (used when useJoinDate=false)
+      const globalFromDate = new Date(
         now.getFullYear(),
         now.getMonth() - (input.months - 1),
         1
-      )
-        .toISOString()
-        .substring(0, 10);
+      ).toISOString().substring(0, 10);
 
       const allProfiles = await getAllAeProfiles();
       const updatedMetrics: string[] = [];
@@ -527,6 +539,11 @@ export const pipedriveSyncRouter = router({
           skippedAes.push(ae.name);
           continue;
         }
+
+        // Use join date as fromDate when useJoinDate=true
+        const fromDate = input.useJoinDate
+          ? new Date(ae.joinDate).toISOString().substring(0, 10)
+          : globalFromDate;
 
         const deals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
@@ -656,10 +673,19 @@ export const pipedriveSyncRouter = router({
    * Skips deals already imported (idempotent via pipedriveId).
    * Team leader only.
    */
+  /**
+   * Import Pipedrive won deals as deal records for all AEs.
+   * Creates deal + payout records in the deals/commission_payouts tables.
+   * Skips deals already imported (idempotent via pipedriveId).
+   * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
+   */
   importDeals: publicProcedure
     .input(
       z.object({
         months: z.number().int().min(1).max(24).default(6),
+        useJoinDate: z.boolean().default(true),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -672,13 +698,12 @@ export const pipedriveSyncRouter = router({
 
       const now = new Date();
       const toDate = now.toISOString().substring(0, 10);
-      const fromDate = new Date(
+      // Global fallback fromDate (used when useJoinDate=false)
+      const globalFromDate = new Date(
         now.getFullYear(),
         now.getMonth() - (input.months - 1),
         1
-      )
-        .toISOString()
-        .substring(0, 10);
+      ).toISOString().substring(0, 10);
 
       const allProfiles = await getAllAeProfiles();
       const activeStructure = await getActiveCommissionStructure();
@@ -696,6 +721,11 @@ export const pipedriveSyncRouter = router({
           skipped.push(`${ae.name} (not found in Pipedrive)`);
           continue;
         }
+
+        // Use join date as fromDate when useJoinDate=true
+        const fromDate = input.useJoinDate
+          ? new Date(ae.joinDate).toISOString().substring(0, 10)
+          : globalFromDate;
 
         const pdDeals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
 

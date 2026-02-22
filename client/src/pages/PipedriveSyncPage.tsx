@@ -44,6 +44,7 @@ export default function PipedriveSyncPage() {
   const { ae, isLoading } = useAeAuth();
   const [, navigate] = useLocation();
   const [monthsToSync, setMonthsToSync] = useState(4);
+  const [useJoinDate, setUseJoinDate] = useState(true);
   const [mergeMode, setMergeMode] = useState<"replace" | "add">("replace");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(() => {
@@ -59,7 +60,7 @@ export default function PipedriveSyncPage() {
 
   // Preview query
   const previewQuery = trpc.pipedriveSync.preview.useQuery(
-    { months: monthsToSync },
+    { months: monthsToSync, useJoinDate },
     { enabled: false, retry: false }
   );
 
@@ -105,7 +106,7 @@ export default function PipedriveSyncPage() {
   };
 
   const handleImport = () => {
-    importMutation.mutate({ months: monthsToSync, mergeMode });
+    importMutation.mutate({ months: monthsToSync, mergeMode, useJoinDate });
   };
 
   const previewData = previewQuery.data;
@@ -224,23 +225,52 @@ export default function PipedriveSyncPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Months to sync
+                Sync window
               </label>
               <div className="flex gap-2">
-                {[2, 3, 4, 6].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setMonthsToSync(n)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
-                      monthsToSync === n
-                        ? "bg-primary/15 border-primary/40 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+                <button
+                  onClick={() => setUseJoinDate(true)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    useJoinDate
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                  }`}
+                >
+                  Full history
+                </button>
+                <button
+                  onClick={() => setUseJoinDate(false)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
+                    !useJoinDate
+                      ? "bg-primary/15 border-primary/40 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                  }`}
+                >
+                  Recent only
+                </button>
               </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {useJoinDate
+                  ? "Syncs from each AE's join date — ensures no historical data is missed."
+                  : `Syncs the last ${monthsToSync} months only.`}
+              </p>
+              {!useJoinDate && (
+                <div className="flex gap-2 mt-2">
+                  {[2, 3, 4, 6].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setMonthsToSync(n)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        monthsToSync === n
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                      }`}
+                    >
+                      {n}mo
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
@@ -308,7 +338,7 @@ export default function PipedriveSyncPage() {
               Sync ARR Metrics
             </Button>
             <Button
-              onClick={() => importDealsMutation.mutate({ months: monthsToSync })}
+              onClick={() => importDealsMutation.mutate({ months: monthsToSync, useJoinDate })}
               disabled={
                 importDealsMutation.isPending ||
                 !statusQuery.data?.working

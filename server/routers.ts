@@ -845,6 +845,49 @@ export const appRouter = router({
   pipedriveSync: pipedriveSyncRouter,
   voipSync: voipSyncRouter,
 
+  // ─── Data Audit ───────────────────────────────────────────────────────────
+  dataAudit: router({
+    /**
+     * Returns all monthly metrics for all AEs, grouped by AE.
+     * Team leader only. Used for the data audit view.
+     */
+    allMetrics: publicProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      const profile = await getAeProfileById(aeId);
+      if (!profile?.isTeamLeader) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+      }
+
+      const allProfiles = await getAllAeProfiles();
+      const result = await Promise.all(
+        allProfiles.map(async (ae) => {
+          const metrics = await getMetricsForAe(ae.id, 24);
+          return {
+            aeId: ae.id,
+            aeName: ae.name,
+            joinDate: ae.joinDate,
+            isTeamLeader: ae.isTeamLeader,
+            metrics: metrics.map((m) => ({
+              year: m.year,
+              month: m.month,
+              arrUsd: Number(m.arrUsd),
+              demosTotal: m.demosTotal,
+              demosFromPipedrive: m.demosFromPipedrive,
+              dialsTotal: m.dialsTotal,
+              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              connectedDials: m.connectedDials ?? 0,
+              connectionRate: m.connectionRate != null ? Number(m.connectionRate) : null,
+              talkTimeSecs: m.talkTimeSecs ?? 0,
+            })),
+          };
+        })
+      );
+
+      return result;
+    }),
+  }),
+
   // ─── Commission Structure Management ──────────────────────────────────────
   commissionStructure: router({
     // List all versions

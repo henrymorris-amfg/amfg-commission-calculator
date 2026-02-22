@@ -132,3 +132,8 @@
 - [ ] Fix calculateTier new joiner logic — ARR waived, only activity metrics count during 6-month window
 - [ ] Re-import Joe's Q4 deals with corrected tiers
 - [ ] Verify Toby Greer and Julian Earl new joiner tiers are also correct
+
+## Three Improvements (Feb 22 2026)
+- [x] Fix voipSync.ts TypeScript error — replace undefined getAeIdFromCtx references with correct auth helper
+- [x] Extend Pipedrive and VOIP sync window to use each AE's join date as fromDate (not fixed 4-month lookback)
+- [x] Build data audit view for team leaders (monthly metrics table: demos, dials, ARR per AE per month) — /data-audit route, nav item added

@@ -663,35 +663,52 @@ function formatTalkTime(secs) {
 function formatDate(d) {
   return d.toISOString().substring(0, 10);
 }
-async function pullVoipMonthlyData(months) {
+async function pullVoipMonthlyData(months, useJoinDate = true) {
   const allProfiles = await getAllAeProfiles();
   const results = [];
   const unmatchedAes = [];
   const now = /* @__PURE__ */ new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
   for (const ae of allProfiles) {
     const voipUserId = await findVoipUserId(ae.name);
     if (!voipUserId) {
       unmatchedAes.push(ae.name);
       continue;
     }
-    for (let i = 0; i < months; i++) {
-      const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = targetDate.getFullYear();
-      const month = targetDate.getMonth() + 1;
-      const firstDay = formatDate(new Date(year, month - 1, 1));
-      const lastDay = formatDate(new Date(year, month, 0));
+    let startYear;
+    let startMonth;
+    if (useJoinDate) {
+      const joinDate = new Date(ae.joinDate);
+      startYear = joinDate.getFullYear();
+      startMonth = joinDate.getMonth() + 1;
+    } else {
+      const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+      startYear = startDate.getFullYear();
+      startMonth = startDate.getMonth() + 1;
+    }
+    let iterYear = startYear;
+    let iterMonth = startMonth;
+    while (iterYear < currentYear || iterYear === currentYear && iterMonth <= currentMonth) {
+      const firstDay = formatDate(new Date(iterYear, iterMonth - 1, 1));
+      const lastDay = formatDate(new Date(iterYear, iterMonth, 0));
       const stats = await getDialCount(voipUserId, firstDay, lastDay);
       const connectionRate = stats.total > 0 ? Math.round(stats.connected / stats.total * 1e4) / 100 : 0;
       results.push({
         aeName: ae.name,
         aeId: ae.id,
-        year,
-        month,
+        year: iterYear,
+        month: iterMonth,
         totalDials: stats.total,
         connected: stats.connected,
         connectionRate,
         totalTalkTimeSecs: stats.talkTimeSecs
       });
+      iterMonth++;
+      if (iterMonth > 12) {
+        iterMonth = 1;
+        iterYear++;
+      }
     }
   }
   return { data: results, unmatchedAes };
@@ -729,12 +746,15 @@ var init_voipSync = __esm({
         }
       }),
       /** Preview dial data for all AEs for a date range (team leader only) */
-      preview: publicProcedure.input(z.object({ months: z.number().min(1).max(6).default(2) })).query(async ({ ctx, input }) => {
+      preview: publicProcedure.input(z.object({
+        months: z.number().min(1).max(24).default(2),
+        useJoinDate: z.boolean().default(true)
+      })).query(async ({ ctx, input }) => {
         const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
-        const { data, unmatchedAes } = await pullVoipMonthlyData(input.months);
+        const { data, unmatchedAes } = await pullVoipMonthlyData(input.months, input.useJoinDate);
         return {
           monthlyData: data.map((d) => ({
             ...d,
@@ -745,12 +765,15 @@ var init_voipSync = __esm({
         };
       }),
       /** Import VOIP Studio dial data into monthly_metrics (team leader only) */
-      import: publicProcedure.input(z.object({ months: z.number().min(1).max(6).default(2) })).mutation(async ({ ctx, input }) => {
+      import: publicProcedure.input(z.object({
+        months: z.number().min(1).max(24).default(2),
+        useJoinDate: z.boolean().default(true)
+      })).mutation(async ({ ctx, input }) => {
         const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
-        const { data, unmatchedAes } = await pullVoipMonthlyData(input.months);
+        const { data, unmatchedAes } = await pullVoipMonthlyData(input.months, input.useJoinDate);
         let recordsUpdated = 0;
         for (const d of data) {
           const existing = await getMetricsForMonth(d.aeId, d.year, d.month);
@@ -2291,10 +2314,14 @@ var pipedriveSyncRouter = router({
    * Preview won deals from Pipedrive for all registered AEs.
    * Returns aggregated monthly ARR per AE without writing to DB.
    * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
+   * When useJoinDate=false, the months parameter is used as a fixed lookback.
    */
   preview: publicProcedure.input(
     z3.object({
-      months: z3.number().int().min(1).max(12).default(4)
+      months: z3.number().int().min(1).max(24).default(4),
+      useJoinDate: z3.boolean().default(true)
     })
   ).query(async ({ input, ctx }) => {
     const aeId = getAeIdFromCtx(ctx);
@@ -2305,7 +2332,7 @@ var pipedriveSyncRouter = router({
     }
     const now = /* @__PURE__ */ new Date();
     const toDate = now.toISOString().substring(0, 10);
-    const fromDate = new Date(
+    const globalFromDate = new Date(
       now.getFullYear(),
       now.getMonth() - (input.months - 1),
       1
@@ -2314,6 +2341,7 @@ var pipedriveSyncRouter = router({
     const results = [];
     for (const ae of allProfiles) {
       const pdUserId = await findPipedriveUserId2(ae.name);
+      const aeFromDate = input.useJoinDate ? new Date(ae.joinDate).toISOString().substring(0, 10) : globalFromDate;
       if (!pdUserId) {
         results.push({
           aeId: ae.id,
@@ -2324,13 +2352,14 @@ var pipedriveSyncRouter = router({
           totalArrUsd: 0,
           totalDemos: 0,
           notFound: true,
-          monthlyDemos: []
+          monthlyDemos: [],
+          fromDate: aeFromDate
         });
         continue;
       }
-      const deals2 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+      const deals2 = await fetchWonDealsForUser(pdUserId, aeFromDate, toDate);
       const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals2);
-      const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
+      const demos = await fetchCompletedDemosForUser(pdUserId, aeFromDate, toDate);
       const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
       results.push({
         aeId: ae.id,
@@ -2341,13 +2370,15 @@ var pipedriveSyncRouter = router({
         totalArrUsd: monthlyArr.reduce((sum, m) => sum + m.totalArrUsd, 0),
         totalDemos: demos.length,
         monthlyDemos,
-        notFound: false
+        notFound: false,
+        fromDate: aeFromDate
       });
     }
     return {
       results,
-      fromDate,
+      fromDate: globalFromDate,
       toDate,
+      useJoinDate: input.useJoinDate,
       targetPipelines: Object.entries(PIPELINE_NAMES).map(([id, name]) => ({
         id: Number(id),
         name
@@ -2358,10 +2389,13 @@ var pipedriveSyncRouter = router({
    * Import won deal ARR from Pipedrive into monthly_metrics for all AEs.
    * Merges ARR into existing metrics (preserving dials/demos).
    * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
    */
   import: publicProcedure.input(
     z3.object({
-      months: z3.number().int().min(1).max(12).default(4),
+      months: z3.number().int().min(1).max(24).default(4),
+      useJoinDate: z3.boolean().default(true),
       mergeMode: z3.enum(["replace", "add"]).default("replace").describe(
         "replace: set arrUsd to Pipedrive total; add: add Pipedrive ARR on top of existing"
       )
@@ -2375,7 +2409,7 @@ var pipedriveSyncRouter = router({
     }
     const now = /* @__PURE__ */ new Date();
     const toDate = now.toISOString().substring(0, 10);
-    const fromDate = new Date(
+    const globalFromDate = new Date(
       now.getFullYear(),
       now.getMonth() - (input.months - 1),
       1
@@ -2389,6 +2423,7 @@ var pipedriveSyncRouter = router({
         skippedAes.push(ae.name);
         continue;
       }
+      const fromDate = input.useJoinDate ? new Date(ae.joinDate).toISOString().substring(0, 10) : globalFromDate;
       const deals2 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
       const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals2);
       const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
@@ -2495,9 +2530,18 @@ var pipedriveSyncRouter = router({
    * Skips deals already imported (idempotent via pipedriveId).
    * Team leader only.
    */
+  /**
+   * Import Pipedrive won deals as deal records for all AEs.
+   * Creates deal + payout records in the deals/commission_payouts tables.
+   * Skips deals already imported (idempotent via pipedriveId).
+   * Team leader only.
+   * 
+   * When useJoinDate=true (default), each AE's sync window starts from their join date.
+   */
   importDeals: publicProcedure.input(
     z3.object({
-      months: z3.number().int().min(1).max(24).default(6)
+      months: z3.number().int().min(1).max(24).default(6),
+      useJoinDate: z3.boolean().default(true)
     })
   ).mutation(async ({ input, ctx }) => {
     const aeId = getAeIdFromCtx(ctx);
@@ -2508,7 +2552,7 @@ var pipedriveSyncRouter = router({
     }
     const now = /* @__PURE__ */ new Date();
     const toDate = now.toISOString().substring(0, 10);
-    const fromDate = new Date(
+    const globalFromDate = new Date(
       now.getFullYear(),
       now.getMonth() - (input.months - 1),
       1
@@ -2526,6 +2570,7 @@ var pipedriveSyncRouter = router({
         skipped.push(`${ae.name} (not found in Pipedrive)`);
         continue;
       }
+      const fromDate = input.useJoinDate ? new Date(ae.joinDate).toISOString().substring(0, 10) : globalFromDate;
       const pdDeals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
       for (const pdDeal of pdDeals) {
         try {
@@ -3378,6 +3423,46 @@ var appRouter = router({
   spreadsheetSync: spreadsheetSyncRouter,
   pipedriveSync: pipedriveSyncRouter,
   voipSync: voipSyncRouter,
+  // ─── Data Audit ───────────────────────────────────────────────────────────
+  dataAudit: router({
+    /**
+     * Returns all monthly metrics for all AEs, grouped by AE.
+     * Team leader only. Used for the data audit view.
+     */
+    allMetrics: publicProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx2(ctx);
+      if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      const profile = await getAeProfileById(aeId);
+      if (!profile?.isTeamLeader) {
+        throw new TRPCError6({ code: "FORBIDDEN", message: "Team leader access required." });
+      }
+      const allProfiles = await getAllAeProfiles();
+      const result = await Promise.all(
+        allProfiles.map(async (ae) => {
+          const metrics = await getMetricsForAe(ae.id, 24);
+          return {
+            aeId: ae.id,
+            aeName: ae.name,
+            joinDate: ae.joinDate,
+            isTeamLeader: ae.isTeamLeader,
+            metrics: metrics.map((m) => ({
+              year: m.year,
+              month: m.month,
+              arrUsd: Number(m.arrUsd),
+              demosTotal: m.demosTotal,
+              demosFromPipedrive: m.demosFromPipedrive,
+              dialsTotal: m.dialsTotal,
+              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              connectedDials: m.connectedDials ?? 0,
+              connectionRate: m.connectionRate != null ? Number(m.connectionRate) : null,
+              talkTimeSecs: m.talkTimeSecs ?? 0
+            }))
+          };
+        })
+      );
+      return result;
+    })
+  }),
   // ─── Commission Structure Management ──────────────────────────────────────
   commissionStructure: router({
     // List all versions

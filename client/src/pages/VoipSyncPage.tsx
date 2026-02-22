@@ -25,6 +25,7 @@ export default function VoipSyncPage() {
   const [, navigate] = useLocation();
   const { ae, isLoading } = useAeAuth();
   const [months, setMonths] = useState(2);
+  const [useJoinDate, setUseJoinDate] = useState(true);
   const [importResult, setImportResult] = useState<{
     success: boolean;
     recordsUpdated: number;
@@ -47,7 +48,7 @@ export default function VoipSyncPage() {
     enabled: !!ae,
   });
   const previewQuery = trpc.voipSync.preview.useQuery(
-    { months },
+    { months, useJoinDate },
     { enabled: false, retry: false, throwOnError: false }
   );
   const teamStatsQuery = trpc.voipSync.teamDialStats.useQuery(
@@ -95,7 +96,7 @@ export default function VoipSyncPage() {
 
   const handleImport = async () => {
     try {
-      const result = await importMutation.mutateAsync({ months });
+      const result = await importMutation.mutateAsync({ months, useJoinDate });
       setImportResult(result);
     } catch {
       // Error handled by mutation state
@@ -233,20 +234,44 @@ export default function VoipSyncPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 mb-5">
             <div className="flex rounded-lg border border-border overflow-hidden flex-shrink-0">
-              {[2, 3, 4, 6].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMonths(m)}
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
-                    months === m
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {m} months
-                </button>
-              ))}
+              <button
+                onClick={() => setUseJoinDate(true)}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  useJoinDate
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                Full history
+              </button>
+              <button
+                onClick={() => setUseJoinDate(false)}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  !useJoinDate
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+              >
+                Recent only
+              </button>
             </div>
+            {!useJoinDate && (
+              <div className="flex rounded-lg border border-border overflow-hidden flex-shrink-0">
+                {[2, 3, 4, 6].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMonths(m)}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      months === m
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {m}mo
+                  </button>
+                ))}
+              </div>
+            )}
             <Button
               onClick={() => previewQuery.refetch()}
               disabled={previewQuery.isFetching}

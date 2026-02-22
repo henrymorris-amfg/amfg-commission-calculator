@@ -312,8 +312,8 @@ describe("computeAvgRetention", () => {
     expect(avg).toBe(70);
   });
 
-  it("returns 0 for empty input", () => {
-    expect(computeAvgRetention([])).toBe(0);
+  it("returns null for empty input (no retention data available)", () => {
+    expect(computeAvgRetention([])).toBeNull();
   });
 });
 
