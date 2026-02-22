@@ -82,3 +82,8 @@
 - [x] Frontend: Change PIN dialog in AppLayout sidebar (current PIN + new PIN + confirm)
 - [x] Frontend: Lockout error banner on LoginPage (amber warning for wrong PIN, red lock for lockout)
 - [x] Frontend: PIN input disabled and button shows locked state during lockout
+
+## Integration Bug Fixes
+- [x] Diagnose and fix VOIP Studio API integration failure — was using old (ctx as Record).aeId pattern; replaced with getAeIdFromCtx() from shared aeAuth.ts
+- [x] Diagnose and fix Pipedrive API integration failure — was using getAeIdFromCookie() reading old ae_session cookie; replaced with getAeIdFromCtx() from shared aeAuth.ts
+- [x] Created server/aeAuth.ts shared module for X-AE-Token header parsing (used by all sync routers)

@@ -19,6 +19,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
+import { getAeIdFromCtx } from "./aeAuth";
 import {
   getAllAeProfiles,
   getAeProfileById,
@@ -274,7 +275,7 @@ export async function pullVoipMonthlyData(months: number): Promise<{
 export const voipSyncRouter = router({
   /** Get VOIP Studio connection status and user list */
   status: publicProcedure.query(async ({ ctx }) => {
-    const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+    const aeId = getAeIdFromCtx(ctx) ?? undefined;
     if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const ae = await getAeProfileById(aeId);
     if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
@@ -300,7 +301,7 @@ export const voipSyncRouter = router({
   preview: publicProcedure
     .input(z.object({ months: z.number().min(1).max(6).default(2) }))
     .query(async ({ ctx, input }) => {
-      const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+      const aeId = getAeIdFromCtx(ctx) ?? undefined;
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const ae = await getAeProfileById(aeId);
       if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
@@ -321,7 +322,7 @@ export const voipSyncRouter = router({
   import: publicProcedure
     .input(z.object({ months: z.number().min(1).max(6).default(2) }))
     .mutation(async ({ ctx, input }) => {
-      const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+      const aeId = getAeIdFromCtx(ctx) ?? undefined;
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const ae = await getAeProfileById(aeId);
       if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
@@ -356,7 +357,7 @@ export const voipSyncRouter = router({
 
   /** Get today's real-time dial stats for the logged-in AE */
   myDialsToday: publicProcedure.query(async ({ ctx }) => {
-    const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+    const aeId = getAeIdFromCtx(ctx) ?? undefined;
     if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const ae = await getAeProfileById(aeId);
     if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
@@ -394,7 +395,7 @@ export const voipSyncRouter = router({
 
   /** Get this week's dial stats for the logged-in AE */
   myDialsThisWeek: publicProcedure.query(async ({ ctx }) => {
-    const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+    const aeId = getAeIdFromCtx(ctx) ?? undefined;
     if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const ae = await getAeProfileById(aeId);
     if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
@@ -445,7 +446,7 @@ export const voipSyncRouter = router({
       dateTo: z.string(),
     }))
     .query(async ({ ctx, input }) => {
-      const aeId = (ctx as Record<string, unknown>).aeId as number | undefined;
+      const aeId = getAeIdFromCtx(ctx) ?? undefined;
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const ae = await getAeProfileById(aeId);
       if (!ae?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });

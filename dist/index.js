@@ -504,6 +504,38 @@ var init_trpc = __esm({
   }
 });
 
+// server/aeAuth.ts
+function parseAeToken(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token, "base64url").toString());
+    if (typeof payload.aeId !== "number") return null;
+    return { aeId: payload.aeId };
+  } catch {
+    return null;
+  }
+}
+function getAeIdFromCtx(ctx) {
+  const headerToken = ctx.req.headers["x-ae-token"];
+  if (headerToken) {
+    const parsed = parseAeToken(headerToken);
+    if (parsed) return parsed.aeId;
+  }
+  const cookieHeader = ctx.req.headers["cookie"];
+  if (cookieHeader) {
+    const match = cookieHeader.match(/ae_session=([^;]+)/);
+    if (match?.[1]) {
+      const parsed = parseAeToken(match[1]);
+      if (parsed) return parsed.aeId;
+    }
+  }
+  return null;
+}
+var init_aeAuth = __esm({
+  "server/aeAuth.ts"() {
+    "use strict";
+  }
+});
+
 // server/voipSync.ts
 var voipSync_exports = {};
 __export(voipSync_exports, {
@@ -652,12 +684,13 @@ var init_voipSync = __esm({
     "use strict";
     init_trpc();
     init_const();
+    init_aeAuth();
     init_db();
     VOIP_BASE = "https://l7api.com/v1.2/voipstudio";
     voipSyncRouter = router({
       /** Get VOIP Studio connection status and user list */
       status: publicProcedure.query(async ({ ctx }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
@@ -679,7 +712,7 @@ var init_voipSync = __esm({
       }),
       /** Preview dial data for all AEs for a date range (team leader only) */
       preview: publicProcedure.input(z.object({ months: z.number().min(1).max(6).default(2) })).query(async ({ ctx, input }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
@@ -695,7 +728,7 @@ var init_voipSync = __esm({
       }),
       /** Import VOIP Studio dial data into monthly_metrics (team leader only) */
       import: publicProcedure.input(z.object({ months: z.number().min(1).max(6).default(2) })).mutation(async ({ ctx, input }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
@@ -726,7 +759,7 @@ var init_voipSync = __esm({
       }),
       /** Get today's real-time dial stats for the logged-in AE */
       myDialsToday: publicProcedure.query(async ({ ctx }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae) throw new TRPCError2({ code: "NOT_FOUND", message: "AE not found" });
@@ -760,7 +793,7 @@ var init_voipSync = __esm({
       }),
       /** Get this week's dial stats for the logged-in AE */
       myDialsThisWeek: publicProcedure.query(async ({ ctx }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae) throw new TRPCError2({ code: "NOT_FOUND", message: "AE not found" });
@@ -803,7 +836,7 @@ var init_voipSync = __esm({
         dateFrom: z.string(),
         dateTo: z.string()
       })).query(async ({ ctx, input }) => {
-        const aeId = ctx.aeId;
+        const aeId = getAeIdFromCtx(ctx) ?? void 0;
         if (!aeId) throw new TRPCError2({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
         const ae = await getAeProfileById(aeId);
         if (!ae?.isTeamLeader) throw new TRPCError2({ code: "FORBIDDEN", message: "Team leader only" });
@@ -1885,6 +1918,7 @@ var spreadsheetSyncRouter = router({
 // server/pipedriveSync.ts
 init_trpc();
 init_const();
+init_aeAuth();
 init_db();
 import { z as z3 } from "zod";
 import { TRPCError as TRPCError4 } from "@trpc/server";
@@ -2078,18 +2112,6 @@ async function aggregateDemosToMonthly(aeId, aeName, demos) {
     (a, b) => a.calYear * 100 + a.calMonth - (b.calYear * 100 + b.calMonth)
   );
 }
-function getAeIdFromCookie(ctx) {
-  const cookieHeader = ctx.req.headers["cookie"];
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(/ae_session=([^;]+)/);
-  if (!match) return null;
-  try {
-    const payload = JSON.parse(Buffer.from(match[1], "base64url").toString());
-    return typeof payload.aeId === "number" ? payload.aeId : null;
-  } catch {
-    return null;
-  }
-}
 var pipedriveSyncRouter = router({
   /**
    * Preview won deals from Pipedrive for all registered AEs.
@@ -2101,7 +2123,7 @@ var pipedriveSyncRouter = router({
       months: z3.number().int().min(1).max(12).default(4)
     })
   ).query(async ({ input, ctx }) => {
-    const aeId = getAeIdFromCookie(ctx);
+    const aeId = getAeIdFromCtx(ctx);
     if (!aeId) throw new TRPCError4({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const profile = await getAeProfileById(aeId);
     if (!profile?.isTeamLeader) {
@@ -2171,7 +2193,7 @@ var pipedriveSyncRouter = router({
       )
     })
   ).mutation(async ({ input, ctx }) => {
-    const aeId = getAeIdFromCookie(ctx);
+    const aeId = getAeIdFromCtx(ctx);
     if (!aeId) throw new TRPCError4({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const profile = await getAeProfileById(aeId);
     if (!profile?.isTeamLeader) {
@@ -2250,7 +2272,7 @@ var pipedriveSyncRouter = router({
       months: z3.number().int().min(1).max(24).default(12)
     })
   ).query(async ({ input, ctx }) => {
-    const aeId = getAeIdFromCookie(ctx);
+    const aeId = getAeIdFromCtx(ctx);
     if (!aeId) throw new TRPCError4({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
     const profile = await getAeProfileById(aeId);
     if (!profile) throw new TRPCError4({ code: "NOT_FOUND" });
@@ -2601,7 +2623,7 @@ function makeAeToken(aeId) {
   const payload = { aeId, ts: Date.now() };
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
 }
-function parseAeToken(token) {
+function parseAeToken2(token) {
   try {
     const payload = JSON.parse(Buffer.from(token, "base64url").toString());
     if (typeof payload.aeId !== "number") return null;
@@ -2610,17 +2632,17 @@ function parseAeToken(token) {
     return null;
   }
 }
-function getAeIdFromCtx(ctx) {
+function getAeIdFromCtx2(ctx) {
   const headerToken = ctx.req.headers["x-ae-token"];
   if (headerToken) {
-    const parsed = parseAeToken(headerToken);
+    const parsed = parseAeToken2(headerToken);
     if (parsed) return parsed.aeId;
   }
   const cookieHeader = ctx.req.headers["cookie"];
   if (cookieHeader) {
     const match = cookieHeader.match(/ae_session=([^;]+)/);
     if (match?.[1]) {
-      const parsed = parseAeToken(match[1]);
+      const parsed = parseAeToken2(match[1]);
       if (parsed) return parsed.aeId;
     }
   }
@@ -2726,7 +2748,7 @@ var appRouter = router({
         newPin: z5.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits")
       })
     ).mutation(async ({ ctx, input }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) {
         throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       }
@@ -2759,7 +2781,7 @@ var appRouter = router({
     }),
     // Get current AE session
     me: publicProcedure.query(async ({ ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) return null;
       const profile = await getAeProfileById(aeId);
       if (!profile) return null;
@@ -2784,7 +2806,7 @@ var appRouter = router({
         retentionRate: z5.number().min(0).max(100).optional()
       })
     ).mutation(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       await upsertMonthlyMetric({
         aeId,
@@ -2799,7 +2821,7 @@ var appRouter = router({
     }),
     // Get recent metrics for current AE
     list: publicProcedure.query(async ({ ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const rows = await getMetricsForAe(aeId, 6);
       return rows.map((r) => ({
@@ -2810,7 +2832,7 @@ var appRouter = router({
     }),
     // Get metric for a specific month
     getForMonth: publicProcedure.input(z5.object({ year: z5.number().int(), month: z5.number().int() })).query(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const row = await getMetricsForMonth(aeId, input.year, input.month);
       if (!row) return null;
@@ -2830,7 +2852,7 @@ var appRouter = router({
         month: z5.number().int().min(1).max(12)
       })
     ).query(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError6({ code: "NOT_FOUND" });
@@ -2931,7 +2953,7 @@ var appRouter = router({
         tierOverride: z5.enum(["bronze", "silver", "gold"]).optional()
       })
     ).mutation(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError6({ code: "NOT_FOUND" });
@@ -3027,7 +3049,7 @@ var appRouter = router({
     }),
     // List all deals for current AE
     list: publicProcedure.query(async ({ ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const dealList = await getDealsForAe(aeId);
       return dealList.map((d) => ({
@@ -3038,7 +3060,7 @@ var appRouter = router({
     }),
     // Get payouts for a specific deal
     getPayouts: publicProcedure.input(z5.object({ dealId: z5.number().int() })).query(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const deal = await getDealById(input.dealId);
       if (!deal || deal.aeId !== aeId) throw new TRPCError6({ code: "FORBIDDEN" });
@@ -3055,7 +3077,7 @@ var appRouter = router({
     }),
     // Delete a deal and its payouts
     delete: publicProcedure.input(z5.object({ dealId: z5.number().int() })).mutation(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const deal = await getDealById(input.dealId);
       if (!deal || deal.aeId !== aeId) throw new TRPCError6({ code: "FORBIDDEN" });
@@ -3068,7 +3090,7 @@ var appRouter = router({
   commission: router({
     // Monthly summary: total commission by month
     monthlySummary: publicProcedure.query(async ({ ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const allPayouts = await getPayoutsForAe(aeId);
       const allDeals = await getDealsForAe(aeId);
@@ -3111,7 +3133,7 @@ var appRouter = router({
     }),
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
+      const aeId = getAeIdFromCtx2(ctx);
       if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
       const allPayouts = await getPayoutsForAe(aeId);
       const allDeals = await getDealsForAe(aeId);

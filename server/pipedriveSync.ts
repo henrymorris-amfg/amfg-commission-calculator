@@ -20,6 +20,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
+import { getAeIdFromCtx } from "./aeAuth";
 import {
   getAllAeProfiles,
   getAeProfileById,
@@ -367,22 +368,7 @@ async function aggregateDemosToMonthly(
   );
 }
 
-// ─── Auth helper (same pattern as routers.ts) ─────────────────────────────────
-
-function getAeIdFromCookie(
-  ctx: { req: { headers: Record<string, string | string[] | undefined> } }
-): number | null {
-  const cookieHeader = ctx.req.headers["cookie"] as string | undefined;
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(/ae_session=([^;]+)/);
-  if (!match) return null;
-  try {
-    const payload = JSON.parse(Buffer.from(match[1], "base64url").toString());
-    return typeof payload.aeId === "number" ? payload.aeId : null;
-  } catch {
-    return null;
-  }
-}
+// Auth helper is imported from ./aeAuth (X-AE-Token header, production-safe)
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -400,7 +386,7 @@ export const pipedriveSyncRouter = router({
     )
     .query(async ({ input, ctx }) => {
       // Auth check
-      const aeId = getAeIdFromCookie(ctx);
+      const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const profile = await getAeProfileById(aeId);
       if (!profile?.isTeamLeader) {
@@ -497,7 +483,7 @@ export const pipedriveSyncRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       // Auth check
-      const aeId = getAeIdFromCookie(ctx);
+      const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
       const profile = await getAeProfileById(aeId);
       if (!profile?.isTeamLeader) {
@@ -596,7 +582,7 @@ export const pipedriveSyncRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCookie(ctx);
+      const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
 
       const profile = await getAeProfileById(aeId);
