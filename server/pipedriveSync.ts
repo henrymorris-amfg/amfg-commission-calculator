@@ -211,7 +211,7 @@ const PIPELINE_NAMES: Record<number, string> = {
  * Find the Pipedrive user ID for an AE by matching their name.
  * Returns null if no match found.
  */
-async function findPipedriveUserId(aeName: string): Promise<number | null> {
+export async function findPipedriveUserId(aeName: string): Promise<number | null> {
   const resp = (await pipedriveGet("users")) as { data: PipedriveUser[] | null };
   const users = resp.data || [];
 
@@ -271,7 +271,7 @@ async function fetchWonDealsForUser(
  * Fetch all completed "Demo" activities for a specific Pipedrive user,
  * filtered to a date range.
  */
-async function fetchCompletedDemosForUser(
+export async function fetchCompletedDemosForUser(
   pipedriveUserId: number,
   fromDate: string, // YYYY-MM-DD
   toDate: string    // YYYY-MM-DD

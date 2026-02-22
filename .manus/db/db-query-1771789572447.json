@@ -1,0 +1,36 @@
+{
+  "query": "\nSELECT * FROM commission_structures WHERE isActive = 1;\nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 6;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT * FROM commission_structures WHERE isActive = 1;\nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 6;\n",
+  "rows": [
+    {
+      "id": "1",
+      "versionLabel": "Q1 2026 — Initial",
+      "effectiveFrom": "2026-01-01 00:00:00",
+      "isActive": "1",
+      "bronzeRate": "0.1300",
+      "silverRate": "0.1600",
+      "goldRate": "0.1900",
+      "standardTargets": "{\"gold\": {\"arrUsd\": 25000, \"demosPw\": 4, \"dialsPw\": 200, \"retentionMin\": 71}, \"silver\": {\"arrUsd\": 20000, \"demosPw\": 3, \"dialsPw\": 100, \"retentionMin\": 61}}",
+      "teamLeaderTargets": "{\"gold\": {\"arrUsd\": 12500, \"demosPw\": 2, \"dialsPw\": 100, \"retentionMin\": 71}, \"silver\": {\"arrUsd\": 10000, \"demosPw\": 2, \"dialsPw\": 50, \"retentionMin\": 61}}",
+      "monthlyPayoutMonths": "13",
+      "onboardingDeductionGbp": "500.00",
+      "onboardingArrReductionUsd": "5000.00",
+      "createdBy": "system",
+      "notes": "Initial commission structure seeded from hardcoded constants.",
+      "createdAt": "2026-02-21 19:05:45",
+      "updatedAt": "2026-02-21 19:05:45"
+    }
+  ],
+  "messages": [
+    "aeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal",
+    "30002\t2026\t2\t12995.00\t13\t629",
+    "30002\t2026\t1\t0.00\t17\t655",
+    "30002\t2025\t12\t27085.00\t7\t385",
+    "30002\t2025\t11\t0.00\t16\t963",
+    "30002\t2025\t10\t11293.00\t26\t779",
+    "30002\t2025\t9\t0.00\t20\t575"
+  ],
+  "stdout": "id\tversionLabel\teffectiveFrom\tisActive\tbronzeRate\tsilverRate\tgoldRate\tstandardTargets\tteamLeaderTargets\tmonthlyPayoutMonths\tonboardingDeductionGbp\tonboardingArrReductionUsd\tcreatedBy\tnotes\tcreatedAt\tupdatedAt\n1\tQ1 2026 — Initial\t2026-01-01 00:00:00\t1\t0.1300\t0.1600\t0.1900\t{\"gold\": {\"arrUsd\": 25000, \"demosPw\": 4, \"dialsPw\": 200, \"retentionMin\": 71}, \"silver\": {\"arrUsd\": 20000, \"demosPw\": 3, \"dialsPw\": 100, \"retentionMin\": 61}}\t{\"gold\": {\"arrUsd\": 12500, \"demosPw\": 2, \"dialsPw\": 100, \"retentionMin\": 71}, \"silver\": {\"arrUsd\": 10000, \"demosPw\": 2, \"dialsPw\": 50, \"retentionMin\": 61}}\t13\t500.00\t5000.00\tsystem\tInitial commission structure seeded from hardcoded constants.\t2026-02-21 19:05:45\t2026-02-21 19:05:45\naeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n30002\t2026\t2\t12995.00\t13\t629\n30002\t2026\t1\t0.00\t17\t655\n30002\t2025\t12\t27085.00\t7\t385\n30002\t2025\t11\t0.00\t16\t963\n30002\t2025\t10\t11293.00\t26\t779\n30002\t2025\t9\t0.00\t20\t575\n",
+  "stderr": "",
+  "execution_time_ms": 398
+}

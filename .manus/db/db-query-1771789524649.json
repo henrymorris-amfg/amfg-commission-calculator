@@ -1,0 +1,13 @@
+{
+  "query": "\nDELETE FROM commission_payouts WHERE aeId IN (30000, 30001);\nDELETE FROM deals WHERE aeId IN (30000, 30001);\nDELETE FROM commission_payouts WHERE aeId IN (1, 30002, 30003, 30004);\nDELETE FROM deals WHERE aeId IN (1, 30002, 30003, 30004);\nSELECT COUNT(*) as remaining_deals FROM deals;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nDELETE FROM commission_payouts WHERE aeId IN (30000, 30001);\nDELETE FROM deals WHERE aeId IN (30000, 30001);\nDELETE FROM commission_payouts WHERE aeId IN (1, 30002, 30003, 30004);\nDELETE FROM deals WHERE aeId IN (1, 30002, 30003, 30004);\nSELECT COUNT(*) as remaining_deals FROM deals;\n",
+  "rows": [
+    {
+      "remaining_deals": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "remaining_deals\n0\n",
+  "stderr": "",
+  "execution_time_ms": 585
+}

@@ -158,11 +158,16 @@ async function clearDealsForAe(aeId: number) {
 
 // ─── AE configuration ─────────────────────────────────────────────────────────
 
+// CORRECT AE IDs from database (verified 2026-02-22):
+//   ID:1     = Henry Morris  (team leader)
+//   ID:30002 = Joe Payne
+//   ID:30003 = Julian Earl
+//   ID:30004 = Toby Greer
 const AE_CONFIG = [
-  { aeId: 30000, name: "Henry Morris", joinDateStr: "2025-01-01", joinDate: new Date("2025-01-01"), pipedriveId: 15871239, isTeamLeader: true },
-  { aeId: 30001, name: "Joe Payne", joinDateStr: "2025-06-16", joinDate: new Date("2025-06-16"), pipedriveId: 23861740, isTeamLeader: false },
-  { aeId: 30002, name: "Toby Greer", joinDateStr: "2025-07-28", joinDate: new Date("2025-07-28"), pipedriveId: 24052953, isTeamLeader: false },
-  { aeId: 30003, name: "Julian Earl", joinDateStr: "2026-02-04", joinDate: new Date("2026-02-04"), pipedriveId: 25094488, isTeamLeader: false },
+  { aeId: 1,     name: "Henry Morris", joinDateStr: "2025-01-01", joinDate: new Date("2025-01-01"), pipedriveId: 15871239, isTeamLeader: true },
+  { aeId: 30002, name: "Joe Payne",    joinDateStr: "2025-06-16", joinDate: new Date("2025-06-16"), pipedriveId: 23861740, isTeamLeader: false },
+  { aeId: 30004, name: "Toby Greer",   joinDateStr: "2025-07-28", joinDate: new Date("2025-07-28"), pipedriveId: 24052953, isTeamLeader: false },
+  { aeId: 30003, name: "Julian Earl",  joinDateStr: "2026-02-04", joinDate: new Date("2026-02-04"), pipedriveId: 25094488, isTeamLeader: false },
 ];
 
 const today = new Date().toISOString().substring(0, 10);

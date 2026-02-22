@@ -1,0 +1,138 @@
+{
+  "query": "DESCRIBE commission_structures;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute DESCRIBE commission_structures;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "versionLabel",
+      "Type": "varchar(128)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "effectiveFrom",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "isActive",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "bronzeRate",
+      "Type": "decimal(5,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0.1300",
+      "Extra": ""
+    },
+    {
+      "Field": "silverRate",
+      "Type": "decimal(5,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0.1600",
+      "Extra": ""
+    },
+    {
+      "Field": "goldRate",
+      "Type": "decimal(5,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0.1900",
+      "Extra": ""
+    },
+    {
+      "Field": "standardTargets",
+      "Type": "json",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "teamLeaderTargets",
+      "Type": "json",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "monthlyPayoutMonths",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "13",
+      "Extra": ""
+    },
+    {
+      "Field": "onboardingDeductionGbp",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "500.00",
+      "Extra": ""
+    },
+    {
+      "Field": "onboardingArrReductionUsd",
+      "Type": "decimal(12,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "5000.00",
+      "Extra": ""
+    },
+    {
+      "Field": "createdBy",
+      "Type": "varchar(128)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "system",
+      "Extra": ""
+    },
+    {
+      "Field": "notes",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nversionLabel\tvarchar(128)\tNO\t\tNULL\t\neffectiveFrom\ttimestamp\tNO\t\tNULL\t\nisActive\ttinyint(1)\tNO\t\t0\t\nbronzeRate\tdecimal(5,4)\tNO\t\t0.1300\t\nsilverRate\tdecimal(5,4)\tNO\t\t0.1600\t\ngoldRate\tdecimal(5,4)\tNO\t\t0.1900\t\nstandardTargets\tjson\tNO\t\tNULL\t\nteamLeaderTargets\tjson\tNO\t\tNULL\t\nmonthlyPayoutMonths\tint\tNO\t\t13\t\nonboardingDeductionGbp\tdecimal(10,2)\tNO\t\t500.00\t\nonboardingArrReductionUsd\tdecimal(12,2)\tNO\t\t5000.00\t\ncreatedBy\tvarchar(128)\tNO\t\tsystem\t\nnotes\ttext\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 346
+}

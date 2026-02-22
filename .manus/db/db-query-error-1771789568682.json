@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT id, name, isActive, silverArrUsd, goldArrUsd, silverDemosPw, goldDemosPw, silverDialsPw, goldDialsPw FROM commission_structures WHERE isActive = 1;\nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 6;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT id, name, isActive, silverArrUsd, goldArrUsd, silverDemosPw, goldDemosPw, silverDialsPw, goldDialsPw FROM commission_structures WHERE isActive = 1;\nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 6;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'name' in 'field list'"
+  ]
+}

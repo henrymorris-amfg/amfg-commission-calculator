@@ -1,0 +1,434 @@
+{
+  "query": "SELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics ORDER BY aeId, year, month;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics ORDER BY aeId, year, month;",
+  "rows": [
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "1",
+      "arrUsd": "7140.00",
+      "demosTotal": "13",
+      "dialsTotal": "128"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "2",
+      "arrUsd": "27780.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "3",
+      "arrUsd": "9540.00",
+      "demosTotal": "9",
+      "dialsTotal": "161"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "4",
+      "arrUsd": "7140.00",
+      "demosTotal": "8",
+      "dialsTotal": "155"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "5",
+      "arrUsd": "2500.00",
+      "demosTotal": "12",
+      "dialsTotal": "116"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "38300.00",
+      "demosTotal": "7",
+      "dialsTotal": "162"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "0.00",
+      "demosTotal": "11",
+      "dialsTotal": "87"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "2340.00",
+      "demosTotal": "8",
+      "dialsTotal": "208"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "63300.00",
+      "demosTotal": "6",
+      "dialsTotal": "169"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "20",
+      "dialsTotal": "260"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "4000.00",
+      "demosTotal": "2",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "38661.00",
+      "demosTotal": "2",
+      "dialsTotal": "33"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "5",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "22888.00",
+      "demosTotal": "3",
+      "dialsTotal": "127"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "1",
+      "arrUsd": "9623.00",
+      "demosTotal": "14",
+      "dialsTotal": "128"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "2",
+      "arrUsd": "27780.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "3",
+      "arrUsd": "12857.00",
+      "demosTotal": "9",
+      "dialsTotal": "161"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "4",
+      "arrUsd": "9623.00",
+      "demosTotal": "8",
+      "dialsTotal": "155"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "5",
+      "arrUsd": "2500.00",
+      "demosTotal": "12",
+      "dialsTotal": "116"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "48488.00",
+      "demosTotal": "8",
+      "dialsTotal": "162"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "0.00",
+      "demosTotal": "11",
+      "dialsTotal": "87"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "2340.00",
+      "demosTotal": "8",
+      "dialsTotal": "208"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "63978.00",
+      "demosTotal": "7",
+      "dialsTotal": "169"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "20",
+      "dialsTotal": "260"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "4000.00",
+      "demosTotal": "2",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "30000",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "37698.00",
+      "demosTotal": "2",
+      "dialsTotal": "33"
+    },
+    {
+      "aeId": "30000",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "5",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "30000",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "22888.00",
+      "demosTotal": "3",
+      "dialsTotal": "127"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "0.00",
+      "demosTotal": "7",
+      "dialsTotal": "455"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "13000.00",
+      "demosTotal": "11",
+      "dialsTotal": "1308"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "8100.00",
+      "demosTotal": "18",
+      "dialsTotal": "1220"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "15900.00",
+      "demosTotal": "20",
+      "dialsTotal": "575"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "27950.00",
+      "demosTotal": "26",
+      "dialsTotal": "779"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "6000.00",
+      "demosTotal": "16",
+      "dialsTotal": "963"
+    },
+    {
+      "aeId": "30001",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "40644.00",
+      "demosTotal": "7",
+      "dialsTotal": "385"
+    },
+    {
+      "aeId": "30001",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "43521.00",
+      "demosTotal": "17",
+      "dialsTotal": "655"
+    },
+    {
+      "aeId": "30001",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "23064.00",
+      "demosTotal": "13",
+      "dialsTotal": "629"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "53"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "10907.00",
+      "demosTotal": "11",
+      "dialsTotal": "506"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "0.00",
+      "demosTotal": "18",
+      "dialsTotal": "456"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "11293.00",
+      "demosTotal": "20",
+      "dialsTotal": "346"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "272"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "27085.00",
+      "demosTotal": "14",
+      "dialsTotal": "122"
+    },
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "12995.00",
+      "demosTotal": "3",
+      "dialsTotal": "74"
+    },
+    {
+      "aeId": "30003",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "0.00",
+      "demosTotal": "3",
+      "dialsTotal": "732"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "10907.00",
+      "demosTotal": "11",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "0.00",
+      "demosTotal": "17",
+      "dialsTotal": "456"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "11293.00",
+      "demosTotal": "20",
+      "dialsTotal": "346"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "272"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "27085.00",
+      "demosTotal": "15",
+      "dialsTotal": "122"
+    },
+    {
+      "aeId": "30004",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "aeId": "30004",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "15306.00",
+      "demosTotal": "3",
+      "dialsTotal": "74"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n1\t2025\t1\t7140.00\t13\t128\n1\t2025\t2\t27780.00\t15\t225\n1\t2025\t3\t9540.00\t9\t161\n1\t2025\t4\t7140.00\t8\t155\n1\t2025\t5\t2500.00\t12\t116\n1\t2025\t6\t38300.00\t7\t162\n1\t2025\t7\t0.00\t11\t87\n1\t2025\t8\t2340.00\t8\t208\n1\t2025\t9\t63300.00\t6\t169\n1\t2025\t10\t0.00\t20\t260\n1\t2025\t11\t4000.00\t2\t65\n1\t2025\t12\t38661.00\t2\t33\n1\t2026\t1\t0.00\t5\t65\n1\t2026\t2\t22888.00\t3\t127\n30000\t2025\t1\t9623.00\t14\t128\n30000\t2025\t2\t27780.00\t15\t225\n30000\t2025\t3\t12857.00\t9\t161\n30000\t2025\t4\t9623.00\t8\t155\n30000\t2025\t5\t2500.00\t12\t116\n30000\t2025\t6\t48488.00\t8\t162\n30000\t2025\t7\t0.00\t11\t87\n30000\t2025\t8\t2340.00\t8\t208\n30000\t2025\t9\t63978.00\t7\t169\n30000\t2025\t10\t0.00\t20\t260\n30000\t2025\t11\t4000.00\t2\t65\n30000\t2025\t12\t37698.00\t2\t33\n30000\t2026\t1\t0.00\t5\t65\n30000\t2026\t2\t22888.00\t3\t127\n30001\t2025\t6\t0.00\t7\t455\n30001\t2025\t7\t13000.00\t11\t1308\n30001\t2025\t8\t8100.00\t18\t1220\n30001\t2025\t9\t15900.00\t20\t575\n30001\t2025\t10\t27950.00\t26\t779\n30001\t2025\t11\t6000.00\t16\t963\n30001\t2025\t12\t40644.00\t7\t385\n30001\t2026\t1\t43521.00\t17\t655\n30001\t2026\t2\t23064.00\t13\t629\n30002\t2025\t7\t0.00\t0\t53\n30002\t2025\t8\t10907.00\t11\t506\n30002\t2025\t9\t0.00\t18\t456\n30002\t2025\t10\t11293.00\t20\t346\n30002\t2025\t11\t0.00\t15\t272\n30002\t2025\t12\t27085.00\t14\t122\n30002\t2026\t1\t0.00\t15\t225\n30002\t2026\t2\t12995.00\t3\t74\n30003\t2026\t2\t0.00\t3\t732\n30004\t2025\t8\t10907.00\t11\t0\n30004\t2025\t9\t0.00\t17\t456\n30004\t2025\t10\t11293.00\t20\t346\n30004\t2025\t11\t0.00\t15\t272\n30004\t2025\t12\t27085.00\t15\t122\n30004\t2026\t1\t0.00\t15\t225\n30004\t2026\t2\t15306.00\t3\t74\n",
+  "stderr": "",
+  "execution_time_ms": 346
+}
