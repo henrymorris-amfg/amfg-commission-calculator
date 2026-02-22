@@ -1,0 +1,9 @@
+{
+  "query": "\nDELETE cp FROM commission_payouts cp\nINNER JOIN deals d ON cp.dealId = d.id\nWHERE d.pipedriveId IS NOT NULL;\n\nDELETE FROM deals WHERE pipedriveId IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nDELETE cp FROM commission_payouts cp\nINNER JOIN deals d ON cp.dealId = d.id\nWHERE d.pipedriveId IS NOT NULL;\n\nDELETE FROM deals WHERE pipedriveId IS NOT NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 418
+}

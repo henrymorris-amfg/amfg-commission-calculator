@@ -471,7 +471,7 @@ export const appRouter = router({
               dialsTotal: z.number().int().min(0),
             })
           ).min(1).max(3),
-          retentionRate: z.number().min(0).max(100),
+          retentionRate: z.number().min(0).max(100).nullable().optional(),
           isNewJoiner: z.boolean().default(false),
           isTeamLeader: z.boolean().default(false),
         })
@@ -485,11 +485,10 @@ export const appRouter = router({
           avgArrUsd,
           avgDemosPw,
           avgDialsPw,
-          avgRetentionRate: input.retentionRate,
+           avgRetentionRate: input.retentionRate ?? null,
           isNewJoiner: input.isNewJoiner,
           isTeamLeader: input.isTeamLeader,
         });
-
         return { ...result, avgArrUsd, avgDemosPw, avgDialsPw };
       }),
   }),

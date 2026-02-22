@@ -117,3 +117,10 @@
 - [x] Clear old Pipedrive deal imports and re-import all 44 current won deals (20 Henry, 19 Joe, 5 Toby)
 - [x] Verify VOIP dials — confirmed correct via direct API (audit script bug was using Pipedrive IDs not VOIP IDs)
 - [x] Final validation — all data confirmed correct for Monday
+
+## Tier Re-assignment & Commission Recalculation
+- [ ] Verify 12-weeks-per-quarter is used consistently in all tier/rolling-average calculations
+- [ ] Build getTierAtDate(aeId, contractStartDate) function using historical monthly_metrics
+- [ ] Update importDeals to look up tier at contract start date (not current month)
+- [ ] Clear and re-import all 44 deals with correct historical tiers
+- [ ] Recalculate all commission payouts using the correct tier rate per deal

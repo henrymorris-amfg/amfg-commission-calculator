@@ -1963,14 +1963,15 @@ var ONBOARDING_DEDUCTION_GBP = 500;
 var NEW_JOINER_GRACE_MONTHS = 6;
 function calculateTier(inputs) {
   const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+  const retentionAvailable = inputs.avgRetentionRate != null;
   const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
   const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
   const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
-  const meetsRetentionGold = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_GOLD_MIN;
+  const meetsRetentionGold = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_GOLD_MIN;
   const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
   const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
   const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
-  const meetsRetentionSilver = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_SILVER_MIN;
+  const meetsRetentionSilver = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_SILVER_MIN;
   const reasons = [];
   if (meetsArrGold && meetsDemosGold && meetsDialsGold && meetsRetentionGold) {
     return {
@@ -1986,7 +1987,7 @@ function calculateTier(inputs) {
   if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
   if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
   if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
-  if (!meetsRetentionGold) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
+  if (!meetsRetentionGold && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
   if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
     return {
       tier: "silver",
@@ -2001,7 +2002,7 @@ function calculateTier(inputs) {
   if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
   if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
   if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
-  if (!meetsRetentionSilver) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
+  if (!meetsRetentionSilver && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
   return {
     tier: "bronze",
     reasons,
@@ -2029,7 +2030,7 @@ function computeRollingAverages(last3Months) {
 }
 function computeAvgRetention(last6Months) {
   const withRetention = last6Months.filter((m) => m.retentionRate != null);
-  if (withRetention.length === 0) return 0;
+  if (withRetention.length === 0) return null;
   const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
   return total / withRetention.length;
 }
@@ -3100,7 +3101,7 @@ var appRouter = router({
             dialsTotal: z5.number().int().min(0)
           })
         ).min(1).max(3),
-        retentionRate: z5.number().min(0).max(100),
+        retentionRate: z5.number().min(0).max(100).nullable().optional(),
         isNewJoiner: z5.boolean().default(false),
         isTeamLeader: z5.boolean().default(false)
       })
@@ -3112,7 +3113,7 @@ var appRouter = router({
         avgArrUsd,
         avgDemosPw,
         avgDialsPw,
-        avgRetentionRate: input.retentionRate,
+        avgRetentionRate: input.retentionRate ?? null,
         isNewJoiner: input.isNewJoiner,
         isTeamLeader: input.isTeamLeader
       });

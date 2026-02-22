@@ -162,11 +162,11 @@ export default function DashboardPage() {
         },
         {
           label: "Retention Rate",
-          current: tierData.avgRetentionRate,
+          current: tierData.avgRetentionRate ?? 0,
           target: nextTargets.retentionMin,
           format: (v: number) => `${v.toFixed(1)}%`,
-          exempt: isNewJoiner,
-          exemptLabel: "Exempt (new joiner)",
+          exempt: isNewJoiner || tierData.avgRetentionRate == null,
+          exemptLabel: tierData.avgRetentionRate == null ? "No data yet" : "Exempt (new joiner)",
         },
       ]
     : [];
@@ -525,9 +525,9 @@ export default function DashboardPage() {
                 },
                 {
                   label: "Retention Rate",
-                  value: `${tierData.avgRetentionRate.toFixed(1)}%`,
+                  value: tierData.avgRetentionRate != null ? `${tierData.avgRetentionRate.toFixed(1)}%` : "No data",
                   met: tierData.meetsRetention,
-                  note: tierData.isNewJoiner ? "Exempt (new joiner)" : undefined,
+                  note: tierData.avgRetentionRate == null ? "No data yet" : tierData.isNewJoiner ? "Exempt (new joiner)" : undefined,
                 },
               ].map((c) => (
                 <div key={c.label} className="rounded-xl p-4 border"

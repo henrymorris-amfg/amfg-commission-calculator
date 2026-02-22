@@ -43,8 +43,8 @@ export interface TierInputs {
   avgArrUsd: number;       // monthly average ARR over last 3 months
   avgDemosPw: number;      // demos done per week (total last 3 months / 12)
   avgDialsPw: number;      // dials per week (total last 3 months / 12)
-  // 6-month average retention rate
-  avgRetentionRate: number; // percentage e.g. 71.5
+  // 6-month average retention rate — null means no data yet (check is skipped)
+  avgRetentionRate: number | null;
   // Profile flags
   isNewJoiner: boolean;    // within first 6 months
   isTeamLeader: boolean;
@@ -63,17 +63,22 @@ export interface TierResult {
 export function calculateTier(inputs: TierInputs): TierResult {
   const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
 
+  // Retention check is skipped (passes automatically) when no data is available
+  const retentionAvailable = inputs.avgRetentionRate != null;
+
   // Check each criterion at gold level
   const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
   const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
   const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
-  const meetsRetentionGold = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_GOLD_MIN;
+  const meetsRetentionGold =
+    !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_GOLD_MIN;
 
   // Check each criterion at silver level
   const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
   const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
   const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
-  const meetsRetentionSilver = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_SILVER_MIN;
+  const meetsRetentionSilver =
+    !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_SILVER_MIN;
 
   const reasons: string[] = [];
 
@@ -92,7 +97,7 @@ export function calculateTier(inputs: TierInputs): TierResult {
   if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
   if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
   if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
-  if (!meetsRetentionGold) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
+  if (!meetsRetentionGold && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
 
   if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
     return {
@@ -109,7 +114,7 @@ export function calculateTier(inputs: TierInputs): TierResult {
   if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
   if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
   if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
-  if (!meetsRetentionSilver) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
+  if (!meetsRetentionSilver && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
 
   return {
     tier: "bronze",
@@ -158,10 +163,11 @@ export function computeRollingAverages(last3Months: MonthData[]): {
 
 /**
  * Compute 6-month average retention rate.
+ * Returns null when no retention data is available (check will be skipped in tier calculation).
  */
-export function computeAvgRetention(last6Months: MonthData[]): number {
+export function computeAvgRetention(last6Months: MonthData[]): number | null {
   const withRetention = last6Months.filter((m) => m.retentionRate != null);
-  if (withRetention.length === 0) return 0;
+  if (withRetention.length === 0) return null;
   const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
   return total / withRetention.length;
 }
