@@ -212,7 +212,9 @@ async function fetchWonDealsForUser(
   fromDate: string, // YYYY-MM-DD
   toDate: string    // YYYY-MM-DD
 ): Promise<PipedriveDeal[]> {
-  const allDeals: PipedriveDeal[] = [];
+  // Use a Map to deduplicate deals by ID — the same deal can appear in multiple
+  // pipelines (e.g. Machining, Closing SMB, Closing Enterprise) and must only be counted once.
+  const dealsById = new Map<number, PipedriveDeal>();
 
   for (const pipelineId of TARGET_PIPELINE_IDS) {
     const deals = await pipedriveGetAll("deals", {
@@ -221,18 +223,19 @@ async function fetchWonDealsForUser(
       status: "won",
     });
 
-    // Filter by date range
-    const filtered = deals.filter((d) => {
+    // Filter by date range and deduplicate by deal ID
+    for (const d of deals) {
+      if (dealsById.has(d.id)) continue; // already counted from another pipeline
       const wonDate = d.won_time || d.close_time;
-      if (!wonDate) return false;
+      if (!wonDate) continue;
       const date = wonDate.substring(0, 10); // YYYY-MM-DD
-      return date >= fromDate && date <= toDate;
-    });
-
-    allDeals.push(...filtered);
+      if (date >= fromDate && date <= toDate) {
+        dealsById.set(d.id, d);
+      }
+    }
   }
 
-  return allDeals;
+  return Array.from(dealsById.values());
 }
 
 /**

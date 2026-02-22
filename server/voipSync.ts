@@ -105,11 +105,18 @@ async function voipGet<T>(endpoint: string, params: Record<string, string | numb
 
 /** Get all VOIP Studio users (contacts/extensions) */
 async function getVoipUsers(): Promise<Array<{ id: number; name: string; extension: string }>> {
-  const data = await voipGet<{ data: Array<{ i: number; name: string; extension: string }> }>(
+  // The /users endpoint returns: { id, first_name, last_name, ext, email, active, ... }
+  const data = await voipGet<{ data: Array<{ id: number; first_name: string; last_name: string; ext: string; active: boolean }> }>(
     "users",
     { limit: 100 }
   );
-  return (data.data || []).map((u) => ({ id: u.i, name: u.name, extension: u.extension }));
+  return (data.data || [])
+    .filter((u) => u.active !== false) // only active users
+    .map((u) => ({
+      id: u.id,
+      name: `${u.first_name} ${u.last_name}`.trim(),
+      extension: u.ext || "",
+    }));
 }
 
 /** Find a VOIP Studio user ID by AE name (fuzzy match) */
