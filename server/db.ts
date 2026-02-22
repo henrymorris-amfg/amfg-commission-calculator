@@ -114,11 +114,38 @@ export async function getAllAeProfiles(): Promise<AeProfile[]> {
 
 export async function updateAeProfile(
   id: number,
-  data: Partial<Pick<AeProfile, "name" | "joinDate" | "isTeamLeader">>
+  data: Partial<Pick<AeProfile, "name" | "joinDate" | "isTeamLeader" | "pinHash" | "failedPinAttempts" | "lockedUntil">>
 ): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.update(aeProfiles).set(data).where(eq(aeProfiles.id, id));
+}
+
+/** Increment failed PIN attempts and optionally set a lockout expiry. */
+export async function recordFailedPinAttempt(
+  id: number,
+  newAttemptCount: number,
+  lockoutUntil?: Date
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(aeProfiles)
+    .set({
+      failedPinAttempts: newAttemptCount,
+      lockedUntil: lockoutUntil ?? null,
+    })
+    .where(eq(aeProfiles.id, id));
+}
+
+/** Reset failed attempt counter and clear any lockout after a successful login or PIN change. */
+export async function resetPinAttempts(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(aeProfiles)
+    .set({ failedPinAttempts: 0, lockedUntil: null })
+    .where(eq(aeProfiles.id, id));
 }
 
 // ─── Monthly Metrics ──────────────────────────────────────────────────────────

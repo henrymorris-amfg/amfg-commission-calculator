@@ -85,6 +85,9 @@ var init_schema = __esm({
       pinHash: varchar("pinHash", { length: 256 }).notNull(),
       joinDate: timestamp("joinDate").notNull(),
       isTeamLeader: boolean("isTeamLeader").default(false).notNull(),
+      // PIN lockout: track failed attempts and when the lockout expires
+      failedPinAttempts: int("failedPinAttempts").default(0).notNull(),
+      lockedUntil: timestamp("lockedUntil"),
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
     });
@@ -200,6 +203,8 @@ __export(db_exports, {
   getPayoutsForDeal: () => getPayoutsForDeal,
   getPayoutsForMonth: () => getPayoutsForMonth,
   getUserByOpenId: () => getUserByOpenId,
+  recordFailedPinAttempt: () => recordFailedPinAttempt,
+  resetPinAttempts: () => resetPinAttempts,
   seedInitialCommissionStructure: () => seedInitialCommissionStructure,
   updateAeProfile: () => updateAeProfile,
   updateCommissionStructure: () => updateCommissionStructure,
@@ -281,6 +286,19 @@ async function updateAeProfile(id, data) {
   const db = await getDb();
   if (!db) return;
   await db.update(aeProfiles).set(data).where(eq(aeProfiles.id, id));
+}
+async function recordFailedPinAttempt(id, newAttemptCount, lockoutUntil) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(aeProfiles).set({
+    failedPinAttempts: newAttemptCount,
+    lockedUntil: lockoutUntil ?? null
+  }).where(eq(aeProfiles.id, id));
+}
+async function resetPinAttempts(id) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(aeProfiles).set({ failedPinAttempts: 0, lockedUntil: null }).where(eq(aeProfiles.id, id));
 }
 async function upsertMonthlyMetric(data) {
   const db = await getDb();
@@ -2662,10 +2680,36 @@ var appRouter = router({
       if (!profile) {
         throw new TRPCError6({ code: "NOT_FOUND", message: "AE not found." });
       }
+      const MAX_ATTEMPTS = 5;
+      const LOCKOUT_HOURS = 2;
+      const now = /* @__PURE__ */ new Date();
+      if (profile.lockedUntil && profile.lockedUntil > now) {
+        const minutesLeft = Math.ceil(
+          (profile.lockedUntil.getTime() - now.getTime()) / 6e4
+        );
+        throw new TRPCError6({
+          code: "TOO_MANY_REQUESTS",
+          message: `Account locked. Try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`
+        });
+      }
       const valid = await bcrypt2.compare(input.pin, profile.pinHash);
       if (!valid) {
-        throw new TRPCError6({ code: "UNAUTHORIZED", message: "Incorrect PIN." });
+        const newAttempts = (profile.failedPinAttempts ?? 0) + 1;
+        const lockoutUntil = newAttempts >= MAX_ATTEMPTS ? new Date(now.getTime() + LOCKOUT_HOURS * 60 * 60 * 1e3) : void 0;
+        await recordFailedPinAttempt(profile.id, newAttempts, lockoutUntil);
+        const remaining = MAX_ATTEMPTS - newAttempts;
+        if (lockoutUntil) {
+          throw new TRPCError6({
+            code: "TOO_MANY_REQUESTS",
+            message: `Too many incorrect attempts. Account locked for ${LOCKOUT_HOURS} hours.`
+          });
+        }
+        throw new TRPCError6({
+          code: "UNAUTHORIZED",
+          message: `Incorrect PIN. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`
+        });
       }
+      await resetPinAttempts(profile.id);
       const token = makeAeToken(profile.id);
       return {
         token,
@@ -2674,6 +2718,40 @@ var appRouter = router({
         joinDate: profile.joinDate,
         isTeamLeader: profile.isTeamLeader
       };
+    }),
+    // Change PIN — requires current PIN for verification
+    changePin: publicProcedure.input(
+      z5.object({
+        currentPin: z5.string().length(4).regex(/^\d{4}$/),
+        newPin: z5.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits")
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) {
+        throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
+      }
+      const profile = await getAeProfileById(aeId);
+      if (!profile) {
+        throw new TRPCError6({ code: "NOT_FOUND", message: "Profile not found." });
+      }
+      const valid = await bcrypt2.compare(input.currentPin, profile.pinHash);
+      if (!valid) {
+        throw new TRPCError6({
+          code: "UNAUTHORIZED",
+          message: "Current PIN is incorrect."
+        });
+      }
+      const samePin = await bcrypt2.compare(input.newPin, profile.pinHash);
+      if (samePin) {
+        throw new TRPCError6({
+          code: "BAD_REQUEST",
+          message: "New PIN must be different from your current PIN."
+        });
+      }
+      const newPinHash = await bcrypt2.hash(input.newPin, 10);
+      await updateAeProfile(aeId, { pinHash: newPinHash });
+      await resetPinAttempts(aeId);
+      return { success: true };
     }),
     // Logout AE session (client clears localStorage)
     logout: publicProcedure.mutation(() => {

@@ -73,3 +73,12 @@
 ## Bug Fixes
 - [x] Fix login loop — race condition in LoginPage: await refetch() before navigate("/dashboard")
 - [x] Fix Manus OAuth redirect — switched AE session from httpOnly cookie to localStorage token sent via X-AE-Token header; removed global OAuth redirect from main.tsx; ae.me query disabled when no token present
+
+## PIN Security
+- [x] Add failedPinAttempts + lockedUntil columns to ae_profiles table
+- [x] Push schema migration
+- [x] Backend: lockout logic on ae.login (5 attempts → 2-hour lockout, resets on success)
+- [x] Backend: ae.changePin procedure (verify current PIN, set new PIN, reset attempts)
+- [x] Frontend: Change PIN dialog in AppLayout sidebar (current PIN + new PIN + confirm)
+- [x] Frontend: Lockout error banner on LoginPage (amber warning for wrong PIN, red lock for lockout)
+- [x] Frontend: PIN input disabled and button shows locked state during lockout

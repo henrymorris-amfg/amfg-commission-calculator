@@ -36,6 +36,13 @@
       "when": 1771755280346,
       "tag": "0004_shallow_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1771755417474,
+      "tag": "0005_white_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }

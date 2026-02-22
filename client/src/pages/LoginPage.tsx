@@ -19,6 +19,8 @@ export default function LoginPage() {
   const [selectedName, setSelectedName] = useState("");
   const [pin, setPin] = useState("");
   const [showPin, setShowPin] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
 
   // Register form state
   const [regName, setRegName] = useState("");
@@ -31,14 +33,19 @@ export default function LoginPage() {
 
   const loginMutation = trpc.ae.login.useMutation({
     onSuccess: async (data) => {
-      // Store the session token in localStorage so it's sent on every
-      // subsequent tRPC request via the X-AE-Token header.
+      setLoginError(null);
+      setIsLocked(false);
       setAeToken(data.token);
-      // Wait for the AE context to refresh before navigating.
       await refetch();
       navigate("/dashboard");
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      const msg = err.message;
+      const locked = msg.toLowerCase().includes("locked");
+      setIsLocked(locked);
+      setLoginError(msg);
+      setPin("");
+    },
   });
 
   const registerMutation = trpc.ae.register.useMutation({
@@ -205,12 +212,24 @@ export default function LoginPage() {
           {mode === "login" && (
             <div className="space-y-6">
               <div>
-                <button onClick={() => setMode("select")} className="text-xs text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 transition-colors">
+                <button onClick={() => { setMode("select"); setLoginError(null); setIsLocked(false); setPin(""); }} className="text-xs text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 transition-colors">
                   ← Back
                 </button>
                 <h2 className="text-3xl text-foreground">Enter your PIN</h2>
                 <p className="text-muted-foreground mt-1">Signing in as <span className="text-foreground font-medium">{selectedName}</span></p>
               </div>
+
+              {/* Error / Lockout Banner */}
+              {loginError && (
+                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${
+                  isLocked
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                }`}>
+                  <span className="text-base leading-none mt-0.5">{isLocked ? "🔒" : "⚠️"}</span>
+                  <span>{loginError}</span>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -221,10 +240,13 @@ export default function LoginPage() {
                       inputMode="numeric"
                       maxLength={4}
                       value={pin}
-                      onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                      onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 4)); if (loginError && !isLocked) setLoginError(null); }}
+                      onKeyDown={(e) => e.key === "Enter" && !isLocked && handleLogin()}
                       placeholder="••••"
-                      className="text-center text-2xl tracking-[0.5em] h-14 bg-input border-border focus:border-primary pr-12"
+                      disabled={isLocked}
+                      className={`text-center text-2xl tracking-[0.5em] h-14 bg-input border-border focus:border-primary pr-12 ${
+                        isLocked ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     />
                     <button
                       type="button"
@@ -238,11 +260,13 @@ export default function LoginPage() {
 
                 <Button
                   onClick={handleLogin}
-                  disabled={pin.length !== 4 || loginMutation.isPending}
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                  disabled={pin.length !== 4 || loginMutation.isPending || isLocked}
+                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold disabled:opacity-50"
                 >
                   {loginMutation.isPending ? (
                     <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Signing in...</span>
+                  ) : isLocked ? (
+                    <span className="flex items-center gap-2">🔒 Account Locked</span>
                   ) : (
                     <span className="flex items-center gap-2"><LogIn className="w-4 h-4" />Sign In</span>
                   )}

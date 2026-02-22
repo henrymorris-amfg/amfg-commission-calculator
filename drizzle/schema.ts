@@ -63,6 +63,9 @@ export const aeProfiles = mysqlTable("ae_profiles", {
   pinHash: varchar("pinHash", { length: 256 }).notNull(),
   joinDate: timestamp("joinDate").notNull(),
   isTeamLeader: boolean("isTeamLeader").default(false).notNull(),
+  // PIN lockout: track failed attempts and when the lockout expires
+  failedPinAttempts: int("failedPinAttempts").default(0).notNull(),
+  lockedUntil: timestamp("lockedUntil"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -43,6 +43,8 @@ import {
   updateCommissionStructure,
   upsertMonthlyMetric,
   updateAeProfile,
+  recordFailedPinAttempt,
+  resetPinAttempts,
 } from "./db";
 
 // Seed the initial commission structure on first startup
@@ -179,13 +181,49 @@ export const appRouter = router({
         if (!profile) {
           throw new TRPCError({ code: "NOT_FOUND", message: "AE not found." });
         }
+
+        // ── Lockout check ──────────────────────────────────────────────────────
+        const MAX_ATTEMPTS = 5;
+        const LOCKOUT_HOURS = 2;
+        const now = new Date();
+
+        if (profile.lockedUntil && profile.lockedUntil > now) {
+          const minutesLeft = Math.ceil(
+            (profile.lockedUntil.getTime() - now.getTime()) / 60000
+          );
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message: `Account locked. Try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`,
+          });
+        }
+
+        // ── PIN verification ───────────────────────────────────────────────────
         const valid = await bcrypt.compare(input.pin, profile.pinHash);
         if (!valid) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Incorrect PIN." });
+          const newAttempts = (profile.failedPinAttempts ?? 0) + 1;
+          const lockoutUntil =
+            newAttempts >= MAX_ATTEMPTS
+              ? new Date(now.getTime() + LOCKOUT_HOURS * 60 * 60 * 1000)
+              : undefined;
+          await recordFailedPinAttempt(profile.id, newAttempts, lockoutUntil);
+
+          const remaining = MAX_ATTEMPTS - newAttempts;
+          if (lockoutUntil) {
+            throw new TRPCError({
+              code: "TOO_MANY_REQUESTS",
+              message: `Too many incorrect attempts. Account locked for ${LOCKOUT_HOURS} hours.`,
+            });
+          }
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: `Incorrect PIN. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`,
+          });
         }
+
+        // ── Success — reset attempt counter ────────────────────────────────────
+        await resetPinAttempts(profile.id);
+
         const token = makeAeToken(profile.id);
-        // Return token in response body — client stores in localStorage and
-        // sends as X-AE-Token header on every subsequent request.
         return {
           token,
           id: profile.id,
@@ -193,6 +231,48 @@ export const appRouter = router({
           joinDate: profile.joinDate,
           isTeamLeader: profile.isTeamLeader,
         };
+      }),
+
+    // Change PIN — requires current PIN for verification
+    changePin: publicProcedure
+      .input(
+        z.object({
+          currentPin: z.string().length(4).regex(/^\d{4}$/),
+          newPin: z.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        }
+        const profile = await getAeProfileById(aeId);
+        if (!profile) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found." });
+        }
+
+        // Verify current PIN
+        const valid = await bcrypt.compare(input.currentPin, profile.pinHash);
+        if (!valid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Current PIN is incorrect.",
+          });
+        }
+
+        // Ensure new PIN is different
+        const samePin = await bcrypt.compare(input.newPin, profile.pinHash);
+        if (samePin) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "New PIN must be different from your current PIN.",
+          });
+        }
+
+        const newPinHash = await bcrypt.hash(input.newPin, 10);
+        await updateAeProfile(aeId, { pinHash: newPinHash });
+        await resetPinAttempts(aeId);
+        return { success: true };
       }),
 
     // Logout AE session (client clears localStorage)

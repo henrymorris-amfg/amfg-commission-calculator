@@ -7,6 +7,7 @@ import {
   Calendar,
   ChevronRight,
   DollarSign,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Medal,
@@ -20,6 +21,16 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
@@ -37,6 +48,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ae, refetch } = useAeAuth();
   const [location, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [changePinOpen, setChangePinOpen] = useState(false);
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+
+  const changePinMutation = trpc.ae.changePin.useMutation({
+    onSuccess: () => {
+      toast.success("PIN changed successfully.");
+      setChangePinOpen(false);
+      setCurrentPin("");
+      setNewPin("");
+      setConfirmPin("");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleChangePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPin !== confirmPin) {
+      toast.error("New PINs do not match.");
+      return;
+    }
+    if (!/^\d{4}$/.test(newPin)) {
+      toast.error("PIN must be exactly 4 digits.");
+      return;
+    }
+    changePinMutation.mutate({ currentPin, newPin });
+  };
 
   const logoutMutation = trpc.ae.logout.useMutation({
     onSuccess: () => {
@@ -113,8 +152,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-border">
+        {/* Profile Actions */}
+        <div className="px-3 py-4 border-t border-border space-y-1">
+          <button
+            onClick={() => setChangePinOpen(true)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-150"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>Change PIN</span>
+          </button>
           <button
             onClick={() => logoutMutation.mutate()}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
@@ -212,8 +258,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            {/* Logout */}
-            <div className="px-3 py-4 border-t border-border">
+            {/* Profile Actions */}
+            <div className="px-3 py-4 border-t border-border space-y-1">
+              <button
+                onClick={() => { setChangePinOpen(true); setMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-150"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>Change PIN</span>
+              </button>
               <button
                 onClick={() => logoutMutation.mutate()}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
@@ -230,6 +283,85 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-auto md:pt-0 pt-[57px]">
         {children}
       </main>
+
+      {/* ── Change PIN Dialog ────────────────────────────────────────────────── */}
+      <Dialog open={changePinOpen} onOpenChange={(open) => {
+        setChangePinOpen(open);
+        if (!open) { setCurrentPin(""); setNewPin(""); setConfirmPin(""); }
+      }}>
+        <DialogContent className="sm:max-w-md bg-[oklch(0.16_0.016_250)] border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Change PIN
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Enter your current PIN and choose a new 4-digit PIN.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleChangePinSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="current-pin" className="text-foreground text-sm">Current PIN</Label>
+              <Input
+                id="current-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="••••"
+                value={currentPin}
+                onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="bg-background border-border text-foreground tracking-widest text-center text-xl"
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-pin" className="text-foreground text-sm">New PIN</Label>
+              <Input
+                id="new-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="••••"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="bg-background border-border text-foreground tracking-widest text-center text-xl"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-pin" className="text-foreground text-sm">Confirm New PIN</Label>
+              <Input
+                id="confirm-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="••••"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="bg-background border-border text-foreground tracking-widest text-center text-xl"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setChangePinOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={changePinMutation.isPending || currentPin.length !== 4 || newPin.length !== 4 || confirmPin.length !== 4}
+              >
+                {changePinMutation.isPending ? "Saving..." : "Change PIN"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Mobile Bottom Navigation ─────────────────────────────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-[oklch(0.14_0.016_250)] flex">
