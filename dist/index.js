@@ -2211,6 +2211,17 @@ async function toUsd2(value, currency) {
   if (!rate) return value;
   return value / rate;
 }
+var DEAL_EXCLUSION_KEYWORDS = [
+  "implementation",
+  "customer success",
+  "onboarding",
+  "cs ",
+  "- cs"
+];
+function isDealExcluded(title) {
+  const lower = title.toLowerCase();
+  return DEAL_EXCLUSION_KEYWORDS.some((kw) => lower.includes(kw));
+}
 var PIPELINE_NAMES = {
   20: "Machining",
   12: "Closing SMB",
@@ -2241,6 +2252,7 @@ async function fetchWonDealsForUser(pipedriveUserId, fromDate, toDate) {
     });
     for (const d of deals2) {
       if (dealsById.has(d.id)) continue;
+      if (isDealExcluded(d.title)) continue;
       const wonDate = d.won_time || d.close_time;
       if (!wonDate) continue;
       const date = wonDate.substring(0, 10);

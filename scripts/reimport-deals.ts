@@ -109,6 +109,13 @@ async function fetchWonDealsForUser(pipedriveUserId: number, fromDate: string, t
       const data = resp.data || [];
       for (const d of data) {
         if (dealsById.has(d.id)) continue;
+        // Skip implementation/CS/onboarding deals — these are not new ARR
+        const titleLower = (d.title || "").toLowerCase();
+        if (
+          titleLower.includes("implementation") ||
+          titleLower.includes("customer success") ||
+          titleLower.includes("onboarding")
+        ) continue;
         const wonDate = d.won_time || d.close_time;
         if (!wonDate) continue;
         const date = wonDate.substring(0, 10);

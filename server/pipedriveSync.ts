@@ -197,6 +197,26 @@ async function toUsd(value: number, currency: string): Promise<number> {
   return value / rate;
 }
 
+// ─── Deal exclusion filter ──────────────────────────────────────────────────
+
+/**
+ * Deal titles containing any of these keywords should be excluded from import.
+ * These represent implementation, onboarding, or customer success engagements
+ * that are not new ARR and should not generate commission.
+ */
+const DEAL_EXCLUSION_KEYWORDS = [
+  "implementation",
+  "customer success",
+  "onboarding",
+  "cs ",
+  "- cs",
+];
+
+function isDealExcluded(title: string): boolean {
+  const lower = title.toLowerCase();
+  return DEAL_EXCLUSION_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 // ─── Pipeline name map ────────────────────────────────────────────────────────
 
 const PIPELINE_NAMES: Record<number, string> = {
@@ -252,9 +272,10 @@ async function fetchWonDealsForUser(
       status: "won",
     });
 
-    // Filter by date range and deduplicate by deal ID
+    // Filter by date range, exclude implementation/CS deals, and deduplicate by deal ID
     for (const d of deals) {
       if (dealsById.has(d.id)) continue; // already counted from another pipeline
+      if (isDealExcluded(d.title)) continue; // skip implementation/CS/onboarding deals
       const wonDate = d.won_time || d.close_time;
       if (!wonDate) continue;
       const date = wonDate.substring(0, 10); // YYYY-MM-DD
