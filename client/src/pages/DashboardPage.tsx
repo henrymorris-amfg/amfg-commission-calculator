@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
@@ -22,6 +23,8 @@ import {
   Phone,
   PhoneCall,
   Activity,
+  RefreshCw,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -83,6 +86,24 @@ export default function DashboardPage() {
   );
 
   const { data: fxData } = trpc.commission.fxRate.useQuery(undefined, { enabled: !!ae });
+
+  // Sync Now mutation (team leader only)
+  const utils = trpc.useUtils();
+  const syncMutation = trpc.pipedriveSync.import.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Sync complete — ${data.totalImported} month records updated.`);
+      utils.tier.calculate.invalidate();
+      utils.pipedriveSync.myDeals.invalidate();
+      utils.commission.monthlySummary.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Sync failed: ${err.message}`);
+    },
+  });
+
+  const handleSyncNow = useCallback(() => {
+    syncMutation.mutate({ months: 4, mergeMode: "replace", useJoinDate: true });
+  }, [syncMutation]);
 
   const { data: summary = [] } = trpc.commission.monthlySummary.useQuery(
     undefined,
@@ -187,13 +208,26 @@ export default function DashboardPage() {
               Here's your commission overview for {MONTH_NAMES[selectedMonth - 1]} {selectedYear}.
             </p>
           </div>
-          <Button
-            onClick={() => navigate("/deals")}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 self-start"
-          >
-            <Plus className="w-4 h-4" />
-            Log Deal
-          </Button>
+          <div className="flex items-center gap-2 self-start">
+            {ae.isTeamLeader && (
+              <Button
+                variant="outline"
+                onClick={handleSyncNow}
+                disabled={syncMutation.isPending}
+                className="gap-2 border-border text-muted-foreground hover:text-foreground"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+                {syncMutation.isPending ? "Syncing…" : "Sync Now"}
+              </Button>
+            )}
+            <Button
+              onClick={() => navigate("/deals")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Log Deal
+            </Button>
+          </div>
         </div>
 
         {/* Badges */}
@@ -311,7 +345,7 @@ export default function DashboardPage() {
               </h3>
               {nextTier && (
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Based on your 3-month rolling averages
+                  3-month rolling avg (Nov–Jan) · used for tier
                 </p>
               )}
             </div>
@@ -497,7 +531,13 @@ export default function DashboardPage() {
         {tierData && (
           <div className="rounded-2xl bg-card border border-border p-6">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-foreground">Tier Criteria — {MONTH_NAMES[selectedMonth - 1]}</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Tier Criteria — {MONTH_NAMES[selectedMonth - 1]}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Averages from last 3 complete months · used for tier calculation
+                </p>
+              </div>
               <button
                 onClick={() => navigate("/metrics")}
                 className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
@@ -738,13 +778,16 @@ function PipedriveDealsWidget() {
 
   return (
     <div className="rounded-2xl bg-card border border-border p-6">
-      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Won Deals (Pipedrive)</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Won Deals (Pipedrive)</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Live from Pipedrive · includes current month · not used for tier</p>
+          </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">Last 3 months</p>
+          <p className="text-xs text-muted-foreground">Last 3 months (live)</p>
           <p className="text-sm font-bold text-foreground">
             ${totalArr.toLocaleString(undefined, { maximumFractionDigits: 0 })} ARR
           </p>

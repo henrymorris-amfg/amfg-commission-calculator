@@ -166,3 +166,8 @@
 - [x] Investigate: "Last 3 months $111,614 ARR" shows as "$11,384 Avg ARR/Month" — Jan 2026 ARR was $0 in monthly_metrics (Pipedrive sync had not run for Jan)
 - [x] Fix: ran Pipedrive sync to populate Jan 2026 ARR ($28,921) in monthly_metrics for Joe Payne
 - [x] Re-imported all deals with corrected tiers: Joe Jan+Feb 2026 now Silver (was Bronze)
+
+## Three Dashboard Improvements (Feb 22 2026)
+- [x] Add "Sync Now" button to Dashboard — triggers Pipedrive sync directly from dashboard (team leader only)
+- [x] Run Toby Greer VOIP sync for August 2025 — confirmed already populated (506 dials, no gap)
+- [x] Add clarifying labels on dashboard ARR figures: "from Pipedrive (live)" vs "used for tier calculation"
