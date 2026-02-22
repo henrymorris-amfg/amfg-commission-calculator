@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -40,15 +40,16 @@ interface ImportResult {
 }
 
 export default function PipedriveSyncPage() {
-  const { ae } = useAeAuth();
+  const { ae, isLoading } = useAeAuth();
   const [, navigate] = useLocation();
   const [monthsToSync, setMonthsToSync] = useState(4);
   const [mergeMode, setMergeMode] = useState<"replace" | "add">("replace");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  // Status check
+  // Status check — only run once AE session is confirmed to avoid stale UNAUTHORIZED errors
   const statusQuery = trpc.pipedriveSync.status.useQuery(undefined, {
     retry: false,
+    enabled: !!ae,
   });
 
   // Preview query
@@ -70,11 +71,12 @@ export default function PipedriveSyncPage() {
     },
   });
 
-  // Redirect non-team-leaders (after all hooks)
-  if (ae && !ae.isTeamLeader) {
-    navigate("/dashboard");
-    return null;
-  }
+  // Redirect unauthenticated users and non-team-leaders (after all hooks)
+  useEffect(() => {
+    if (!isLoading && !ae) navigate("/");
+    if (!isLoading && ae && !ae.isTeamLeader) navigate("/dashboard");
+  }, [ae, isLoading]);
+  if (isLoading || !ae || !ae.isTeamLeader) return null;
 
   const handlePreview = () => {
     previewQuery.refetch();
