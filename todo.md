@@ -110,3 +110,10 @@
 - [x] Add importDeals procedure to pipedriveSync router (creates deal + commission payout records)
 - [x] Add Import Deals to Commission button on Pipedrive sync page
 - [x] Run importDeals for all AEs — 44 deals imported (20 Henry, 19 Joe, 5 Toby, 0 Julian — Julian too new)
+
+## Full Resync & Verification (Feb 22 2026 — pre-Monday)
+- [x] Clear inflated monthly_metrics ARR (reset arrUsd to 0, kept dials/demos intact)
+- [x] Re-run Pipedrive sync from scratch — correct ARR now in DB for all AEs
+- [x] Clear old Pipedrive deal imports and re-import all 44 current won deals (20 Henry, 19 Joe, 5 Toby)
+- [x] Verify VOIP dials — confirmed correct via direct API (audit script bug was using Pipedrive IDs not VOIP IDs)
+- [x] Final validation — all data confirmed correct for Monday

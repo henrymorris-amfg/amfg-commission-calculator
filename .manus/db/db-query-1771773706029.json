@@ -1,0 +1,176 @@
+{
+  "query": "\nSELECT \n  a.name,\n  m.year,\n  m.month,\n  ROUND(m.arrUsd, 0) as arr_usd,\n  m.demosTotal as demos,\n  m.dialsTotal as dials\nFROM monthly_metrics m\nJOIN ae_profiles a ON m.aeId = a.id\nWHERE a.isActive = 1\n  AND (m.year = 2026 OR (m.year = 2025 AND m.month >= 10))\nORDER BY a.name, m.year, m.month;\n\nSELECT a.name, COUNT(d.id) as deal_count, ROUND(SUM(d.arrUsd), 0) as total_arr_usd\nFROM ae_profiles a\nLEFT JOIN deals d ON d.aeId = a.id\nWHERE a.isActive = 1\nGROUP BY a.id, a.name;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT \n  a.name,\n  m.year,\n  m.month,\n  ROUND(m.arrUsd, 0) as arr_usd,\n  m.demosTotal as demos,\n  m.dialsTotal as dials\nFROM monthly_metrics m\nJOIN ae_profiles a ON m.aeId = a.id\nWHERE a.isActive = 1\n  AND (m.year = 2026 OR (m.year = 2025 AND m.month >= 10))\nORDER BY a.name, m.year, m.month;\n\nSELECT a.name, COUNT(d.id) as deal_count, ROUND(SUM(d.arrUsd), 0) as total_arr_usd\nFROM ae_profiles a\nLEFT JOIN deals d ON d.aeId = a.id\nWHERE a.isActive = 1\nGROUP BY a.id, a.name;\n",
+  "rows": [
+    {
+      "name": "Henry Morris",
+      "year": "2025",
+      "month": "10",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "260"
+    },
+    {
+      "name": "Henry Morris",
+      "year": "2025",
+      "month": "11",
+      "arr_usd": "4000",
+      "demos": "2",
+      "dials": "65"
+    },
+    {
+      "name": "Henry Morris",
+      "year": "2025",
+      "month": "12",
+      "arr_usd": "38661",
+      "demos": "2",
+      "dials": "33"
+    },
+    {
+      "name": "Henry Morris",
+      "year": "2026",
+      "month": "1",
+      "arr_usd": "0",
+      "demos": "5",
+      "dials": "65"
+    },
+    {
+      "name": "Henry Morris",
+      "year": "2026",
+      "month": "2",
+      "arr_usd": "22888",
+      "demos": "3",
+      "dials": "127"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "10",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "779"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "11",
+      "arr_usd": "7067",
+      "demos": "16",
+      "dials": "963"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "12",
+      "arr_usd": "42434",
+      "demos": "7",
+      "dials": "385"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "1",
+      "arr_usd": "43521",
+      "demos": "17",
+      "dials": "655"
+    },
+    {
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "2",
+      "arr_usd": "25659",
+      "demos": "13",
+      "dials": "629"
+    },
+    {
+      "name": "Julian Earl",
+      "year": "2025",
+      "month": "10",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "0"
+    },
+    {
+      "name": "Julian Earl",
+      "year": "2025",
+      "month": "11",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "0"
+    },
+    {
+      "name": "Julian Earl",
+      "year": "2025",
+      "month": "12",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "0"
+    },
+    {
+      "name": "Julian Earl",
+      "year": "2026",
+      "month": "1",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "589"
+    },
+    {
+      "name": "Julian Earl",
+      "year": "2026",
+      "month": "2",
+      "arr_usd": "0",
+      "demos": "3",
+      "dials": "732"
+    },
+    {
+      "name": "Toby Greer",
+      "year": "2025",
+      "month": "10",
+      "arr_usd": "0",
+      "demos": "0",
+      "dials": "346"
+    },
+    {
+      "name": "Toby Greer",
+      "year": "2025",
+      "month": "11",
+      "arr_usd": "0",
+      "demos": "15",
+      "dials": "272"
+    },
+    {
+      "name": "Toby Greer",
+      "year": "2025",
+      "month": "12",
+      "arr_usd": "27085",
+      "demos": "14",
+      "dials": "122"
+    },
+    {
+      "name": "Toby Greer",
+      "year": "2026",
+      "month": "1",
+      "arr_usd": "0",
+      "demos": "15",
+      "dials": "225"
+    },
+    {
+      "name": "Toby Greer",
+      "year": "2026",
+      "month": "2",
+      "arr_usd": "15306",
+      "demos": "3",
+      "dials": "74"
+    }
+  ],
+  "messages": [
+    "name\tdeal_count\ttotal_arr_usd",
+    "Joe Payne\t19\t185125",
+    "Henry Morris\t20\t206046",
+    "Toby Greer\t5\t64591",
+    "Julian Earl\t0\tNULL"
+  ],
+  "stdout": "name\tyear\tmonth\tarr_usd\tdemos\tdials\nHenry Morris\t2025\t10\t0\t0\t260\nHenry Morris\t2025\t11\t4000\t2\t65\nHenry Morris\t2025\t12\t38661\t2\t33\nHenry Morris\t2026\t1\t0\t5\t65\nHenry Morris\t2026\t2\t22888\t3\t127\nJoe Payne\t2025\t10\t0\t0\t779\nJoe Payne\t2025\t11\t7067\t16\t963\nJoe Payne\t2025\t12\t42434\t7\t385\nJoe Payne\t2026\t1\t43521\t17\t655\nJoe Payne\t2026\t2\t25659\t13\t629\nJulian Earl\t2025\t10\t0\t0\t0\nJulian Earl\t2025\t11\t0\t0\t0\nJulian Earl\t2025\t12\t0\t0\t0\nJulian Earl\t2026\t1\t0\t0\t589\nJulian Earl\t2026\t2\t0\t3\t732\nToby Greer\t2025\t10\t0\t0\t346\nToby Greer\t2025\t11\t0\t15\t272\nToby Greer\t2025\t12\t27085\t14\t122\nToby Greer\t2026\t1\t0\t15\t225\nToby Greer\t2026\t2\t15306\t3\t74\nname\tdeal_count\ttotal_arr_usd\nJoe Payne\t19\t185125\nHenry Morris\t20\t206046\nToby Greer\t5\t64591\nJulian Earl\t0\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 423
+}

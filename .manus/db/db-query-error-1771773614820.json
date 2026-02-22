@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE monthly_metrics SET arr_usd = 0, arr_usd_from_pipedrive = 0;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute UPDATE monthly_metrics SET arr_usd = 0, arr_usd_from_pipedrive = 0;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'arr_usd' in 'field list'"
+  ]
+}
