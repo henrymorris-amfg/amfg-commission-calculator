@@ -537,22 +537,24 @@ export const pipedriveSyncRouter = router({
           const existing = await getMetricsForMonth(ae.id, year, month);
 
                     const arrUsd = arr?.totalArrUsd ?? 0;
-          const demosFromPipedrive = demos?.totalDemos ?? 0;
-
+            const demosFromPipedrive = demos?.totalDemos ?? 0;
           let newArrUsd: number;
           if (input.mergeMode === "add" && existing) {
             newArrUsd = Number(existing.arrUsd) + arrUsd;
           } else {
             newArrUsd = arrUsd;
           }
-
+          // Always update demosTotal with Pipedrive count so it shows on Activity Metrics.
+          // Use the higher of the two values to avoid overwriting manual entries that are larger.
+          const existingDemosTotal = existing?.demosTotal ?? 0;
+          const newDemosTotal = demosFromPipedrive > existingDemosTotal ? demosFromPipedrive : existingDemosTotal;
           await upsertMonthlyMetric({
             aeId: ae.id,
             year: year,
             month: month,
             arrUsd: String(Math.round(newArrUsd)),
             demosFromPipedrive,
-            demosTotal: existing?.demosTotal ?? 0,
+            demosTotal: newDemosTotal,
             dialsTotal: existing?.dialsTotal ?? 0,
             retentionRate: existing?.retentionRate ?? null,
           });

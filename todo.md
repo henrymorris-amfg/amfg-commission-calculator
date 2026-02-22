@@ -87,3 +87,10 @@
 - [x] Diagnose and fix VOIP Studio API integration failure — was using old (ctx as Record).aeId pattern; replaced with getAeIdFromCtx() from shared aeAuth.ts
 - [x] Diagnose and fix Pipedrive API integration failure — was using getAeIdFromCookie() reading old ae_session cookie; replaced with getAeIdFromCtx() from shared aeAuth.ts
 - [x] Created server/aeAuth.ts shared module for X-AE-Token header parsing (used by all sync routers)
+- [x] Fix auth timing issue on VOIP/Pipedrive pages — queries now wait for AE session to load before firing
+
+## AE Management & Metrics Fixes
+- [x] Add remaining AEs: Janos Rosenberg, Joe Payne, Julian Earl, Toby Greer (default PIN 1234)
+- [x] Fix Demos Done not showing on Activity Metrics — Pipedrive import now updates demosTotal (uses higher of Pipedrive vs manual value)
+- [x] Add Admin PIN Reset feature on Commission Structure page (team leader only)
+- [x] Add ae.adminResetPin tRPC procedure (team leader auth, bcrypt hash, reset lockout)

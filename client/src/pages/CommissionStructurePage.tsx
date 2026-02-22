@@ -35,6 +35,7 @@ import {
   Clock,
   ChevronRight,
   AlertTriangle,
+  KeyRound,
 } from "lucide-react";
 
 // ─── Tier config ──────────────────────────────────────────────────────────────
@@ -548,6 +549,115 @@ function ActivateDialog({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+// ─── Admin PIN Reset Section ──────────────────────────────────────────────────
+function AdminPinResetSection() {
+  const { data: aeList = [] } = trpc.ae.listNames.useQuery();
+  const [selectedAeId, setSelectedAeId] = useState<number | null>(null);
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const resetMutation = trpc.ae.adminResetPin.useMutation({
+    onSuccess: (data) => {
+      toast.success(`PIN reset for ${data.aeName}`);
+      setConfirmOpen(false);
+      setNewPin("");
+      setConfirmPin("");
+      setSelectedAeId(null);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const selectedName = aeList.find((a) => a.id === selectedAeId)?.name;
+
+  const handleResetClick = () => {
+    if (!selectedAeId) return toast.error("Please select an AE.");
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) return toast.error("PIN must be exactly 4 digits.");
+    if (newPin !== confirmPin) return toast.error("PINs do not match.");
+    setConfirmOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <KeyRound className="w-4 h-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Admin: Reset AE PIN</h2>
+      </div>
+      <Card className="bg-muted/20">
+        <CardContent className="pt-4 pb-4 space-y-4">
+          <p className="text-xs text-muted-foreground">Use this to reset an AE's PIN if they are locked out. The AE should change their PIN immediately after logging in.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Select AE</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                value={selectedAeId ?? ""}
+                onChange={(e) => setSelectedAeId(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">— choose AE —</option>
+                {aeList.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">New PIN</Label>
+              <Input
+                type="password"
+                maxLength={4}
+                placeholder="4 digits"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Confirm PIN</Label>
+              <Input
+                type="password"
+                maxLength={4}
+                placeholder="4 digits"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={handleResetClick}
+              disabled={resetMutation.isPending}
+              style={{ background: "oklch(0.82 0.14 75)", color: "oklch(0.12 0.02 260)" }}
+            >
+              <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+              Reset PIN
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm PIN Reset</DialogTitle>
+            <DialogDescription>
+              This will immediately change <strong>{selectedName}</strong>'s PIN. They will need to use the new PIN on their next login.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => resetMutation.mutate({ targetAeId: selectedAeId!, newPin })}
+              disabled={resetMutation.isPending}
+              style={{ background: "oklch(0.82 0.14 75)", color: "oklch(0.12 0.02 260)" }}
+            >
+              {resetMutation.isPending ? "Resetting…" : "Confirm Reset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function CommissionStructurePage() {
   const [, navigate] = useLocation();
   const { ae, isLoading } = useAeAuth();
@@ -647,6 +757,8 @@ export default function CommissionStructurePage() {
             </div>
           </CardContent>
         </Card>
+        {/* Admin PIN reset — team leader only */}
+        {ae.isTeamLeader && <AdminPinResetSection />}
       </div>
 
       <CreateStructureDialog

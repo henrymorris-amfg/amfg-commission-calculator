@@ -1,0 +1,46 @@
+{
+  "query": "SELECT aeId, year, month, arrUsd, demosTotal, demosFromPipedrive, dialsTotal FROM monthly_metrics ORDER BY aeId, year, month;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, year, month, arrUsd, demosTotal, demosFromPipedrive, dialsTotal FROM monthly_metrics ORDER BY aeId, year, month;",
+  "rows": [
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "194062.00",
+      "demosTotal": "0",
+      "demosFromPipedrive": "0",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "12000.00",
+      "demosTotal": "0",
+      "demosFromPipedrive": "0",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "115983.00",
+      "demosTotal": "0",
+      "demosFromPipedrive": "0",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "68664.00",
+      "demosTotal": "0",
+      "demosFromPipedrive": "0",
+      "dialsTotal": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\tarrUsd\tdemosTotal\tdemosFromPipedrive\tdialsTotal\n1\t2025\t9\t194062.00\t0\t0\t0\n1\t2025\t11\t12000.00\t0\t0\t0\n1\t2025\t12\t115983.00\t0\t0\t0\n1\t2026\t2\t68664.00\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 345
+}

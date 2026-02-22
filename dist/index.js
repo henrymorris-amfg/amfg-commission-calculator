@@ -2241,13 +2241,15 @@ var pipedriveSyncRouter = router({
         } else {
           newArrUsd = arrUsd;
         }
+        const existingDemosTotal = existing?.demosTotal ?? 0;
+        const newDemosTotal = demosFromPipedrive > existingDemosTotal ? demosFromPipedrive : existingDemosTotal;
         await upsertMonthlyMetric({
           aeId: ae.id,
           year,
           month,
           arrUsd: String(Math.round(newArrUsd)),
           demosFromPipedrive,
-          demosTotal: existing?.demosTotal ?? 0,
+          demosTotal: newDemosTotal,
           dialsTotal: existing?.dialsTotal ?? 0,
           retentionRate: existing?.retentionRate ?? null
         });
@@ -2774,6 +2776,30 @@ var appRouter = router({
       await updateAeProfile(aeId, { pinHash: newPinHash });
       await resetPinAttempts(aeId);
       return { success: true };
+    }),
+    // Admin: reset another AE's PIN (team leader only)
+    adminResetPin: publicProcedure.input(
+      z5.object({
+        targetAeId: z5.number().int().positive(),
+        newPin: z5.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits")
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const aeId = getAeIdFromCtx2(ctx);
+      if (!aeId) {
+        throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
+      }
+      const caller = await getAeProfileById(aeId);
+      if (!caller?.isTeamLeader) {
+        throw new TRPCError6({ code: "FORBIDDEN", message: "Team leader access required." });
+      }
+      const target = await getAeProfileById(input.targetAeId);
+      if (!target) {
+        throw new TRPCError6({ code: "NOT_FOUND", message: "AE not found." });
+      }
+      const newPinHash = await bcrypt2.hash(input.newPin, 10);
+      await updateAeProfile(input.targetAeId, { pinHash: newPinHash });
+      await resetPinAttempts(input.targetAeId);
+      return { success: true, aeName: target.name };
     }),
     // Logout AE session (client clears localStorage)
     logout: publicProcedure.mutation(() => {

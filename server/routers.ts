@@ -275,6 +275,32 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Admin: reset another AE's PIN (team leader only)
+    adminResetPin: publicProcedure
+      .input(
+        z.object({
+          targetAeId: z.number().int().positive(),
+          newPin: z.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        }
+        const caller = await getAeProfileById(aeId);
+        if (!caller?.isTeamLeader) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+        }
+        const target = await getAeProfileById(input.targetAeId);
+        if (!target) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "AE not found." });
+        }
+        const newPinHash = await bcrypt.hash(input.newPin, 10);
+        await updateAeProfile(input.targetAeId, { pinHash: newPinHash });
+        await resetPinAttempts(input.targetAeId);
+        return { success: true, aeName: target.name };
+      }),
     // Logout AE session (client clears localStorage)
     logout: publicProcedure.mutation(() => {
       return { success: true };

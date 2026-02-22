@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, isTeamLeader, failedPinAttempts, createdAt FROM ae_profiles ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, name, isTeamLeader, failedPinAttempts, createdAt FROM ae_profiles ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Henry Morris",
+      "isTeamLeader": "1",
+      "failedPinAttempts": "0",
+      "createdAt": "2026-02-21 18:55:04"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tisTeamLeader\tfailedPinAttempts\tcreatedAt\n1\tHenry Morris\t1\t0\t2026-02-21 18:55:04\n",
+  "stderr": "",
+  "execution_time_ms": 362
+}
