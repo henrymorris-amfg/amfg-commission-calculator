@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Step 2: Delete the non-keeper rows (those with lower IDs in duplicate groups)\nDELETE m1 FROM monthly_metrics m1\nJOIN (\n  SELECT aeId, year, month, MAX(id) as keep_id\n  FROM monthly_metrics\n  GROUP BY aeId, year, month\n  HAVING COUNT(*) > 1\n) keepers ON m1.aeId = keepers.aeId AND m1.year = keepers.year AND m1.month = keepers.month\nWHERE m1.id != keepers.keep_id;\n\n-- Verify no duplicates remain\nSELECT aeId, year, month, COUNT(*) as cnt\nFROM monthly_metrics\nGROUP BY aeId, year, month\nHAVING cnt > 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \n-- Step 2: Delete the non-keeper rows (those with lower IDs in duplicate groups)\nDELETE m1 FROM monthly_metrics m1\nJOIN (\n  SELECT aeId, year, month, MAX(id) as keep_id\n  FROM monthly_metrics\n  GROUP BY aeId, year, month\n  HAVING COUNT(*) > 1\n) keepers ON m1.aeId = keepers.aeId AND m1.year = keepers.year AND m1.month = keepers.month\nWHERE m1.id != keepers.keep_id;\n\n-- Verify no duplicates remain\nSELECT aeId, year, month, COUNT(*) as cnt\nFROM monthly_metrics\nGROUP BY aeId, year, month\nHAVING cnt > 1;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 415
+}

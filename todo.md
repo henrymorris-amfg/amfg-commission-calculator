@@ -102,3 +102,11 @@
 - [x] Run Pipedrive sync for all active AEs (13 records updated)
 - [x] Run VOIP monthly import for all AEs (24 records updated across 4 AEs)
 - [x] Add last-synced timestamp to Pipedrive sync page (persisted in localStorage)
+
+## Dashboard & Commission Fix (Feb 22 2026)
+- [x] Fix duplicate monthly_metrics rows (unique constraint added, existing duplicates merged into single rows)
+- [x] Fix dials/week 3-month average — was inflated by duplicate rows; Joe's correct figure is ~167/week (2003 dials ÷ 12 weeks)
+- [x] Add pipedriveId column to deals schema for deduplication on re-import
+- [x] Add importDeals procedure to pipedriveSync router (creates deal + commission payout records)
+- [x] Add Import Deals to Commission button on Pipedrive sync page
+- [x] Run importDeals for all AEs — 44 deals imported (20 Henry, 19 Joe, 5 Toby, 0 Julian — Julian too new)

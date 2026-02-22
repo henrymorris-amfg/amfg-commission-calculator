@@ -63,7 +63,21 @@ export default function PipedriveSyncPage() {
     { enabled: false, retry: false }
   );
 
-  // Import mutation
+  // Import deals mutation (creates deal + payout records in the commission engine)
+  const importDealsMutation = trpc.pipedriveSync.importDeals.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        `Deals imported — ${data.totalImported} new deal${data.totalImported !== 1 ? 's' : ''} added to commission calculator.`
+      );
+      if (data.errors.length > 0) {
+        toast.error(`${data.errors.length} deal(s) had errors during import.`);
+      }
+    },
+    onError: (err) => {
+      toast.error(`Deal import failed: ${err.message}`);
+    },
+  });
+  // Import ARR metrics mutation
   const importMutation = trpc.pipedriveSync.import.useMutation({
     onSuccess: (data) => {
       setImportResult(data);
@@ -291,7 +305,23 @@ export default function PipedriveSyncPage() {
               ) : (
                 <ArrowDownToLine className="w-4 h-4" />
               )}
-              Sync to Database
+              Sync ARR Metrics
+            </Button>
+            <Button
+              onClick={() => importDealsMutation.mutate({ months: monthsToSync })}
+              disabled={
+                importDealsMutation.isPending ||
+                !statusQuery.data?.working
+              }
+              variant="outline"
+              className="gap-2"
+            >
+              {importDealsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ArrowDownToLine className="w-4 h-4" />
+              )}
+              Import Deals to Commission
             </Button>
           </div>
           {lastSyncedAt && (

@@ -1,0 +1,94 @@
+{
+  "query": "\n-- First, see all duplicates across all AEs\nSELECT aeId, year, month, COUNT(*) as cnt\nFROM monthly_metrics\nGROUP BY aeId, year, month\nHAVING cnt > 1\nORDER BY aeId, year DESC, month DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \n-- First, see all duplicates across all AEs\nSELECT aeId, year, month, COUNT(*) as cnt\nFROM monthly_metrics\nGROUP BY aeId, year, month\nHAVING cnt > 1\nORDER BY aeId, year DESC, month DESC;\n",
+  "rows": [
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "2",
+      "cnt": "3"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "1",
+      "cnt": "2"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "12",
+      "cnt": "3"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "11",
+      "cnt": "3"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "9",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "2",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "12",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "11",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30003",
+      "year": "2026",
+      "month": "2",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30004",
+      "year": "2026",
+      "month": "2",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30004",
+      "year": "2026",
+      "month": "1",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "12",
+      "cnt": "2"
+    },
+    {
+      "aeId": "30004",
+      "year": "2025",
+      "month": "11",
+      "cnt": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\tcnt\n1\t2026\t2\t3\n1\t2026\t1\t2\n1\t2025\t12\t3\n1\t2025\t11\t3\n1\t2025\t9\t2\n30002\t2026\t2\t2\n30002\t2026\t1\t2\n30002\t2025\t12\t2\n30002\t2025\t11\t2\n30003\t2026\t2\t2\n30004\t2026\t2\t2\n30004\t2026\t1\t2\n30004\t2025\t12\t2\n30004\t2025\t11\t2\n",
+  "stderr": "",
+  "execution_time_ms": 357
+}

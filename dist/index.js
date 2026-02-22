@@ -37,6 +37,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  unique,
   varchar
 } from "drizzle-orm/mysql-core";
 var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts;
@@ -115,7 +116,10 @@ var init_schema = __esm({
       // total connected talk time in seconds
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
-    });
+    }, (t2) => ({
+      // Enforce one row per AE per calendar month — prevents duplicate inserts from VOIP + Pipedrive syncs
+      aeMonthUnique: unique("ae_month_unique").on(t2.aeId, t2.year, t2.month)
+    }));
     deals = mysqlTable("deals", {
       id: int("id").autoincrement().primaryKey(),
       aeId: int("aeId").notNull(),
@@ -135,6 +139,8 @@ var init_schema = __esm({
       fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
       // Reference to the commission structure version active when the deal was created
       commissionStructureId: int("commissionStructureId"),
+      // Pipedrive deal ID — set when imported from Pipedrive, null for manually entered deals
+      pipedriveId: int("pipedriveId"),
       notes: text("notes"),
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
@@ -198,6 +204,7 @@ __export(db_exports, {
   getCommissionStructureById: () => getCommissionStructureById,
   getDb: () => getDb,
   getDealById: () => getDealById,
+  getDealByPipedriveId: () => getDealByPipedriveId,
   getDealsForAe: () => getDealsForAe,
   getMetricsForAe: () => getMetricsForAe,
   getMetricsForMonth: () => getMetricsForMonth,
@@ -352,6 +359,12 @@ async function getDealById(id) {
   const db = await getDb();
   if (!db) return void 0;
   const result = await db.select().from(deals).where(eq(deals.id, id)).limit(1);
+  return result[0];
+}
+async function getDealByPipedriveId(aeId, pipedriveId) {
+  const db = await getDb();
+  if (!db) return void 0;
+  const result = await db.select().from(deals).where(and(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
   return result[0];
 }
 async function deleteDeal(id, aeId) {
@@ -1927,6 +1940,161 @@ init_aeAuth();
 init_db();
 import { z as z3 } from "zod";
 import { TRPCError as TRPCError4 } from "@trpc/server";
+
+// shared/commission.ts
+var TIER_COMMISSION_RATE = {
+  bronze: 0.13,
+  silver: 0.16,
+  gold: 0.19
+};
+var STANDARD_TARGETS = {
+  silver: { arrUsd: 2e4, demosPw: 3, dialsPw: 100, retentionMin: 61 },
+  gold: { arrUsd: 25e3, demosPw: 4, dialsPw: 200, retentionMin: 71 }
+};
+var TEAM_LEADER_TARGETS = {
+  silver: { arrUsd: 1e4, demosPw: 2, dialsPw: 50, retentionMin: 61 },
+  gold: { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 }
+};
+var RETENTION_SILVER_MIN = 61;
+var RETENTION_GOLD_MIN = 71;
+var MONTHLY_CONTRACT_PAYOUT_MONTHS = 13;
+var ANNUAL_CONTRACT_PAYOUT_MONTHS = 1;
+var ONBOARDING_DEDUCTION_GBP = 500;
+var NEW_JOINER_GRACE_MONTHS = 6;
+function calculateTier(inputs) {
+  const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+  const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
+  const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
+  const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
+  const meetsRetentionGold = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_GOLD_MIN;
+  const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
+  const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
+  const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
+  const meetsRetentionSilver = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_SILVER_MIN;
+  const reasons = [];
+  if (meetsArrGold && meetsDemosGold && meetsDialsGold && meetsRetentionGold) {
+    return {
+      tier: "gold",
+      reasons,
+      meetsArr: meetsArrGold,
+      meetsDemos: meetsDemosGold,
+      meetsDials: meetsDialsGold,
+      meetsRetention: meetsRetentionGold,
+      targets: targets.gold
+    };
+  }
+  if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
+  if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
+  if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
+  if (!meetsRetentionGold) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
+  if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
+    return {
+      tier: "silver",
+      reasons,
+      meetsArr: meetsArrSilver,
+      meetsDemos: meetsDemosSilver,
+      meetsDials: meetsDialsSilver,
+      meetsRetention: meetsRetentionSilver,
+      targets: targets.silver
+    };
+  }
+  if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
+  if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
+  if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
+  if (!meetsRetentionSilver) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
+  return {
+    tier: "bronze",
+    reasons,
+    meetsArr: meetsArrSilver,
+    meetsDemos: meetsDemosSilver,
+    meetsDials: meetsDialsSilver,
+    meetsRetention: meetsRetentionSilver,
+    targets: targets.silver
+  };
+}
+function computeRollingAverages(last3Months) {
+  if (last3Months.length === 0) {
+    return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
+  }
+  const totalArr = last3Months.reduce((s, m) => s + m.arrUsd, 0);
+  const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
+  const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
+  const n = last3Months.length;
+  return {
+    avgArrUsd: totalArr / n,
+    avgDemosPw: totalDemos / 12,
+    // always divide by 12 weeks
+    avgDialsPw: totalDials / 12
+  };
+}
+function computeAvgRetention(last6Months) {
+  const withRetention = last6Months.filter((m) => m.retentionRate != null);
+  if (withRetention.length === 0) return 0;
+  const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
+  return total / withRetention.length;
+}
+function calculateCommission(input) {
+  const rate = TIER_COMMISSION_RATE[input.tier];
+  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5e3;
+  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
+  const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
+  const effectiveArrUsd = input.onboardingFeePaid ? input.arrUsd : Math.max(0, input.arrUsd - arrReductionUsd);
+  const numPayouts = input.contractType === "annual" ? ANNUAL_CONTRACT_PAYOUT_MONTHS : payoutMonths;
+  const payoutAmountUsd = input.contractType === "annual" ? effectiveArrUsd * rate : effectiveArrUsd / 12 * rate;
+  const payoutSchedule = [];
+  for (let i = 1; i <= numPayouts; i++) {
+    const grossCommissionUsd = payoutAmountUsd;
+    const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
+    const onboardingDeductionGbp = !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
+    const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
+    const netCommissionGbp = netCommissionUsd * input.fxRateUsdToGbp - onboardingDeductionGbp;
+    payoutSchedule.push({
+      payoutNumber: i,
+      grossCommissionUsd,
+      referralDeductionUsd,
+      onboardingDeductionGbp,
+      netCommissionUsd,
+      netCommissionGbp: Math.max(0, netCommissionGbp)
+    });
+  }
+  const totalGrossUsd = payoutSchedule.reduce((s, p) => s + p.grossCommissionUsd, 0);
+  const totalNetUsd = payoutSchedule.reduce((s, p) => s + p.netCommissionUsd, 0);
+  const totalNetGbp = payoutSchedule.reduce((s, p) => s + p.netCommissionGbp, 0);
+  return {
+    tier: input.tier,
+    rate,
+    payoutSchedule,
+    totalGrossUsd,
+    totalNetUsd,
+    totalNetGbp,
+    effectiveArrUsd
+  };
+}
+function isNewJoiner(joinDate, forDate = /* @__PURE__ */ new Date()) {
+  const diffMs = forDate.getTime() - joinDate.getTime();
+  const diffMonths = diffMs / (1e3 * 60 * 60 * 24 * 30.44);
+  return diffMonths < NEW_JOINER_GRACE_MONTHS;
+}
+function addMonths(year, month, n) {
+  const date = new Date(year, month - 1 + n, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+var MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
+
+// server/pipedriveSync.ts
 var PIPEDRIVE_BASE2 = "https://api.pipedrive.com/v1";
 var TARGET_PIPELINE_IDS2 = [20, 12, 10];
 function getPipedriveApiKey() {
@@ -2321,6 +2489,145 @@ var pipedriveSyncRouter = router({
     };
   }),
   /**
+   * Import Pipedrive won deals as deal records for all AEs.
+   * Creates deal + payout records in the deals/commission_payouts tables.
+   * Skips deals already imported (idempotent via pipedriveId).
+   * Team leader only.
+   */
+  importDeals: publicProcedure.input(
+    z3.object({
+      months: z3.number().int().min(1).max(24).default(6)
+    })
+  ).mutation(async ({ input, ctx }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError4({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+    const profile = await getAeProfileById(aeId);
+    if (!profile?.isTeamLeader) {
+      throw new TRPCError4({ code: "FORBIDDEN", message: "Team leader access required." });
+    }
+    const now = /* @__PURE__ */ new Date();
+    const toDate = now.toISOString().substring(0, 10);
+    const fromDate = new Date(
+      now.getFullYear(),
+      now.getMonth() - (input.months - 1),
+      1
+    ).toISOString().substring(0, 10);
+    const allProfiles = await getAllAeProfiles();
+    const activeStructure = await getActiveCommissionStructure();
+    const fxRates = await getFxRates2();
+    const usdToGbp = fxRates["GBP"] ?? 0.79;
+    const imported = [];
+    const skipped = [];
+    const errors = [];
+    for (const ae of allProfiles) {
+      const pdUserId = await findPipedriveUserId2(ae.name);
+      if (!pdUserId) {
+        skipped.push(`${ae.name} (not found in Pipedrive)`);
+        continue;
+      }
+      const pdDeals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+      for (const pdDeal of pdDeals) {
+        try {
+          const existing = await getDealByPipedriveId(ae.id, pdDeal.id);
+          if (existing) {
+            skipped.push(`${ae.name}: ${pdDeal.title} (already imported)`);
+            continue;
+          }
+          const wonDate = pdDeal.won_time || pdDeal.close_time;
+          if (!wonDate) continue;
+          const startYear = parseInt(wonDate.substring(0, 4), 10);
+          const startMonth = parseInt(wonDate.substring(5, 7), 10);
+          const startDay = parseInt(wonDate.substring(8, 10), 10);
+          const arrUsd = await toUsd2(pdDeal.value || 0, pdDeal.currency || "USD");
+          const allMetrics = await getMetricsForAe(ae.id, 9);
+          const targetDate = new Date(startYear, startMonth - 1, 1);
+          const last3 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 3).map((m) => ({
+            year: m.year,
+            month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+          }));
+          const last6 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 6).map((m) => ({
+            year: m.year,
+            month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+          }));
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+          const avgRetentionRate = computeAvgRetention(last6);
+          const newJoiner = isNewJoiner(ae.joinDate, targetDate);
+          const tierResult = calculateTier({
+            avgArrUsd,
+            avgDemosPw,
+            avgDialsPw,
+            avgRetentionRate,
+            isNewJoiner: newJoiner,
+            isTeamLeader: ae.isTeamLeader
+          });
+          const tier = tierResult.tier;
+          const commResult = calculateCommission({
+            contractType: "annual",
+            arrUsd,
+            tier,
+            onboardingFeePaid: true,
+            isReferral: false,
+            fxRateUsdToGbp: usdToGbp,
+            monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : void 0,
+            onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : void 0,
+            onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : void 0
+          });
+          const dealId = await createDeal({
+            aeId: ae.id,
+            customerName: pdDeal.title,
+            contractType: "annual",
+            startYear,
+            startMonth,
+            startDay,
+            arrUsd: String(Math.round(arrUsd)),
+            onboardingFeePaid: true,
+            isReferral: false,
+            tierAtStart: tier,
+            fxRateAtEntry: String(usdToGbp),
+            commissionStructureId: activeStructure?.id ?? null,
+            pipedriveId: pdDeal.id,
+            notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`
+          });
+          const payouts = commResult.payoutSchedule.map((p, i) => {
+            const payoutDate = addMonths(startYear, startMonth, i);
+            return {
+              dealId,
+              aeId: ae.id,
+              payoutYear: payoutDate.year,
+              payoutMonth: payoutDate.month,
+              payoutNumber: p.payoutNumber,
+              grossCommissionUsd: String(p.grossCommissionUsd),
+              referralDeductionUsd: String(p.referralDeductionUsd),
+              onboardingDeductionGbp: String(p.onboardingDeductionGbp),
+              netCommissionUsd: String(p.netCommissionUsd),
+              fxRateUsed: String(usdToGbp),
+              netCommissionGbp: String(p.netCommissionGbp)
+            };
+          });
+          await createPayoutsForDeal(payouts);
+          imported.push(`${ae.name}: ${pdDeal.title} ($${Math.round(arrUsd).toLocaleString()} ARR, ${tier} tier)`);
+        } catch (err) {
+          errors.push(`${ae.name}: ${pdDeal.title} \u2014 ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    }
+    return {
+      success: true,
+      imported,
+      skipped,
+      errors,
+      totalImported: imported.length
+    };
+  }),
+  /**
    * Check if the Pipedrive API key is configured and working.
    */
   status: publicProcedure.query(async () => {
@@ -2344,161 +2651,6 @@ var pipedriveSyncRouter = router({
 init_voipSync();
 import * as bcrypt2 from "bcryptjs";
 import { z as z5 } from "zod";
-
-// shared/commission.ts
-var TIER_COMMISSION_RATE = {
-  bronze: 0.13,
-  silver: 0.16,
-  gold: 0.19
-};
-var STANDARD_TARGETS = {
-  silver: { arrUsd: 2e4, demosPw: 3, dialsPw: 100, retentionMin: 61 },
-  gold: { arrUsd: 25e3, demosPw: 4, dialsPw: 200, retentionMin: 71 }
-};
-var TEAM_LEADER_TARGETS = {
-  silver: { arrUsd: 1e4, demosPw: 2, dialsPw: 50, retentionMin: 61 },
-  gold: { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 }
-};
-var RETENTION_SILVER_MIN = 61;
-var RETENTION_GOLD_MIN = 71;
-var MONTHLY_CONTRACT_PAYOUT_MONTHS = 13;
-var ANNUAL_CONTRACT_PAYOUT_MONTHS = 1;
-var ONBOARDING_DEDUCTION_GBP = 500;
-var NEW_JOINER_GRACE_MONTHS = 6;
-function calculateTier(inputs) {
-  const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
-  const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
-  const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
-  const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
-  const meetsRetentionGold = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_GOLD_MIN;
-  const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
-  const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
-  const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
-  const meetsRetentionSilver = inputs.isNewJoiner || inputs.avgRetentionRate >= RETENTION_SILVER_MIN;
-  const reasons = [];
-  if (meetsArrGold && meetsDemosGold && meetsDialsGold && meetsRetentionGold) {
-    return {
-      tier: "gold",
-      reasons,
-      meetsArr: meetsArrGold,
-      meetsDemos: meetsDemosGold,
-      meetsDials: meetsDialsGold,
-      meetsRetention: meetsRetentionGold,
-      targets: targets.gold
-    };
-  }
-  if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
-  if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
-  if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
-  if (!meetsRetentionGold) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
-  if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
-    return {
-      tier: "silver",
-      reasons,
-      meetsArr: meetsArrSilver,
-      meetsDemos: meetsDemosSilver,
-      meetsDials: meetsDialsSilver,
-      meetsRetention: meetsRetentionSilver,
-      targets: targets.silver
-    };
-  }
-  if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
-  if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
-  if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
-  if (!meetsRetentionSilver) reasons.push(`Retention ${inputs.avgRetentionRate.toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
-  return {
-    tier: "bronze",
-    reasons,
-    meetsArr: meetsArrSilver,
-    meetsDemos: meetsDemosSilver,
-    meetsDials: meetsDialsSilver,
-    meetsRetention: meetsRetentionSilver,
-    targets: targets.silver
-  };
-}
-function computeRollingAverages(last3Months) {
-  if (last3Months.length === 0) {
-    return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
-  }
-  const totalArr = last3Months.reduce((s, m) => s + m.arrUsd, 0);
-  const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
-  const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
-  const n = last3Months.length;
-  return {
-    avgArrUsd: totalArr / n,
-    avgDemosPw: totalDemos / 12,
-    // always divide by 12 weeks
-    avgDialsPw: totalDials / 12
-  };
-}
-function computeAvgRetention(last6Months) {
-  const withRetention = last6Months.filter((m) => m.retentionRate != null);
-  if (withRetention.length === 0) return 0;
-  const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
-  return total / withRetention.length;
-}
-function calculateCommission(input) {
-  const rate = TIER_COMMISSION_RATE[input.tier];
-  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5e3;
-  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
-  const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
-  const effectiveArrUsd = input.onboardingFeePaid ? input.arrUsd : Math.max(0, input.arrUsd - arrReductionUsd);
-  const numPayouts = input.contractType === "annual" ? ANNUAL_CONTRACT_PAYOUT_MONTHS : payoutMonths;
-  const payoutAmountUsd = input.contractType === "annual" ? effectiveArrUsd * rate : effectiveArrUsd / 12 * rate;
-  const payoutSchedule = [];
-  for (let i = 1; i <= numPayouts; i++) {
-    const grossCommissionUsd = payoutAmountUsd;
-    const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
-    const onboardingDeductionGbp = !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
-    const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
-    const netCommissionGbp = netCommissionUsd * input.fxRateUsdToGbp - onboardingDeductionGbp;
-    payoutSchedule.push({
-      payoutNumber: i,
-      grossCommissionUsd,
-      referralDeductionUsd,
-      onboardingDeductionGbp,
-      netCommissionUsd,
-      netCommissionGbp: Math.max(0, netCommissionGbp)
-    });
-  }
-  const totalGrossUsd = payoutSchedule.reduce((s, p) => s + p.grossCommissionUsd, 0);
-  const totalNetUsd = payoutSchedule.reduce((s, p) => s + p.netCommissionUsd, 0);
-  const totalNetGbp = payoutSchedule.reduce((s, p) => s + p.netCommissionGbp, 0);
-  return {
-    tier: input.tier,
-    rate,
-    payoutSchedule,
-    totalGrossUsd,
-    totalNetUsd,
-    totalNetGbp,
-    effectiveArrUsd
-  };
-}
-function isNewJoiner(joinDate, forDate = /* @__PURE__ */ new Date()) {
-  const diffMs = forDate.getTime() - joinDate.getTime();
-  const diffMonths = diffMs / (1e3 * 60 * 60 * 24 * 30.44);
-  return diffMonths < NEW_JOINER_GRACE_MONTHS;
-}
-function addMonths(year, month, n) {
-  const date = new Date(year, month - 1 + n, 1);
-  return { year: date.getFullYear(), month: date.getMonth() + 1 };
-}
-var MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December"
-];
-
-// server/routers.ts
 init_const();
 
 // server/_core/systemRouter.ts

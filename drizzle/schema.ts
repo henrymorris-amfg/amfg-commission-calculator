@@ -7,6 +7,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  unique,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -94,7 +95,10 @@ export const monthlyMetrics = mysqlTable("monthly_metrics", {
   talkTimeSecs: int("talkTimeSecs").default(0), // total connected talk time in seconds
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // Enforce one row per AE per calendar month — prevents duplicate inserts from VOIP + Pipedrive syncs
+  aeMonthUnique: unique("ae_month_unique").on(t.aeId, t.year, t.month),
+}));
 
 export type MonthlyMetric = typeof monthlyMetrics.$inferSelect;
 export type InsertMonthlyMetric = typeof monthlyMetrics.$inferInsert;
@@ -118,6 +122,8 @@ export const deals = mysqlTable("deals", {
   fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
   // Reference to the commission structure version active when the deal was created
   commissionStructureId: int("commissionStructureId"),
+  // Pipedrive deal ID — set when imported from Pipedrive, null for manually entered deals
+  pipedriveId: int("pipedriveId"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

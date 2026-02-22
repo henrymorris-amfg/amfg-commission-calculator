@@ -1,0 +1,120 @@
+{
+  "query": "\nSELECT id, aeId, year, month, arrUsd, demosTotal, dialsTotal, connectedDials, connectionRate\nFROM monthly_metrics \nWHERE aeId = 30002\nORDER BY year DESC, month DESC, id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT id, aeId, year, month, arrUsd, demosTotal, dialsTotal, connectedDials, connectionRate\nFROM monthly_metrics \nWHERE aeId = 30002\nORDER BY year DESC, month DESC, id;\n",
+  "rows": [
+    {
+      "id": "30008",
+      "aeId": "30002",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "25659.00",
+      "demosTotal": "13",
+      "dialsTotal": "0",
+      "connectedDials": "0",
+      "connectionRate": "NULL"
+    },
+    {
+      "id": "30020",
+      "aeId": "30002",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "25659.00",
+      "demosTotal": "13",
+      "dialsTotal": "629",
+      "connectedDials": "478",
+      "connectionRate": "75.99"
+    },
+    {
+      "id": "30007",
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "43521.00",
+      "demosTotal": "17",
+      "dialsTotal": "0",
+      "connectedDials": "0",
+      "connectionRate": "NULL"
+    },
+    {
+      "id": "30021",
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "43521.00",
+      "demosTotal": "17",
+      "dialsTotal": "655",
+      "connectedDials": "473",
+      "connectionRate": "72.21"
+    },
+    {
+      "id": "30006",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "42434.00",
+      "demosTotal": "7",
+      "dialsTotal": "0",
+      "connectedDials": "0",
+      "connectionRate": "NULL"
+    },
+    {
+      "id": "30022",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "42434.00",
+      "demosTotal": "7",
+      "dialsTotal": "385",
+      "connectedDials": "241",
+      "connectionRate": "62.60"
+    },
+    {
+      "id": "30005",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "7067.00",
+      "demosTotal": "16",
+      "dialsTotal": "0",
+      "connectedDials": "0",
+      "connectionRate": "NULL"
+    },
+    {
+      "id": "30023",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "7067.00",
+      "demosTotal": "16",
+      "dialsTotal": "963",
+      "connectedDials": "536",
+      "connectionRate": "55.66"
+    },
+    {
+      "id": "30024",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "779",
+      "connectedDials": "514",
+      "connectionRate": "65.98"
+    },
+    {
+      "id": "30025",
+      "aeId": "30002",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "575",
+      "connectedDials": "400",
+      "connectionRate": "69.57"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\tconnectedDials\tconnectionRate\n30008\t30002\t2026\t2\t25659.00\t13\t0\t0\tNULL\n30020\t30002\t2026\t2\t25659.00\t13\t629\t478\t75.99\n30007\t30002\t2026\t1\t43521.00\t17\t0\t0\tNULL\n30021\t30002\t2026\t1\t43521.00\t17\t655\t473\t72.21\n30006\t30002\t2025\t12\t42434.00\t7\t0\t0\tNULL\n30022\t30002\t2025\t12\t42434.00\t7\t385\t241\t62.60\n30005\t30002\t2025\t11\t7067.00\t16\t0\t0\tNULL\n30023\t30002\t2025\t11\t7067.00\t16\t963\t536\t55.66\n30024\t30002\t2025\t10\t0.00\t0\t779\t514\t65.98\n30025\t30002\t2025\t9\t0.00\t0\t575\t400\t69.57\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

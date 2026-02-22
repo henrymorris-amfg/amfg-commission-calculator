@@ -25,8 +25,24 @@ import {
   getAllAeProfiles,
   getAeProfileById,
   getMetricsForMonth,
+  getMetricsForAe,
   upsertMonthlyMetric,
+  getDealByPipedriveId,
+  createDeal,
+  createPayoutsForDeal,
+  deletePayoutsForDeal,
+  deleteDeal,
+  getActiveCommissionStructure,
 } from "./db";
+import {
+  computeRollingAverages,
+  computeAvgRetention,
+  isNewJoiner,
+  calculateTier,
+  calculateCommission,
+  addMonths,
+  type Tier,
+} from "../shared/commission";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -631,6 +647,176 @@ export const pipedriveSyncRouter = router({
         })),
         pipedriveUserFound: true,
         pipedriveUserName: profile.name,
+      };
+    }),
+
+  /**
+   * Import Pipedrive won deals as deal records for all AEs.
+   * Creates deal + payout records in the deals/commission_payouts tables.
+   * Skips deals already imported (idempotent via pipedriveId).
+   * Team leader only.
+   */
+  importDeals: publicProcedure
+    .input(
+      z.object({
+        months: z.number().int().min(1).max(24).default(6),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+      const profile = await getAeProfileById(aeId);
+      if (!profile?.isTeamLeader) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+      }
+
+      const now = new Date();
+      const toDate = now.toISOString().substring(0, 10);
+      const fromDate = new Date(
+        now.getFullYear(),
+        now.getMonth() - (input.months - 1),
+        1
+      )
+        .toISOString()
+        .substring(0, 10);
+
+      const allProfiles = await getAllAeProfiles();
+      const activeStructure = await getActiveCommissionStructure();
+      // Use GBP rate from our existing FX cache
+      const fxRates = await getFxRates();
+      const usdToGbp = fxRates["GBP"] ?? 0.79;
+
+      const imported: string[] = [];
+      const skipped: string[] = [];
+      const errors: string[] = [];
+
+      for (const ae of allProfiles) {
+        const pdUserId = await findPipedriveUserId(ae.name);
+        if (!pdUserId) {
+          skipped.push(`${ae.name} (not found in Pipedrive)`);
+          continue;
+        }
+
+        const pdDeals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+
+        for (const pdDeal of pdDeals) {
+          try {
+            // Skip if already imported
+            const existing = await getDealByPipedriveId(ae.id, pdDeal.id);
+            if (existing) {
+              skipped.push(`${ae.name}: ${pdDeal.title} (already imported)`);
+              continue;
+            }
+
+            const wonDate = pdDeal.won_time || pdDeal.close_time;
+            if (!wonDate) continue;
+
+            const startYear = parseInt(wonDate.substring(0, 4), 10);
+            const startMonth = parseInt(wonDate.substring(5, 7), 10);
+            const startDay = parseInt(wonDate.substring(8, 10), 10);
+            const arrUsd = await toUsd(pdDeal.value || 0, pdDeal.currency || "USD");
+
+            // Determine tier at the time of this deal
+            const allMetrics = await getMetricsForAe(ae.id, 9);
+            const targetDate = new Date(startYear, startMonth - 1, 1);
+            const last3 = allMetrics
+              .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
+              .slice(0, 3)
+              .map((m) => ({
+                year: m.year,
+                month: m.month,
+                arrUsd: Number(m.arrUsd),
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              }));
+            const last6 = allMetrics
+              .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
+              .slice(0, 6)
+              .map((m) => ({
+                year: m.year,
+                month: m.month,
+                arrUsd: Number(m.arrUsd),
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              }));
+            const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+            const avgRetentionRate = computeAvgRetention(last6);
+            const newJoiner = isNewJoiner(ae.joinDate, targetDate);
+            const tierResult = calculateTier({
+              avgArrUsd,
+              avgDemosPw,
+              avgDialsPw,
+              avgRetentionRate,
+              isNewJoiner: newJoiner,
+              isTeamLeader: ae.isTeamLeader,
+            });
+            const tier = tierResult.tier as Tier;
+
+            // Calculate commission
+            const commResult = calculateCommission({
+              contractType: "annual",
+              arrUsd,
+              tier,
+              onboardingFeePaid: true,
+              isReferral: false,
+              fxRateUsdToGbp: usdToGbp,
+              monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
+              onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
+              onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
+            });
+
+            // Create deal record
+            const dealId = await createDeal({
+              aeId: ae.id,
+              customerName: pdDeal.title,
+              contractType: "annual",
+              startYear,
+              startMonth,
+              startDay,
+              arrUsd: String(Math.round(arrUsd)),
+              onboardingFeePaid: true,
+              isReferral: false,
+              tierAtStart: tier,
+              fxRateAtEntry: String(usdToGbp),
+              commissionStructureId: activeStructure?.id ?? null,
+              pipedriveId: pdDeal.id,
+              notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`,
+            });
+
+            // Create payout schedule
+            const payouts = commResult.payoutSchedule.map((p, i) => {
+              const payoutDate = addMonths(startYear, startMonth, i);
+              return {
+                dealId,
+                aeId: ae.id,
+                payoutYear: payoutDate.year,
+                payoutMonth: payoutDate.month,
+                payoutNumber: p.payoutNumber,
+                grossCommissionUsd: String(p.grossCommissionUsd),
+                referralDeductionUsd: String(p.referralDeductionUsd),
+                onboardingDeductionGbp: String(p.onboardingDeductionGbp),
+                netCommissionUsd: String(p.netCommissionUsd),
+                fxRateUsed: String(usdToGbp),
+                netCommissionGbp: String(p.netCommissionGbp),
+              };
+            });
+            await createPayoutsForDeal(payouts);
+
+            imported.push(`${ae.name}: ${pdDeal.title} ($${Math.round(arrUsd).toLocaleString()} ARR, ${tier} tier)`);
+          } catch (err) {
+            errors.push(`${ae.name}: ${pdDeal.title} — ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+      }
+
+      return {
+        success: true,
+        imported,
+        skipped,
+        errors,
+        totalImported: imported.length,
       };
     }),
 

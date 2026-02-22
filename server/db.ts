@@ -235,6 +235,16 @@ export async function getDealById(id: number): Promise<Deal | undefined> {
   const result = await db.select().from(deals).where(eq(deals.id, id)).limit(1);
   return result[0];
 }
+export async function getDealByPipedriveId(aeId: number, pipedriveId: number): Promise<Deal | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(deals)
+    .where(and(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId)))
+    .limit(1);
+  return result[0];
+}
 
 export async function deleteDeal(id: number, aeId: number): Promise<void> {
   const db = await getDb();

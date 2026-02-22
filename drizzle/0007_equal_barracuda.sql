@@ -1,0 +1,1 @@
+ALTER TABLE `monthly_metrics` ADD CONSTRAINT `ae_month_unique` UNIQUE(`aeId`,`year`,`month`);

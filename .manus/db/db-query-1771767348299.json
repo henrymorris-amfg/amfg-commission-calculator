@@ -1,0 +1,58 @@
+{
+  "query": "\n-- Check for duplicate rows per AE/year/month\nSELECT aeId, year, month, COUNT(*) as row_count, \n       GROUP_CONCAT(dialsTotal) as dials_values,\n       GROUP_CONCAT(arrUsd) as arr_values\nFROM monthly_metrics \nWHERE aeId = 30002\nGROUP BY aeId, year, month\nORDER BY year DESC, month DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \n-- Check for duplicate rows per AE/year/month\nSELECT aeId, year, month, COUNT(*) as row_count, \n       GROUP_CONCAT(dialsTotal) as dials_values,\n       GROUP_CONCAT(arrUsd) as arr_values\nFROM monthly_metrics \nWHERE aeId = 30002\nGROUP BY aeId, year, month\nORDER BY year DESC, month DESC;\n",
+  "rows": [
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "2",
+      "row_count": "2",
+      "dials_values": "0,629",
+      "arr_values": "25659.00,25659.00"
+    },
+    {
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "row_count": "2",
+      "dials_values": "0,655",
+      "arr_values": "43521.00,43521.00"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "12",
+      "row_count": "2",
+      "dials_values": "0,385",
+      "arr_values": "42434.00,42434.00"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "11",
+      "row_count": "2",
+      "dials_values": "0,963",
+      "arr_values": "7067.00,7067.00"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "10",
+      "row_count": "1",
+      "dials_values": "779",
+      "arr_values": "0.00"
+    },
+    {
+      "aeId": "30002",
+      "year": "2025",
+      "month": "9",
+      "row_count": "1",
+      "dials_values": "575",
+      "arr_values": "0.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\trow_count\tdials_values\tarr_values\n30002\t2026\t2\t2\t0,629\t25659.00,25659.00\n30002\t2026\t1\t2\t0,655\t43521.00,43521.00\n30002\t2025\t12\t2\t0,385\t42434.00,42434.00\n30002\t2025\t11\t2\t0,963\t7067.00,7067.00\n30002\t2025\t10\t1\t779\t0.00\n30002\t2025\t9\t1\t575\t0.00\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}
