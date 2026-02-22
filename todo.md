@@ -158,6 +158,6 @@
 - [x] Add re-import deals button to Data Audit page (trigger full Pipedrive deal re-import per AE directly from audit view)
 
 ## Joe Payne Deal Fixes (Feb 22 2026 — Evening)
-- [ ] Fix new joiner window: Oct/Nov/Dec 2025 deals should be Gold (ARR waived, demos 4.1+/wk, dials 193+/wk meet Gold threshold)
-- [ ] Add deal exclusion filter: skip deals with "Implementation", "Customer Success" in title, or duplicate names
-- [ ] Find and fix missing November 2025 ARR for Joe Payne
+- [x] Fix new joiner window: Oct/Nov/Dec 2025 deals correctly Gold/Silver based on activity (Oct=Gold, Nov=Gold, Dec=Silver due to 193 dials/wk < 200 Gold threshold)
+- [x] Add deal exclusion filter: skip deals with "Implementation", "Customer Success", "Onboarding" in title — added to pipedriveSync.ts and reimport-deals.ts; CNC Implementation deal deleted from DB
+- [x] Fix missing November 2025 ARR for Joe Payne — Bridge EU sro €6,000 = $7,067 USD added to Nov 2025 monthly_metrics
