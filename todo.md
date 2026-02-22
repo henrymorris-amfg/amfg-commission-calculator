@@ -161,3 +161,8 @@
 - [x] Fix new joiner window: Oct/Nov/Dec 2025 deals correctly Gold/Silver based on activity (Oct=Gold, Nov=Gold, Dec=Silver due to 193 dials/wk < 200 Gold threshold)
 - [x] Add deal exclusion filter: skip deals with "Implementation", "Customer Success", "Onboarding" in title — added to pipedriveSync.ts and reimport-deals.ts; CNC Implementation deal deleted from DB
 - [x] Fix missing November 2025 ARR for Joe Payne — Bridge EU sro €6,000 = $7,067 USD added to Nov 2025 monthly_metrics
+
+## ARR Average Bug (Feb 22 2026)
+- [x] Investigate: "Last 3 months $111,614 ARR" shows as "$11,384 Avg ARR/Month" — Jan 2026 ARR was $0 in monthly_metrics (Pipedrive sync had not run for Jan)
+- [x] Fix: ran Pipedrive sync to populate Jan 2026 ARR ($28,921) in monthly_metrics for Joe Payne
+- [x] Re-imported all deals with corrected tiers: Joe Jan+Feb 2026 now Silver (was Bronze)
