@@ -1,0 +1,1 @@
+ALTER TABLE `monthly_metrics` ADD `demosFromPipedrive` int DEFAULT 0 NOT NULL;
