@@ -1,16 +1,16 @@
 /**
  * Weekly Auto-Sync Scheduler
  *
- * Runs every Monday at 20:00 UTC (after the Sales Report is updated by 7pm).
- * Performs two operations in sequence:
- *   1. Spreadsheet sync  — pulls latest dials/demos from the Sales Report sheet
- *   2. Pipedrive sync    — pulls latest won deal ARR from Pipedrive
+ * Runs every Monday at 07:00 UTC (Monday morning UK time, ready for start of work day).
+ * Performs three operations in sequence:
+ *   1. VOIP Studio sync  — pulls dials, connection rate, talk time (full history from join date)
+ *   2. Spreadsheet sync  — pulls latest dials/demos from the Sales Report sheet
+ *   3. Pipedrive sync    — pulls won deal ARR from join date onwards
  *
- * Results are logged to the database in the sync_log table (if available)
- * and written to console for server-side visibility.
+ * Results are logged to console for server-side visibility.
  *
  * The schedule can be overridden via the WEEKLY_SYNC_CRON env var.
- * Default: "0 20 * * 1"  (Monday 20:00 UTC)
+ * Default: "0 7 * * 1"  (Monday 07:00 UTC)
  */
 
 import cron from "node-cron";
@@ -355,9 +355,6 @@ async function runPipedriveSync(months = 2): Promise<SyncResult["pipedriveSync"]
   try {
     const now = new Date();
     const toDate = now.toISOString().substring(0, 10);
-    const fromDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1)
-      .toISOString()
-      .substring(0, 10);
 
     const allProfiles = await getAllAeProfiles();
     const skippedAes: string[] = [];
@@ -370,20 +367,29 @@ async function runPipedriveSync(months = 2): Promise<SyncResult["pipedriveSync"]
         continue;
       }
 
-      // Fetch won deals for this AE across all target pipelines
-      const allDeals: PipedriveDeal[] = [];
+      // Use AE's join date as the start of the sync window
+      const joinDate = new Date(ae.joinDate);
+      const fromDate = joinDate.toISOString().substring(0, 10);
+
+      // Fetch won deals for this AE across all target pipelines.
+      // Use a Map keyed by deal ID to deduplicate — the same deal can appear
+      // in multiple pipelines (Machining, Closing SMB, Closing Enterprise).
+      const dealMap = new Map<number, PipedriveDeal>();
       for (const pipelineId of TARGET_PIPELINE_IDS) {
         const deals = await pipedriveGetAll("deals", {
           pipeline_id: pipelineId,
           user_id: pdUserId,
           status: "won",
         });
-        const filtered = deals.filter((d) => {
+        for (const d of deals) {
+          if (dealMap.has(d.id)) continue; // already seen from another pipeline
           const wonDate = (d.won_time || d.close_time || "").substring(0, 10);
-          return wonDate >= fromDate && wonDate <= toDate;
-        });
-        allDeals.push(...filtered);
+          if (wonDate >= fromDate && wonDate <= toDate) {
+            dealMap.set(d.id, d);
+          }
+        }
       }
+      const allDeals = Array.from(dealMap.values());
 
       // Aggregate by month
       const monthMap = new Map<string, number>();
@@ -435,7 +441,8 @@ async function runVoipSync(months = 2): Promise<SyncResult["voipSync"]> {
 
   try {
     const { pullVoipMonthlyData } = await import("./voipSync");
-    const { data, unmatchedAes } = await pullVoipMonthlyData(months);
+    // useJoinDate=true: sync from each AE's join date so no historical data is ever missed
+    const { data, unmatchedAes } = await pullVoipMonthlyData(months, true);
     let recordsUpdated = 0;
 
     for (const d of data) {
@@ -471,6 +478,7 @@ export async function runWeeklySync(): Promise<SyncResult> {
   console.log(`[WeeklySync] Starting sync at ${timestamp}`);
 
   // Step 1: VOIP Studio — primary source for dials, connection rate, talk time
+  // useJoinDate=true is set inside runVoipSync — syncs full history from each AE's join date
   const voipResult = await runVoipSync(2);
   console.log(
     `[WeeklySync] VOIP Studio sync: ${voipResult.success ? "✓" : "✗"} ` +
@@ -521,31 +529,33 @@ export function getNextSyncTime(): Date | null {
   return nextSyncTime;
 }
 
-function computeNextMonday8pmUtc(): Date {
+function computeNextMonday7amUtc(): Date {
   const now = new Date();
   const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-  const daysUntilMonday = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7 || 7;
   const next = new Date(now);
-  next.setUTCDate(now.getUTCDate() + daysUntilMonday);
-  next.setUTCHours(20, 0, 0, 0);
-  // If it's Monday and before 8pm UTC, use today
-  if (dayOfWeek === 1 && now.getUTCHours() < 20) {
-    next.setUTCDate(now.getUTCDate());
+  // If it's Monday and before 07:00 UTC, use today
+  if (dayOfWeek === 1 && now.getUTCHours() < 7) {
+    next.setUTCHours(7, 0, 0, 0);
+  } else {
+    // Otherwise find next Monday
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
+    next.setUTCDate(now.getUTCDate() + daysUntilMonday);
+    next.setUTCHours(7, 0, 0, 0);
   }
   return next;
 }
 
 export function startWeeklySyncScheduler(): void {
-  // Default: Monday at 20:00 UTC
-  // Override with WEEKLY_SYNC_CRON env var (e.g. "0 20 * * 1")
-  const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 20 * * 1";
+  // Default: Monday at 07:00 UTC (Monday morning UK time, ready for start of work day)
+  // Override with WEEKLY_SYNC_CRON env var (e.g. "0 7 * * 1")
+  const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 7 * * 1";
 
   const task = cron.schedule(
     cronExpression,
     async () => {
       try {
         lastSyncResult = await runWeeklySync();
-        nextSyncTime = computeNextMonday8pmUtc();
+        nextSyncTime = computeNextMonday7amUtc();
       } catch (err) {
         console.error("[WeeklySync] Unhandled error:", err);
       }
@@ -555,7 +565,7 @@ export function startWeeklySyncScheduler(): void {
     }
   );
 
-  nextSyncTime = computeNextMonday8pmUtc();
+  nextSyncTime = computeNextMonday7amUtc();
 
   console.log(
     `[WeeklySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} ` +

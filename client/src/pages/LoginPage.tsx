@@ -199,13 +199,15 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <button
-                onClick={() => setMode("register")}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-150 text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Create new profile
-              </button>
+              {aeNames.length === 0 && (
+                <button
+                  onClick={() => setMode("register")}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-150 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create new profile
+                </button>
+              )}
             </div>
           )}
 

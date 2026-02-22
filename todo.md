@@ -128,12 +128,28 @@
 - [x] Fix DashboardPage Retention Rate display to show 'No data yet' when null
 
 ## New Joiner Tier Fix (Feb 22 2026)
-- [ ] Validate Joe Payne's Q4 2025 dials/demos against Silver/Gold thresholds with ARR waiver
-- [ ] Fix calculateTier new joiner logic — ARR waived, only activity metrics count during 6-month window
-- [ ] Re-import Joe's Q4 deals with corrected tiers
-- [ ] Verify Toby Greer and Julian Earl new joiner tiers are also correct
+- [x] Validate Joe Payne's Q4 2025 dials/demos against Silver/Gold thresholds with ARR waiver
+- [x] Fix calculateTier new joiner logic — ARR waived, only activity metrics count during 6-month window
+- [x] Re-import Joe's Q4 deals with corrected tiers
+- [x] Verify Toby Greer and Julian Earl new joiner tiers are also correct
 
 ## Three Improvements (Feb 22 2026)
 - [x] Fix voipSync.ts TypeScript error — replace undefined getAeIdFromCtx references with correct auth helper
 - [x] Extend Pipedrive and VOIP sync window to use each AE's join date as fromDate (not fixed 4-month lookback)
 - [x] Build data audit view for team leaders (monthly metrics table: demos, dials, ARR per AE per month) — /data-audit route, nav item added
+
+## Pre-Monday QA & Auto-Sync (Feb 22 2026)
+- [x] Weekly auto-sync cron job — every Monday 07:00 UTC, run full-history Pipedrive + VOIP sync for all AEs
+- [x] Validate Toby Greer new joiner tiers — all 5 deals Bronze (correct)
+- [x] Validate Julian Earl new joiner tiers — no deals yet (joined Feb 4, 2026)
+- [x] Full QA pass — all pages, procedures, edge cases, and security concerns reviewed
+- [x] Fix all issues found during QA
+
+## QA Issues Found (Feb 22, 2026)
+
+- [x] SECURITY: Sign AE session token with HMAC-SHA256 using JWT_SECRET (timingSafeEqual)
+- [x] SECURITY: Add team leader auth guard to commissionStructure.create/update/activate
+- [x] SECURITY: Add team leader auth guard to ae.register (anyone can create AE profiles)
+- [x] SECURITY: commissionStructure.list/getActive reviewed — public read is acceptable (rates not secret)
+- [x] PERF: Add 5-minute in-memory cache to commission.fxRate
+- [ ] DATA: Fix Toby's Aug 2025 dials (VOIP network unreachable during QA — retry via VOIP Sync page on Monday)

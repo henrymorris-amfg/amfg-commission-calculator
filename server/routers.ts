@@ -3,6 +3,7 @@ import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
 import * as bcrypt from "bcryptjs";
+import { makeAeToken, getAeIdFromCtx } from "./aeAuth";
 import { z } from "zod";
 import {
   MONTH_NAMES,
@@ -62,60 +63,31 @@ interface StructureTargets {
   gold: TierTargets;
 }
 
-// ─── FX Rate Helper ───────────────────────────────────────────────────────────
+/// ─── FX Rate Helper (with 5-minute in-memory cache) ─────────────────────────
+let _fxCache: { rate: number; fetchedAt: number } | null = null;
+const FX_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function fetchUsdToGbpRate(): Promise<number> {
+  const now = Date.now();
+  if (_fxCache && now - _fxCache.fetchedAt < FX_CACHE_TTL_MS) {
+    return _fxCache.rate;
+  }
   try {
     const res = await fetch(
       "https://api.exchangerate-api.com/v4/latest/USD"
     );
     if (!res.ok) throw new Error("FX API error");
     const data = (await res.json()) as { rates: Record<string, number> };
-    return data.rates["GBP"] ?? 0.79;
+    const rate = data.rates["GBP"] ?? 0.79;
+    _fxCache = { rate, fetchedAt: now };
+    return rate;
   } catch {
-    // Fallback to approximate rate
-    return 0.79;
+    // Return cached value if available, otherwise fallback
+    return _fxCache?.rate ?? 0.79;
   }
 }
 
-// ─── AE Session Token ────────────────────────────────────────────────────────
-// Token is stored in localStorage on the client and sent via the
-// X-AE-Token header on every tRPC request.
-// This avoids cross-origin cookie issues on the Manus production gateway.
-
-function makeAeToken(aeId: number): string {
-  const payload = { aeId, ts: Date.now() };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
-}
-
-function parseAeToken(token: string): { aeId: number } | null {
-  try {
-    const payload = JSON.parse(Buffer.from(token, "base64url").toString());
-    if (typeof payload.aeId !== "number") return null;
-    return { aeId: payload.aeId };
-  } catch {
-    return null;
-  }
-}
-
-function getAeIdFromCtx(ctx: { req: { headers: Record<string, string | string[] | undefined> } }): number | null {
-  // Accept token from X-AE-Token header (localStorage-based, production-safe)
-  const headerToken = ctx.req.headers["x-ae-token"] as string | undefined;
-  if (headerToken) {
-    const parsed = parseAeToken(headerToken);
-    if (parsed) return parsed.aeId;
-  }
-  // Fallback: also accept from cookie for backward compatibility
-  const cookieHeader = ctx.req.headers["cookie"] as string | undefined;
-  if (cookieHeader) {
-    const match = cookieHeader.match(/ae_session=([^;]+)/);
-    if (match?.[1]) {
-      const parsed = parseAeToken(match[1]);
-      if (parsed) return parsed.aeId;
-    }
-  }
-  return null;
-}
+// makeAeToken and getAeIdFromCtx are imported from ./aeAuth
 
 // ─── Routers ──────────────────────────────────────────────────────────────────
 
@@ -139,7 +111,7 @@ export const appRouter = router({
       return profiles.map((p) => ({ id: p.id, name: p.name }));
     }),
 
-    // Register a new AE profile
+    // Register a new AE profile (team leader only)
     register: publicProcedure
       .input(
         z.object({
@@ -149,7 +121,15 @@ export const appRouter = router({
           isTeamLeader: z.boolean().default(false),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // Only team leaders (or first-time setup with no AEs yet) can register new AEs
+        const existingAes = await getAllAeProfiles();
+        if (existingAes.length > 0) {
+          const callerId = getAeIdFromCtx(ctx);
+          if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+          const caller = await getAeProfileById(callerId);
+          if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+        }
         // Check name not already taken
         const existing = await getAeProfileByName(input.name);
         if (existing) {
@@ -921,7 +901,7 @@ export const appRouter = router({
       };
     }),
 
-    // Create a new version (draft, not yet active)
+    // Create a new version (draft, not yet active) — team leader only
     create: publicProcedure
       .input(
         z.object({
@@ -945,7 +925,11 @@ export const appRouter = router({
           createdBy: z.string().min(1).max(128).default("admin"),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
         const id = await createCommissionStructure({
           versionLabel: input.versionLabel,
           effectiveFrom: new Date(input.effectiveFrom),
@@ -964,7 +948,7 @@ export const appRouter = router({
         return { id };
       }),
 
-    // Update a draft version (cannot edit active version's rates — create a new one)
+    // Update a draft version (cannot edit active version's rates — create a new one) — team leader only
     update: publicProcedure
       .input(
         z.object({
@@ -988,7 +972,11 @@ export const appRouter = router({
           notes: z.string().optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
         const { id, effectiveFrom, bronzeRate, silverRate, goldRate,
                 onboardingDeductionGbp, onboardingArrReductionUsd, ...rest } = input;
         const patch: Record<string, unknown> = { ...rest };
@@ -1002,10 +990,14 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Activate a version (deactivates all others)
+    // Activate a version (deactivates all others) — team leader only
     activate: publicProcedure
       .input(z.object({ id: z.number().int() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
         const structure = await getCommissionStructureById(input.id);
         if (!structure) throw new TRPCError({ code: "NOT_FOUND", message: "Commission structure not found." });
         await activateCommissionStructure(input.id);
