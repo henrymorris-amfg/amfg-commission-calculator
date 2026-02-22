@@ -4,12 +4,16 @@ import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  RefreshCw,
   ShieldAlert,
   TrendingUp,
+  XCircle,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -96,6 +100,24 @@ export default function DataAuditPage() {
     enabled: !!ae,
   });
 
+  const [importResult, setImportResult] = useState<{
+    imported: string[];
+    skipped: string[];
+    errors: string[];
+    totalImported: number;
+  } | null>(null);
+
+  const reimportMutation = trpc.pipedriveSync.importDeals.useMutation({
+    onSuccess: (data) => {
+      setImportResult(data);
+      auditQuery.refetch();
+      toast.success(`Re-import complete — ${data.totalImported} deal${data.totalImported !== 1 ? "s" : ""} imported`);
+    },
+    onError: (err) => {
+      toast.error(`Re-import failed: ${err.message}`);
+    },
+  });
+
   useEffect(() => {
     if (!isLoading && !ae) navigate("/");
     if (!isLoading && ae && !ae.isTeamLeader) navigate("/dashboard");
@@ -150,21 +172,40 @@ export default function DataAuditPage() {
               Monthly metrics for all AEs — spot missing ARR, demos, or dials at a glance.
             </p>
           </div>
-          {!auditQuery.isLoading && (
-            <div className="flex items-center gap-2">
-              {totalGaps === 0 ? (
-                <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  All data complete
-                </Badge>
+          <div className="flex items-center gap-3 flex-wrap">
+            {!auditQuery.isLoading && (
+              <>
+                {totalGaps === 0 ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    All data complete
+                  </Badge>
+                ) : (
+                  <Badge className="bg-red-500/15 text-red-400 border-red-500/30 gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {totalGaps} month{totalGaps !== 1 ? "s" : ""} missing data
+                  </Badge>
+                )}
+              </>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setImportResult(null);
+                reimportMutation.mutate({ useJoinDate: true });
+              }}
+              disabled={reimportMutation.isPending}
+              className="gap-2"
+            >
+              {reimportMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Badge className="bg-red-500/15 text-red-400 border-red-500/30 gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  {totalGaps} month{totalGaps !== 1 ? "s" : ""} missing data
-                </Badge>
+                <RefreshCw className="w-3.5 h-3.5" />
               )}
-            </div>
-          )}
+              {reimportMutation.isPending ? "Re-importing…" : "Re-import All Deals"}
+            </Button>
+          </div>
         </div>
 
         {/* Loading */}
@@ -341,6 +382,58 @@ export default function DataAuditPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Re-import result panel */}
+            {importResult && (
+              <div className="rounded-2xl bg-card border border-border p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Re-import Results</h3>
+                  <button onClick={() => setImportResult(null)} className="text-muted-foreground hover:text-foreground">
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-center">
+                    <p className="text-2xl font-bold text-emerald-400">{importResult.totalImported}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Imported</p>
+                  </div>
+                  <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-400">{importResult.skipped.length}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Skipped</p>
+                  </div>
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-center">
+                    <p className="text-2xl font-bold text-red-400">{importResult.errors.length}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Errors</p>
+                  </div>
+                </div>
+                {importResult.imported.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-emerald-400">Imported deals:</p>
+                    <ul className="space-y-0.5 max-h-40 overflow-y-auto">
+                      {importResult.imported.map((s, i) => (
+                        <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400 mt-0.5 shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {importResult.errors.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-red-400">Errors:</p>
+                    <ul className="space-y-0.5">
+                      {importResult.errors.map((s, i) => (
+                        <li key={i} className="text-xs text-red-400 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Legend */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">

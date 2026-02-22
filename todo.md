@@ -153,3 +153,6 @@
 - [x] SECURITY: commissionStructure.list/getActive reviewed — public read is acceptable (rates not secret)
 - [x] PERF: Add 5-minute in-memory cache to commission.fxRate
 - [ ] DATA: Fix Toby's Aug 2025 dials (VOIP network unreachable during QA — retry via VOIP Sync page on Monday)
+
+## UX Improvements (Feb 22 2026 — Evening)
+- [x] Add re-import deals button to Data Audit page (trigger full Pipedrive deal re-import per AE directly from audit view)
