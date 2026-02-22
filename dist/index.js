@@ -85,6 +85,8 @@ var init_schema = __esm({
       pinHash: varchar("pinHash", { length: 256 }).notNull(),
       joinDate: timestamp("joinDate").notNull(),
       isTeamLeader: boolean("isTeamLeader").default(false).notNull(),
+      // Whether this AE is still active (false = left the company)
+      isActive: boolean("isActive").default(true).notNull(),
       // PIN lockout: track failed attempts and when the lockout expires
       failedPinAttempts: int("failedPinAttempts").default(0).notNull(),
       lockedUntil: timestamp("lockedUntil"),
@@ -277,10 +279,13 @@ async function getAeProfileByName(name) {
   const result = await db.select().from(aeProfiles).where(eq(aeProfiles.name, name)).limit(1);
   return result[0];
 }
-async function getAllAeProfiles() {
+async function getAllAeProfiles(includeInactive = false) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(aeProfiles).orderBy(aeProfiles.name);
+  if (includeInactive) {
+    return db.select().from(aeProfiles).orderBy(aeProfiles.name);
+  }
+  return db.select().from(aeProfiles).where(eq(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
 }
 async function updateAeProfile(id, data) {
   const db = await getDb();

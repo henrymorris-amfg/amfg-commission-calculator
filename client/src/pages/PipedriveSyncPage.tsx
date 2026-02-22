@@ -10,6 +10,7 @@ import {
   AlertCircle,
   ArrowDownToLine,
   CheckCircle2,
+  Clock,
   DollarSign,
   Info,
   Loader2,
@@ -45,6 +46,10 @@ export default function PipedriveSyncPage() {
   const [monthsToSync, setMonthsToSync] = useState(4);
   const [mergeMode, setMergeMode] = useState<"replace" | "add">("replace");
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(() => {
+    const stored = localStorage.getItem('pipedrive_last_synced_at');
+    return stored ? new Date(stored) : null;
+  });
 
   // Status check — only run once AE session is confirmed to avoid stale UNAUTHORIZED errors
   const statusQuery = trpc.pipedriveSync.status.useQuery(undefined, {
@@ -62,6 +67,9 @@ export default function PipedriveSyncPage() {
   const importMutation = trpc.pipedriveSync.import.useMutation({
     onSuccess: (data) => {
       setImportResult(data);
+      const now = new Date();
+      setLastSyncedAt(now);
+      localStorage.setItem('pipedrive_last_synced_at', now.toISOString());
       toast.success(
         `Pipedrive sync complete — ${data.totalImported} month records updated.`
       );
@@ -286,6 +294,12 @@ export default function PipedriveSyncPage() {
               Sync to Database
             </Button>
           </div>
+          {lastSyncedAt && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+              <Clock className="w-3 h-3" />
+              <span>Last synced: {lastSyncedAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+            </div>
+          )}
         </div>
 
         {/* Error state */}

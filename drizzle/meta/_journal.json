@@ -43,6 +43,13 @@
       "when": 1771755417474,
       "tag": "0005_white_lucky_pierre",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771759681999,
+      "tag": "0006_serious_exodus",
+      "breakpoints": true
     }
   ]
 }

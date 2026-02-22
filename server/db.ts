@@ -106,15 +106,18 @@ export async function getAeProfileByName(name: string): Promise<AeProfile | unde
   return result[0];
 }
 
-export async function getAllAeProfiles(): Promise<AeProfile[]> {
+export async function getAllAeProfiles(includeInactive = false): Promise<AeProfile[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(aeProfiles).orderBy(aeProfiles.name);
+  if (includeInactive) {
+    return db.select().from(aeProfiles).orderBy(aeProfiles.name);
+  }
+  return db.select().from(aeProfiles).where(eq(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
 }
 
 export async function updateAeProfile(
   id: number,
-  data: Partial<Pick<AeProfile, "name" | "joinDate" | "isTeamLeader" | "pinHash" | "failedPinAttempts" | "lockedUntil">>
+  data: Partial<Pick<AeProfile, "name" | "joinDate" | "isTeamLeader" | "isActive" | "pinHash" | "failedPinAttempts" | "lockedUntil">>
 ): Promise<void> {
   const db = await getDb();
   if (!db) return;

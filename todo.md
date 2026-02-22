@@ -94,3 +94,11 @@
 - [x] Fix Demos Done not showing on Activity Metrics — Pipedrive import now updates demosTotal (uses higher of Pipedrive vs manual value)
 - [x] Add Admin PIN Reset feature on Commission Structure page (team leader only)
 - [x] Add ae.adminResetPin tRPC procedure (team leader auth, bcrypt hash, reset lockout)
+
+## Sync & Data Updates (Feb 22 2026)
+- [x] Update join dates: Joe Payne 16/06/25, Toby Greer 28/07/25, Julian Earl 04/02/26
+- [x] Mark Janos Rosenberg as inactive (left company)
+- [x] Add isActive column to ae_profiles schema and filter inactive AEs from login/lists
+- [x] Run Pipedrive sync for all active AEs (13 records updated)
+- [x] Run VOIP monthly import for all AEs (24 records updated across 4 AEs)
+- [x] Add last-synced timestamp to Pipedrive sync page (persisted in localStorage)
