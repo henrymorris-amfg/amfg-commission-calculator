@@ -65,6 +65,8 @@ interface PipedriveDeal {
   stage_id: number;
   owner_name: string;
   user_id: { id: number; name: string } | number;
+  // Custom fields from Pipedrive (40-char hashes)
+  "39365abf109ea01960620ae35f468978ae611bc8"?: string; // Contract Start Date (YYYY-MM-DD)
 }
 
 interface PipedriveActivity {
@@ -766,6 +768,10 @@ export const pipedriveSyncRouter = router({
             const startMonth = parseInt(wonDate.substring(5, 7), 10);
             const startDay = parseInt(wonDate.substring(8, 10), 10);
             const arrUsd = await toUsd(pdDeal.value || 0, pdDeal.currency || "USD");
+            
+            // Extract Contract Start Date from Pipedrive custom field
+            const contractStartDateStr = pdDeal["39365abf109ea01960620ae35f468978ae611bc8"];
+            const contractStartDate = contractStartDateStr ? new Date(contractStartDateStr) : null;
 
             // Determine tier at the time of this deal
             const allMetrics = await getMetricsForAe(ae.id, 9);
@@ -831,8 +837,12 @@ export const pipedriveSyncRouter = router({
               isReferral: false,
               tierAtStart: tier,
               fxRateAtEntry: String(usdToGbp),
+              fxRateAtWon: String(usdToGbp), // Lock FX rate at deal-won date
               commissionStructureId: activeStructure?.id ?? null,
               pipedriveId: pdDeal.id,
+              pipedriveWonTime: wonDate ? new Date(wonDate) : null,
+              contractStartDate: contractStartDate,
+              billingFrequency: "annual", // Default to annual; can be overridden via UI
               notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`,
             });
 

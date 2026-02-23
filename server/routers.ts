@@ -487,6 +487,7 @@ export const appRouter = router({
           arrUsd: z.number().positive(),
           onboardingFeePaid: z.boolean(),
           isReferral: z.boolean(),
+          billingFrequency: z.enum(["annual", "monthly"]).default("annual"),
           // Optionally override tier (otherwise auto-calculated)
           tierOverride: z.enum(["bronze", "silver", "gold"]).optional(),
         })
@@ -575,6 +576,8 @@ export const appRouter = router({
           isReferral: input.isReferral,
           tierAtStart: tier,
           fxRateAtEntry: String(fxRate),
+          fxRateAtWon: String(fxRate),
+          billingFrequency: input.billingFrequency,
           commissionStructureId: activeStructure?.id ?? null,
           notes: null,
         });

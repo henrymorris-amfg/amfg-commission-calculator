@@ -2629,6 +2629,8 @@ var pipedriveSyncRouter = router({
           const startMonth = parseInt(wonDate.substring(5, 7), 10);
           const startDay = parseInt(wonDate.substring(8, 10), 10);
           const arrUsd = await toUsd2(pdDeal.value || 0, pdDeal.currency || "USD");
+          const contractStartDateStr = pdDeal["39365abf109ea01960620ae35f468978ae611bc8"];
+          const contractStartDate = contractStartDateStr ? new Date(contractStartDateStr) : null;
           const allMetrics = await getMetricsForAe(ae.id, 9);
           const targetDate = new Date(startYear, startMonth - 1, 1);
           const last3 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 3).map((m) => ({
@@ -2682,8 +2684,14 @@ var pipedriveSyncRouter = router({
             isReferral: false,
             tierAtStart: tier,
             fxRateAtEntry: String(usdToGbp),
+            fxRateAtWon: String(usdToGbp),
+            // Lock FX rate at deal-won date
             commissionStructureId: activeStructure?.id ?? null,
             pipedriveId: pdDeal.id,
+            pipedriveWonTime: wonDate ? new Date(wonDate) : null,
+            contractStartDate,
+            billingFrequency: "annual",
+            // Default to annual; can be overridden via UI
             notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`
           });
           const payouts = commResult.payoutSchedule.map((p, i) => {
@@ -3209,6 +3217,7 @@ var appRouter = router({
         arrUsd: z5.number().positive(),
         onboardingFeePaid: z5.boolean(),
         isReferral: z5.boolean(),
+        billingFrequency: z5.enum(["annual", "monthly"]).default("annual"),
         // Optionally override tier (otherwise auto-calculated)
         tierOverride: z5.enum(["bronze", "silver", "gold"]).optional()
       })
@@ -3277,6 +3286,8 @@ var appRouter = router({
         isReferral: input.isReferral,
         tierAtStart: tier,
         fxRateAtEntry: String(fxRate),
+        fxRateAtWon: String(fxRate),
+        billingFrequency: input.billingFrequency,
         commissionStructureId: activeStructure?.id ?? null,
         notes: null
       });

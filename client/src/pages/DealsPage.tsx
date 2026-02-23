@@ -40,6 +40,7 @@ export default function DealsPage() {
   const [onboardingFeePaid, setOnboardingFeePaid] = useState(true);
   const [isReferral, setIsReferral] = useState(false);
   const [tierOverride, setTierOverride] = useState<"" | "bronze" | "silver" | "gold">("");
+  const [billingFrequency, setBillingFrequency] = useState<"annual" | "monthly">("annual");
   const [expandedDeal, setExpandedDeal] = useState<number | null>(null);
 
   const { data: deals = [], isLoading: dealsLoading } = trpc.deals.list.useQuery(
@@ -88,6 +89,7 @@ export default function DealsPage() {
     setOnboardingFeePaid(true);
     setIsReferral(false);
     setTierOverride("");
+    setBillingFrequency("annual");
   };
 
   const handleCreate = () => {
@@ -104,6 +106,7 @@ export default function DealsPage() {
       arrUsd: arr,
       onboardingFeePaid,
       isReferral,
+      billingFrequency,
       tierOverride: tierOverride || undefined,
     });
   };
@@ -187,6 +190,28 @@ export default function DealsPage() {
                   {contractType === "annual"
                     ? "Commission paid upfront on full year ARR."
                     : "Commission paid monthly for 13 months from start."}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Billing Frequency *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["annual", "monthly"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setBillingFrequency(f)}
+                      className={`h-11 rounded-xl border text-sm font-medium transition-all ${
+                        billingFrequency === f
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-input border-border text-muted-foreground hover:border-border/80"
+                      }`}
+                    >
+                      {f === "annual" ? "Annual" : "Monthly"}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  How the customer pays: annual (one invoice) or monthly (recurring).
                 </p>
               </div>
 

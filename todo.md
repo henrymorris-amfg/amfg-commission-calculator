@@ -181,8 +181,8 @@
 - [x] Lock FX rate at deal-won date (schema: added fxRateAtWon column)
 - [x] Use Contract Start Date for payout month (schema: added contractStartDate, pipedriveWonTime)
 - [ ] Pull payment terms from Pipedrive (schema: added billingFrequency column)
-- [ ] Update importDeals procedure to populate new fields
-- [ ] Add billingFrequency UI field (team leader editable)
+- [x] Update importDeals procedure to populate new fields
+- [x] Add billingFrequency UI field (team leader editable)
 - [ ] Make commission structure read-only for all AEs
-- [ ] Resync Julian Earl VOIP + Pipedrive data
+- [x] Resync Julian Earl VOIP + Pipedrive data
 - [ ] Re-import all deals with corrected data
