@@ -1,0 +1,18 @@
+{
+  "query": "SELECT year, month, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = 30003 AND year = 2026 AND month = 2",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT year, month, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = 30003 AND year = 2026 AND month = 2",
+  "rows": [
+    {
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "0.00",
+      "demosTotal": "3",
+      "dialsTotal": "732",
+      "retentionRate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "year\tmonth\tarrUsd\tdemosTotal\tdialsTotal\tretentionRate\n2026\t2\t0.00\t3\t732\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 423
+}

@@ -3126,10 +3126,18 @@ var appRouter = router({
       if (!profile) throw new TRPCError6({ code: "NOT_FOUND" });
       const allMetrics = await getMetricsForAe(aeId, 9);
       const targetDate = new Date(input.year, input.month - 1, 1);
-      const last3 = allMetrics.filter((m) => {
+      const joinDate = new Date(profile.joinDate);
+      let last3 = allMetrics.filter((m) => {
         const d = new Date(m.year, m.month - 1, 1);
-        return d < targetDate;
-      }).slice(0, 3).map((m) => ({
+        return d < targetDate && d >= joinDate;
+      }).slice(0, 3);
+      if (last3.length === 0 && isNewJoiner(profile.joinDate, targetDate)) {
+        last3 = allMetrics.filter((m) => {
+          const d = new Date(m.year, m.month - 1, 1);
+          return d.getFullYear() === input.year && d.getMonth() + 1 === input.month;
+        }).slice(0, 1);
+      }
+      last3 = last3.map((m) => ({
         year: m.year,
         month: m.month,
         arrUsd: Number(m.arrUsd),
@@ -3137,10 +3145,17 @@ var appRouter = router({
         dialsTotal: m.dialsTotal,
         retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
       }));
-      const last6 = allMetrics.filter((m) => {
+      let last6 = allMetrics.filter((m) => {
         const d = new Date(m.year, m.month - 1, 1);
-        return d < targetDate;
-      }).slice(0, 6).map((m) => ({
+        return d < targetDate && d >= joinDate;
+      }).slice(0, 6);
+      if (last6.length === 0 && isNewJoiner(profile.joinDate, targetDate)) {
+        last6 = allMetrics.filter((m) => {
+          const d = new Date(m.year, m.month - 1, 1);
+          return d.getFullYear() === input.year && d.getMonth() + 1 === input.month;
+        }).slice(0, 1);
+      }
+      last6 = last6.map((m) => ({
         year: m.year,
         month: m.month,
         arrUsd: Number(m.arrUsd),

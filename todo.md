@@ -192,3 +192,6 @@
 
 ## Rolling Average Bug for New AEs (Feb 23 2026)
 - [x] Fix: 3-month rolling average should only include months after join date, not pre-join empty months
+
+## New Joiner Tier Display Fix (Feb 23 2026)
+- [x] Fix: tier.calculate now shows current month data for new joiners with no prior data

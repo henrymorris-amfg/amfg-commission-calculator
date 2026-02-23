@@ -380,12 +380,27 @@ export const appRouter = router({
 
         // Filter to the 3 months preceding the target month
         const targetDate = new Date(input.year, input.month - 1, 1);
-        const last3 = allMetrics
+        const joinDate = new Date(profile.joinDate);
+        
+        // For new joiners with no prior data, show current month instead of looking backward
+        let last3 = allMetrics
           .filter((m) => {
             const d = new Date(m.year, m.month - 1, 1);
-            return d < targetDate;
+            return d < targetDate && d >= joinDate;
           })
-          .slice(0, 3)
+          .slice(0, 3);
+        
+        // If new joiner has no prior data but has current month data, use that
+        if (last3.length === 0 && isNewJoiner(profile.joinDate, targetDate)) {
+          last3 = allMetrics
+            .filter((m) => {
+              const d = new Date(m.year, m.month - 1, 1);
+              return d.getFullYear() === input.year && d.getMonth() + 1 === input.month;
+            })
+            .slice(0, 1);
+        }
+        
+        last3 = last3
           .map((m) => ({
             year: m.year,
             month: m.month,
@@ -395,12 +410,24 @@ export const appRouter = router({
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
           }));
 
-        const last6 = allMetrics
+        let last6 = allMetrics
           .filter((m) => {
             const d = new Date(m.year, m.month - 1, 1);
-            return d < targetDate;
+            return d < targetDate && d >= joinDate;
           })
-          .slice(0, 6)
+          .slice(0, 6);
+        
+        // If new joiner has no prior data but has current month data, use that for retention
+        if (last6.length === 0 && isNewJoiner(profile.joinDate, targetDate)) {
+          last6 = allMetrics
+            .filter((m) => {
+              const d = new Date(m.year, m.month - 1, 1);
+              return d.getFullYear() === input.year && d.getMonth() + 1 === input.month;
+            })
+            .slice(0, 1);
+        }
+        
+        last6 = last6
           .map((m) => ({
             year: m.year,
             month: m.month,

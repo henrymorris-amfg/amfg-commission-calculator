@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM monthly_metrics WHERE aeId = 30003 ORDER BY year DESC, month DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT * FROM monthly_metrics WHERE aeId = 30003 ORDER BY year DESC, month DESC",
+  "rows": [
+    {
+      "id": "30026",
+      "aeId": "30003",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "0.00",
+      "demosTotal": "3",
+      "dialsTotal": "732",
+      "retentionRate": "NULL",
+      "createdAt": "2026-02-22 11:30:52",
+      "updatedAt": "2026-02-22 19:41:43",
+      "connectedDials": "568",
+      "connectionRate": "77.60",
+      "talkTimeSecs": "22082",
+      "demosFromPipedrive": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\tretentionRate\tcreatedAt\tupdatedAt\tconnectedDials\tconnectionRate\ttalkTimeSecs\tdemosFromPipedrive\n30026\t30003\t2026\t2\t0.00\t3\t732\tNULL\t2026-02-22 11:30:52\t2026-02-22 19:41:43\t568\t77.60\t22082\t3\n",
+  "stderr": "",
+  "execution_time_ms": 365
+}
