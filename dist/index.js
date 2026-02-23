@@ -135,12 +135,20 @@ var init_schema = __esm({
       isReferral: boolean("isReferral").default(false).notNull(),
       // Tier locked at the time the contract started
       tierAtStart: mysqlEnum("tierAtStart", ["bronze", "silver", "gold"]).notNull(),
-      // Snapshot of FX rate at time of deal entry (USD→GBP)
+      // Snapshot of FX rate at time of deal won (USD→GBP) — locked at won_time from Pipedrive
+      fxRateAtWon: decimal("fxRateAtWon", { precision: 10, scale: 6 }),
+      // Snapshot of FX rate at time of deal entry (USD→GBP) — legacy
       fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
       // Reference to the commission structure version active when the deal was created
       commissionStructureId: int("commissionStructureId"),
       // Pipedrive deal ID — set when imported from Pipedrive, null for manually entered deals
       pipedriveId: int("pipedriveId"),
+      // Billing frequency: annual (upfront), monthly (13 months), or null if not set
+      billingFrequency: mysqlEnum("billingFrequency", ["annual", "monthly"]),
+      // Pipedrive won_time — timestamp when deal was marked as won
+      pipedriveWonTime: timestamp("pipedriveWonTime"),
+      // Contract start date from Pipedrive (determines payout month)
+      contractStartDate: timestamp("contractStartDate"),
       notes: text("notes"),
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()

@@ -171,3 +171,18 @@
 - [x] Add "Sync Now" button to Dashboard — triggers Pipedrive sync directly from dashboard (team leader only)
 - [x] Run Toby Greer VOIP sync for August 2025 — confirmed already populated (506 dials, no gap)
 - [x] Add clarifying labels on dashboard ARR figures: "from Pipedrive (live)" vs "used for tier calculation"
+
+## Pipedrive Deal Import Fixes (Feb 23 2026)
+- [ ] Lock FX rate at deal-won date (snapshot USD→GBP at time of win, not live rate)
+- [ ] Pull payment terms from Pipedrive (monthly vs annual) and store/display correctly
+- [ ] Use contract start date from Pipedrive to set correct commission payout month (e.g. Machine Tool Engineering start 31 Mar → payout in April)
+
+## Pipedrive Deal Import Fixes (Feb 23 2026)
+- [x] Lock FX rate at deal-won date (schema: added fxRateAtWon column)
+- [x] Use Contract Start Date for payout month (schema: added contractStartDate, pipedriveWonTime)
+- [ ] Pull payment terms from Pipedrive (schema: added billingFrequency column)
+- [ ] Update importDeals procedure to populate new fields
+- [ ] Add billingFrequency UI field (team leader editable)
+- [ ] Make commission structure read-only for all AEs
+- [ ] Resync Julian Earl VOIP + Pipedrive data
+- [ ] Re-import all deals with corrected data
