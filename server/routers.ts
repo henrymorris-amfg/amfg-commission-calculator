@@ -506,8 +506,13 @@ export const appRouter = router({
         } else {
           const allMetrics = await getMetricsForAe(aeId, 9);
           const targetDate = new Date(input.startYear, input.startMonth - 1, 1);
+          // For new AEs, only include months after their join date
+          const joinDate = new Date(profile.joinDate);
           const last3 = allMetrics
-            .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
+            .filter((m) => {
+              const monthDate = new Date(m.year, m.month - 1, 1);
+              return monthDate < targetDate && monthDate >= joinDate;
+            })
             .slice(0, 3)
             .map((m) => ({
               year: m.year,
@@ -518,7 +523,10 @@ export const appRouter = router({
               retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
             }));
           const last6 = allMetrics
-            .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
+            .filter((m) => {
+              const monthDate = new Date(m.year, m.month - 1, 1);
+              return monthDate < targetDate && monthDate >= joinDate;
+            })
             .slice(0, 6)
             .map((m) => ({
               year: m.year,

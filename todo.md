@@ -189,3 +189,6 @@
 
 ## Commission Structure Panel (Feb 23 2026)
 - [x] Add read-only Commission Structure panel to Metrics page for all AEs
+
+## Rolling Average Bug for New AEs (Feb 23 2026)
+- [x] Fix: 3-month rolling average should only include months after join date, not pre-join empty months

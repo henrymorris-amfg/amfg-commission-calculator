@@ -3232,7 +3232,11 @@ var appRouter = router({
       } else {
         const allMetrics = await getMetricsForAe(aeId, 9);
         const targetDate = new Date(input.startYear, input.startMonth - 1, 1);
-        const last3 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 3).map((m) => ({
+        const joinDate = new Date(profile.joinDate);
+        const last3 = allMetrics.filter((m) => {
+          const monthDate = new Date(m.year, m.month - 1, 1);
+          return monthDate < targetDate && monthDate >= joinDate;
+        }).slice(0, 3).map((m) => ({
           year: m.year,
           month: m.month,
           arrUsd: Number(m.arrUsd),
@@ -3240,7 +3244,10 @@ var appRouter = router({
           dialsTotal: m.dialsTotal,
           retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
         }));
-        const last6 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 6).map((m) => ({
+        const last6 = allMetrics.filter((m) => {
+          const monthDate = new Date(m.year, m.month - 1, 1);
+          return monthDate < targetDate && monthDate >= joinDate;
+        }).slice(0, 6).map((m) => ({
           year: m.year,
           month: m.month,
           arrUsd: Number(m.arrUsd),
