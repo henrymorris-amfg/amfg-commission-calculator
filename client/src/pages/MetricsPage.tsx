@@ -293,6 +293,73 @@ export default function MetricsPage() {
             </div>
           </div>
         </div>
+
+        {/* Commission Structure (Read-only) */}
+        <div className="rounded-2xl bg-card border border-border p-6 space-y-5">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Commission Structure</h2>
+            <p className="text-sm text-muted-foreground mt-1">Your tier is determined by rolling 3-month averages. Here's how commission is calculated.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                tier: "Bronze",
+                rate: "13%",
+                targets: [
+                  "ARR: $15k+/mo",
+                  "Demos: 2/wk+",
+                  "Dials: 100/wk+",
+                  "Retention: 51%+",
+                ],
+              },
+              {
+                tier: "Silver",
+                rate: "16%",
+                targets: [
+                  "ARR: $20k+/mo",
+                  "Demos: 3/wk+",
+                  "Dials: 100/wk+",
+                  "Retention: 61%+",
+                ],
+              },
+              {
+                tier: "Gold",
+                rate: "19%",
+                targets: [
+                  "ARR: $25k+/mo",
+                  "Demos: 4/wk+",
+                  "Dials: 200/wk+",
+                  "Retention: 71%+",
+                ],
+              },
+            ].map((tier) => (
+              <div key={tier.tier} className="rounded-xl border border-border bg-secondary/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{tier.tier}</p>
+                  <p className="text-2xl font-bold text-primary mt-1">{tier.rate}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">commission rate</p>
+                </div>
+                <div className="space-y-2 pt-2 border-t border-border">
+                  {tier.targets.map((target) => (
+                    <p key={target} className="text-xs text-muted-foreground">{target}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl bg-secondary/20 border border-border/50 p-4 space-y-2">
+            <p className="text-sm font-medium text-foreground">Payout Rules</p>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              <li>• <span className="text-foreground">Annual contracts:</span> Commission paid upfront on full year ARR</li>
+              <li>• <span className="text-foreground">Monthly contracts:</span> Commission paid monthly for 13 months</li>
+              <li>• <span className="text-foreground">Onboarding fee:</span> £1k/€1k/$1k standard (£500 if not paid)</li>
+              <li>• <span className="text-foreground">Referrals:</span> Commission reduced by 50%</li>
+              <li>• <span className="text-foreground">FX rate:</span> Locked at deal-won date, not live rate</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

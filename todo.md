@@ -186,3 +186,6 @@
 - [ ] Make commission structure read-only for all AEs
 - [x] Resync Julian Earl VOIP + Pipedrive data
 - [ ] Re-import all deals with corrected data
+
+## Commission Structure Panel (Feb 23 2026)
+- [x] Add read-only Commission Structure panel to Metrics page for all AEs
