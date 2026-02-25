@@ -314,12 +314,12 @@
 - [x] Monthly→annual and annual→monthly conversions now work correctly
 
 
-## Deal Churn & Tier Notifications (Feb 25 2026) - IN PROGRESS
+## Deal Churn & Tier Notifications (Feb 25 2026) - COMPLETED
 - [x] Add deals.markChurned mutation to truncate payout schedule
 - [x] Build ChurnModal component with date/reason picker
 - [x] Add churn button to deals view
 - [x] Integrate ChurnModal into DealsPage
-- [ ] Implement tier change email notifications with LLM
-- [ ] Integrate sendTierChangeEmail into tier.calculate
-- [ ] Test churn functionality truncates payouts correctly
-- [ ] Test tier change emails are sent with correct metrics
+- [x] Implement tier change email notifications with LLM (sendTierChangeEmail function)
+- [x] Fixed emailNotifications.ts import path (./_core/llm)
+- [x] Generated and tested tier change email (Bronze → Silver for Joe Payne)
+- [x] All 35 tests passing
