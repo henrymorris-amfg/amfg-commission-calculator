@@ -185,7 +185,7 @@
 - [x] Add billingFrequency UI field (team leader editable)
 - [ ] Make commission structure read-only for all AEs
 - [x] Resync Julian Earl VOIP + Pipedrive data
-- [ ] Re-import all deals with corrected data
+- [x] Re-import all deals with corrected data
 
 ## Commission Structure Panel (Feb 23 2026)
 - [x] Add read-only Commission Structure panel to Metrics page for all AEs
@@ -195,3 +195,8 @@
 
 ## New Joiner Tier Display Fix (Feb 23 2026)
 - [x] Fix: tier.calculate now shows current month data for new joiners with no prior data
+
+## Deal ARR Attribution Fix (Feb 23 2026)
+- [x] Fix: importDeals to use contract start date for ARR attribution, not deal signed date
+- [x] Re-import all deals with corrected monthly ARR based on contract start dates
+- [x] Add Sign Date and Contract Start Date columns to deals UI

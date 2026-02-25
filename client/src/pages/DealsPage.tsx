@@ -384,7 +384,15 @@ export default function DealsPage() {
                         <div>
                           <p className="text-sm font-semibold text-foreground">{deal.customerName}</p>
                           <p className="text-xs text-muted-foreground">
-                            {MONTH_NAMES[deal.startMonth - 1]} {deal.startYear}
+                            <span title="Contract Start Date">{MONTH_NAMES[deal.startMonth - 1]} {deal.startYear}</span>
+                            {deal.pipedriveWonTime && (
+                              <>
+                                {" · "}
+                                <span title="Deal Signed Date">
+                                  Signed: {new Date(deal.pipedriveWonTime).toLocaleDateString()}
+                                </span>
+                              </>
+                            )}
                             {" · "}{deal.contractType}
                             {deal.isReferral && " · Referral"}
                             {!deal.onboardingFeePaid && " · No onboarding fee"}

@@ -2625,12 +2625,13 @@ var pipedriveSyncRouter = router({
           }
           const wonDate = pdDeal.won_time || pdDeal.close_time;
           if (!wonDate) continue;
-          const startYear = parseInt(wonDate.substring(0, 4), 10);
-          const startMonth = parseInt(wonDate.substring(5, 7), 10);
-          const startDay = parseInt(wonDate.substring(8, 10), 10);
           const arrUsd = await toUsd2(pdDeal.value || 0, pdDeal.currency || "USD");
           const contractStartDateStr = pdDeal["39365abf109ea01960620ae35f468978ae611bc8"];
           const contractStartDate = contractStartDateStr ? new Date(contractStartDateStr) : null;
+          const attributionDate = contractStartDate || new Date(wonDate);
+          const startYear = attributionDate.getFullYear();
+          const startMonth = attributionDate.getMonth() + 1;
+          const startDay = attributionDate.getDate();
           const allMetrics = await getMetricsForAe(ae.id, 9);
           const targetDate = new Date(startYear, startMonth - 1, 1);
           const last3 = allMetrics.filter((m) => new Date(m.year, m.month - 1, 1) < targetDate).slice(0, 3).map((m) => ({

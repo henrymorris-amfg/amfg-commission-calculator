@@ -764,14 +764,17 @@ export const pipedriveSyncRouter = router({
             const wonDate = pdDeal.won_time || pdDeal.close_time;
             if (!wonDate) continue;
 
-            const startYear = parseInt(wonDate.substring(0, 4), 10);
-            const startMonth = parseInt(wonDate.substring(5, 7), 10);
-            const startDay = parseInt(wonDate.substring(8, 10), 10);
             const arrUsd = await toUsd(pdDeal.value || 0, pdDeal.currency || "USD");
             
             // Extract Contract Start Date from Pipedrive custom field
             const contractStartDateStr = pdDeal["39365abf109ea01960620ae35f468978ae611bc8"];
             const contractStartDate = contractStartDateStr ? new Date(contractStartDateStr) : null;
+            
+            // Use contract start date for ARR attribution, not deal signed date
+            const attributionDate = contractStartDate || new Date(wonDate);
+            const startYear = attributionDate.getFullYear();
+            const startMonth = attributionDate.getMonth() + 1;
+            const startDay = attributionDate.getDate();
 
             // Determine tier at the time of this deal
             const allMetrics = await getMetricsForAe(ae.id, 9);
