@@ -359,3 +359,17 @@
 - [x] Verified annual deals show 1 payout, monthly deals show 12 payouts
 - [x] All payouts include correct FX rate (0.7850) and GBP conversion
 - [x] All 35 tests passing
+
+
+## Commission Summary & Payout Calendar Fix (Feb 25 2026)
+- [ ] Only C-Axis showing in commission summary page
+- [ ] Only C-Axis showing in payout calendar page
+- [ ] Add update/refresh button to manually refresh data
+- [ ] Verify all deals display in both pages after update
+
+## Commission Summary & Payout Calendar Updates (Feb 25 2026)
+- [x] Add Refresh button to Commission Summary page (manual data reload)
+- [x] Add Refresh button to Payout Calendar page (manual data reload)
+- [ ] Fix Payout Calendar data loading issue — query returns empty months array
+- [ ] Investigate why monthlySummary works but payoutCalendar doesn't load data
+- [ ] Test refresh buttons after fixing data loading

@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
 import { MONTH_NAMES } from "../../../shared/commission";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { ChevronDown, ChevronUp, TrendingUp, PoundSterling } from "lucide-react";
+import { ChevronDown, ChevronUp, TrendingUp, PoundSterling, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TIER_CONFIG = {
   bronze: { label: "Bronze", color: "oklch(0.65 0.12 55)" },
@@ -18,7 +19,7 @@ export default function SummaryPage() {
   const { ae, isLoading } = useAeAuth();
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
 
-  const { data: summary = [], isLoading: summaryLoading } = trpc.commission.monthlySummary.useQuery(
+  const { data: summary = [], isLoading: summaryLoading, refetch: refetchSummary } = trpc.commission.monthlySummary.useQuery(
     undefined,
     { enabled: !!ae }
   );
@@ -50,12 +51,24 @@ export default function SummaryPage() {
   return (
     <AppLayout>
       <div className="p-8 space-y-8 max-w-5xl">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl text-foreground">Commission Summary</h1>
-          <p className="text-muted-foreground mt-1">
-            Your total earnings breakdown by month.
-          </p>
+        {/* Header with Refresh Button */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl text-foreground">Commission Summary</h1>
+            <p className="text-muted-foreground mt-1">
+              Your total earnings breakdown by month.
+            </p>
+          </div>
+          <Button
+            onClick={() => refetchSummary()}
+            disabled={summaryLoading}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${summaryLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Top Stats */}

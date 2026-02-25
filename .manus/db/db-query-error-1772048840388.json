@@ -1,0 +1,8 @@
+{
+  "query": "SELECT d.id, d.customerName, d.aeId, COUNT(p.id) as payout_count FROM deals d LEFT JOIN payouts p ON d.id = p.dealId GROUP BY d.id ORDER BY d.aeId, d.customerName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT d.id, d.customerName, d.aeId, COUNT(p.id) as payout_count FROM deals d LEFT JOIN payouts p ON d.id = p.dealId GROUP BY d.id ORDER BY d.aeId, d.customerName;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'gauomoig6vkmxbqaeq6bo3.payouts' doesn't exist"
+  ]
+}

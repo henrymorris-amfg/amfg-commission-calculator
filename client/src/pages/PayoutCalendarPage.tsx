@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   Circle,
   Banknote,
+  RefreshCw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TIER_CONFIG = {
   bronze: { label: "Bronze", color: "oklch(0.65 0.12 55)", bg: "oklch(0.65 0.12 55 / 0.12)", border: "oklch(0.65 0.12 55 / 0.3)" },
@@ -32,7 +34,7 @@ export default function PayoutCalendarPage() {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<"all" | "future" | "past">("all");
 
-  const { data, isLoading: calLoading } = trpc.commission.payoutCalendar.useQuery(
+  const { data, isLoading: calLoading, refetch: refetchCalendar } = trpc.commission.payoutCalendar.useQuery(
     undefined,
     { enabled: !!ae }
   );
@@ -77,16 +79,28 @@ export default function PayoutCalendarPage() {
   return (
     <AppLayout>
       <div className="p-4 sm:p-8 pb-24 md:pb-8 space-y-6 max-w-4xl">
-        {/* Header */}
-        <div>
-          <p className="text-muted-foreground text-sm mb-1 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            Commission Forecast
-          </p>
-          <h1 className="text-3xl sm:text-4xl text-foreground">Payout Calendar</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Your month-by-month commission schedule — past receipts and upcoming payouts.
-          </p>
+        {/* Header with Refresh Button */}
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-muted-foreground text-sm mb-1 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              Commission Forecast
+            </p>
+            <h1 className="text-3xl sm:text-4xl text-foreground">Payout Calendar</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Your month-by-month commission schedule — past receipts and upcoming payouts.
+            </p>
+          </div>
+          <Button
+            onClick={() => refetchCalendar()}
+            disabled={calLoading}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${calLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Summary Stats */}
