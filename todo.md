@@ -352,3 +352,10 @@
 - [x] Deleted all payouts to trigger recalculation
 - [x] Payouts will be recalculated on next dashboard access
 - [x] All 35 tests passing
+
+
+## Payout Breakdown Display Issue (Feb 25 2026) - FIXED
+- [x] Recalculated 151 payouts for all 63 deals
+- [x] Verified annual deals show 1 payout, monthly deals show 12 payouts
+- [x] All payouts include correct FX rate (0.7850) and GBP conversion
+- [x] All 35 tests passing
