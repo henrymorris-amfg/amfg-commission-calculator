@@ -377,7 +377,7 @@ export default function DealsPage() {
                 const grossComm = deal.contractType === "annual"
                   ? effectiveArr * commRate
                   : (effectiveArr / 12) * commRate;
-                const totalGross = deal.contractType === "annual" ? grossComm : grossComm * 13;
+                const totalGross = deal.contractType === "annual" ? grossComm : grossComm * 12;
                 const referralAdj = deal.isReferral ? totalGross * 0.5 : 0;
                 const netUsd = totalGross - referralAdj;
                 const netGbp = netUsd * deal.fxRateAtEntry - (deal.onboardingFeePaid ? 0 : 500);
@@ -464,7 +464,7 @@ export default function DealsPage() {
                               { label: "Commission Rate", value: `${(commRate * 100).toFixed(0)}%` },
                               { label: "Effective ARR", value: `$${effectiveArr.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
                               { label: "FX Rate (at entry)", value: `£${deal.fxRateAtEntry.toFixed(4)}` },
-                              { label: "Payouts", value: deal.contractType === "annual" ? "1 (upfront)" : "13 monthly" },
+                              { label: "Payouts", value: deal.contractType === "annual" ? "1 (upfront)" : "12 monthly" },
                             ].map((item) => (
                               <div key={item.label} className="rounded-xl bg-card border border-border p-3">
                                 <p className="text-xs text-muted-foreground">{item.label}</p>

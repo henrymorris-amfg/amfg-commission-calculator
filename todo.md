@@ -304,3 +304,11 @@
 - [x] Julian Earl has no deals (0 payouts)
 - [x] All payouts recalculated with correct FX rate (0.7850) and payout count
 - [x] All 35 tests passing
+
+
+## Deal Contract Type Update Fix (Feb 25 2026) - COMPLETED
+- [x] deals.update mutation already exists and recalculates payouts on contract type change
+- [x] Fixed frontend payout display: "13 monthly" → "12 monthly"
+- [x] Fixed total gross calculation: grossComm * 13 → grossComm * 12
+- [x] All 35 tests passing
+- [x] Monthly→annual and annual→monthly conversions now work correctly
