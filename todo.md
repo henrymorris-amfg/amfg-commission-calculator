@@ -209,9 +209,10 @@
 ## Refresh Buttons & Auto-Sync (Feb 25 2026)
 - [x] Add Refresh button to Commission Summary page (manual refetch of monthlySummary query)
 - [x] Add Refresh button to Payout Calendar page (manual refetch of payoutCalendar query)
+- [x] Add token cache invalidation when token changes (invalidateQueries in main.tsx)
 - [ ] Add auto-refresh on deal changes (refresh summary/calendar when new deal is logged or deal status changes)
-- [ ] Add success toast notification when Refresh button is clicked
-- [ ] DEBUG: Payout Calendar query returns empty data (token parsing issue with X-AE-Token header)
+- [ ] Add success toast notification when Refresh button is clicked (requires toast component setup)
+- [ ] DEBUG: Payout Calendar query returns empty data (backend issue - payoutCalendar query not returning data for authenticated users)
 
 ## Critical Bugs Fixed (Feb 25 2026)
 - [x] Fixed pipedriveSync.ts to use contract start date for ARR attribution (not deal signed date)

@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { getAeToken } from "@/lib/aeToken";
+import { getAeToken, onTokenChange } from "@/lib/aeToken";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -42,6 +42,11 @@ const trpcClient = trpc.createClient({
       },
     }),
   ],
+});
+
+// When token changes, invalidate all queries to force refetch with new token
+onTokenChange(() => {
+  queryClient.invalidateQueries();
 });
 
 createRoot(document.getElementById("root")!).render(

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM commission_payouts) as total_payouts,\n  (SELECT COUNT(*) FROM deals) as total_deals,\n  (SELECT COUNT(*) FROM deals WHERE aeId = 2) as joe_deals,\n  (SELECT COUNT(*) FROM commission_payouts WHERE aeId = 2) as joe_payouts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT \n  (SELECT COUNT(*) FROM commission_payouts) as total_payouts,\n  (SELECT COUNT(*) FROM deals) as total_deals,\n  (SELECT COUNT(*) FROM deals WHERE aeId = 2) as joe_deals,\n  (SELECT COUNT(*) FROM commission_payouts WHERE aeId = 2) as joe_payouts;",
+  "rows": [
+    {
+      "total_payouts": "303",
+      "total_deals": "63",
+      "joe_deals": "0",
+      "joe_payouts": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_payouts\ttotal_deals\tjoe_deals\tjoe_payouts\n303\t63\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}

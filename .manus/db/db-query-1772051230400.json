@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  cp.id,\n  cp.dealId,\n  d.customerName,\n  d.contractType,\n  d.contractStartDate,\n  cp.payoutYear,\n  cp.payoutMonth,\n  cp.payoutNumber,\n  cp.grossCommissionUsd,\n  cp.netCommissionUsd,\n  cp.netCommissionGbp,\n  cp.fxRateUsed,\n  COUNT(*) OVER (PARTITION BY cp.dealId, cp.payoutMonth) as duplicate_count\nFROM commission_payouts cp\nJOIN deals d ON cp.dealId = d.id\nWHERE cp.aeId = 2\nORDER BY cp.payoutYear, cp.payoutMonth, d.customerName, cp.payoutNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT \n  cp.id,\n  cp.dealId,\n  d.customerName,\n  d.contractType,\n  d.contractStartDate,\n  cp.payoutYear,\n  cp.payoutMonth,\n  cp.payoutNumber,\n  cp.grossCommissionUsd,\n  cp.netCommissionUsd,\n  cp.netCommissionGbp,\n  cp.fxRateUsed,\n  COUNT(*) OVER (PARTITION BY cp.dealId, cp.payoutMonth) as duplicate_count\nFROM commission_payouts cp\nJOIN deals d ON cp.dealId = d.id\nWHERE cp.aeId = 2\nORDER BY cp.payoutYear, cp.payoutMonth, d.customerName, cp.payoutNumber;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 418
+}

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM ae_profiles) as total_aes,\n  (SELECT COUNT(*) FROM deals) as total_deals,\n  (SELECT COUNT(*) FROM commission_payouts) as total_payouts,\n  (SELECT COUNT(*) FROM monthly_metrics) as total_metrics;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT \n  (SELECT COUNT(*) FROM ae_profiles) as total_aes,\n  (SELECT COUNT(*) FROM deals) as total_deals,\n  (SELECT COUNT(*) FROM commission_payouts) as total_payouts,\n  (SELECT COUNT(*) FROM monthly_metrics) as total_metrics;",
+  "rows": [
+    {
+      "total_aes": "5",
+      "total_deals": "63",
+      "total_payouts": "303",
+      "total_metrics": "71"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_aes\ttotal_deals\ttotal_payouts\ttotal_metrics\n5\t63\t303\t71\n",
+  "stderr": "",
+  "execution_time_ms": 374
+}

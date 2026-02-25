@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  d.id,\n  d.customerName,\n  d.contractType,\n  d.contractStartDate,\n  d.arrUsd,\n  d.tierAtStart,\n  d.isReferral,\n  d.onboardingFeePaid,\n  d.createdAt\nFROM deals d\nWHERE d.aeId = 2\nORDER BY d.contractStartDate DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT \n  d.id,\n  d.customerName,\n  d.contractType,\n  d.contractStartDate,\n  d.arrUsd,\n  d.tierAtStart,\n  d.isReferral,\n  d.onboardingFeePaid,\n  d.createdAt\nFROM deals d\nWHERE d.aeId = 2\nORDER BY d.contractStartDate DESC\nLIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 363
+}
