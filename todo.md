@@ -247,3 +247,13 @@
 - [x] Fix Recknagel tier: changed from GOLD to SILVER (Feb 2026: same metrics as MakeFast)
 - [x] Recalculated commission payouts for all three deals with corrected tiers
 - [ ] Verify all other deals have correct tiers based on 3-month rolling average before contract start date
+
+
+## Tier Audit Results (Feb 25 2026)
+- [x] Audited all 71 deals for tier accuracy
+- Found 17 tier mismatches (24% of deals):
+  * Joe Payne: 11 mismatches (mostly Gold should be Silver)
+  * Toby Greer: 4 mismatches (Bronze deals marked as Gold)
+  * Henry Morris: 2 mismatches
+- [ ] Fix all 17 mismatched tiers in database
+- [ ] Build data validation UI to prevent future mismatches

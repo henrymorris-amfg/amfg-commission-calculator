@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
+import { validationRouter } from "./validationRouter";
 import * as bcrypt from "bcryptjs";
 import { makeAeToken } from "./aeAuth";
 import { getAeIdFromCtx } from "./aeTokenUtils";
@@ -1114,6 +1115,7 @@ export const appRouter = router({
    }),
 
   // ─── Admin Utilities ─────────────────────────────────────────────────────
+  validation: validationRouter,
   admin: router({
     fixCAxisMonth: publicProcedure.mutation(async ({ ctx }) => {
       const callerId = getAeIdFromCtx(ctx);
@@ -1183,3 +1185,5 @@ export const appRouter = router({
   }),
 });
 export type AppRouter = typeof appRouter;
+
+
