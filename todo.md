@@ -214,3 +214,25 @@
 - [ ] Verify monthly contract calculations: (ARR ÷ 12) × tier rate is applied correctly
 - [ ] Create Billing Frequency custom field in Pipedrive for automatic contract type detection
 - [ ] Document which deals should be monthly and toggle them manually
+
+
+## CRITICAL BUG: Tier Calculation Rolling Average (Feb 25 2026)
+
+- [ ] Fix tier calculation: 3-month rolling average should use PREVIOUS 3 months, not current + previous 2
+  - For February: use Nov-Dec-Jan (NOT Dec-Jan-Feb)
+  - For January: use Oct-Nov-Dec (NOT Nov-Dec-Jan)
+  - This affects getTierAtDate() and all tier calculations
+- [ ] Update routers.ts tier.calculate to use correct month range
+- [ ] Recalculate all 69 deal tiers with corrected logic
+- [ ] Verify Joe Payne: January should be Bronze (not Silver), February should be Silver
+- [ ] Update monthly_metrics dashboard display to show correct tier for each month
+
+## Pipedrive API Integration (Feb 25 2026) — COMPLETED
+- [x] Create simple Pipedrive API utility function (import-deals-direct.mjs script)
+- [x] Create direct import endpoint that uses the utility
+- [x] Test import and verify deals are created with correct contract start dates (71 deals imported)
+- [x] Verify January 2026 ARR is correct ($14,321 - C-Axis only)
+- [x] Verify Joe Payne's January tier is GOLD (Oct-Nov-Dec 2025 grace period at $25k avg)
+- [x] Verify Joe Payne's February tier is SILVER (Nov-Dec-Jan 2026 mixed grace + actual)
+- [x] Fixed monthly_metrics for Oct-Dec 2025 to match actual deal ARR
+- [x] Moved Machine Tool Engineering from January to March start date
