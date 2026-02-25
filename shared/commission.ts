@@ -26,7 +26,7 @@ export const RETENTION_SILVER_MIN = 61; // 61-70% = silver eligible
 export const RETENTION_GOLD_MIN = 71;   // 71%+ = gold eligible
 
 // Payout rules
-export const MONTHLY_CONTRACT_PAYOUT_MONTHS = 13;
+export const MONTHLY_CONTRACT_PAYOUT_MONTHS = 12;
 export const ANNUAL_CONTRACT_PAYOUT_MONTHS = 1; // paid upfront in full
 
 // Deductions

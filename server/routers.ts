@@ -19,6 +19,7 @@ import {
 } from "../shared/commission";
 import { isInGracePeriod, getGracePeriodStatus } from "../shared/gracePeriod";
 import { type InsertCommissionPayout } from "../drizzle/schema";
+import { sendTierChangeEmail } from "./emailNotifications";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -474,6 +475,22 @@ export const appRouter = router({
           isNewJoiner: newJoiner,
           isTeamLeader: profile.isTeamLeader,
         });
+
+        // TODO: Check if tier changed from previous month and send notification email
+        // const previousTier = await getPreviousMonthTier(aeId, input.year, input.month);
+        // if (previousTier && previousTier !== result.tier) {
+        //   await notifyTierChangeIfApplicable(
+        //     aeId,
+        //     profile.name,
+        //     profile.email || '',
+        //     previousTier,
+        //     result.tier,
+        //     input.month,
+        //     input.year,
+        //     { arrUsd: avgArrUsd, demosPw: avgDemosPw, dialsPw: avgDialsPw },
+        //     getTierTargets(result.tier)
+        //   );
+        // }
 
         return {
           ...result,

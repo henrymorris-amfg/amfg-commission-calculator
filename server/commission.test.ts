@@ -174,10 +174,10 @@ describe("calculateCommission", () => {
       fxRateUsdToGbp: fxRate,
     });
     expect(result.rate).toBe(0.16);
-    expect(result.payoutSchedule).toHaveLength(13);
+    expect(result.payoutSchedule).toHaveLength(12);
     const monthlyPayout = (12_000 / 12) * 0.16;
     expect(result.payoutSchedule[0].grossCommissionUsd).toBeCloseTo(monthlyPayout);
-    expect(result.totalGrossUsd).toBeCloseTo(monthlyPayout * 13);
+    expect(result.totalGrossUsd).toBeCloseTo(monthlyPayout * 12);
   });
 
   it("referral deal: 50% commission reduction", () => {

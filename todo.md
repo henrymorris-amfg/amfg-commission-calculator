@@ -286,3 +286,21 @@
 - [ ] Build churn button UI in deals view with modal for churn details
 - [ ] Implement payout schedule truncation when deal is churned
 - [ ] Test tier notifications and churn functionality
+
+
+## Tier Change Notifications & Deal Resync (Feb 25 2026)
+- [ ] Generate test Bronze→Silver tier change email for user review
+- [ ] Integrate tier change notifications into tier.calculate procedure
+- [ ] Resync deals for Julian Earl, Henry Morris, Toby Greer from Pipedrive
+- [ ] Recalculate all payouts for resynced deals
+- [ ] Verify commission summary shows correct GBP values for all 3 AEs
+
+
+## Monthly Payout Schedule Fix (Feb 25 2026) - COMPLETED
+- [x] Fix monthly deals to show 12 payouts (not 13)
+- [x] Update MONTHLY_CONTRACT_PAYOUT_MONTHS constant from 13 to 12
+- [x] Updated test to expect 12 payouts for monthly deals
+- [x] Resync deals for Henry Morris (95 payouts, £31,376.16) and Toby Greer (5 payouts, £6,355.66)
+- [x] Julian Earl has no deals (0 payouts)
+- [x] All payouts recalculated with correct FX rate (0.7850) and payout count
+- [x] All 35 tests passing
