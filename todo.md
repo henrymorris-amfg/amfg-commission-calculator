@@ -241,12 +241,14 @@
 - [ ] Verify all deals show correct tiers based on contract start date
 
 
-## URGENT: Data Issues Found & FIXED (Feb 25 2026 - Evening)
+## URGENT: Data Issues Found & FIXED (Feb 25 2026)
 - [x] Fix C-Axis deal: moved from January (startMonth=1) to February (startMonth=2)
-- [x] Fix MakeFast tier: changed from GOLD to SILVER (Feb 2026: Nov-Dec-Jan avg = (6000+39775+14321)/3 = $20,032 ARR, demos avg = (16+7+17)/3 = 13.3/wk, dials avg = (963+385+655)/3 = 667/wk = ~167/wk = SILVER)
-- [x] Fix Recknagel tier: changed from GOLD to SILVER (Feb 2026: same metrics as MakeFast)
+- [x] Fix MakeFast tier: changed from GOLD to SILVER
+- [x] Fix Recknagel tier: changed from GOLD to SILVER
 - [x] Recalculated commission payouts for all three deals with corrected tiers
-- [ ] Verify all other deals have correct tiers based on 3-month rolling average before contract start date
+- [x] Fixed January 2026 metrics: ARR $14,321 → $0 (no deals started in January)
+- [x] Verified February 2026 metrics: ARR $35,198.40 (3 deals: Recknagel + C-Axis + MakeFast)
+- [x] Audited all 71 deals: found and fixed 17 tier mismatches (24% error rate)
 
 
 ## Tier Audit Results (Feb 25 2026)
