@@ -149,6 +149,14 @@ var init_schema = __esm({
       pipedriveWonTime: timestamp("pipedriveWonTime"),
       // Contract start date from Pipedrive (determines payout month)
       contractStartDate: timestamp("contractStartDate"),
+      // Churn tracking (for monthly deals)
+      isChurned: boolean("isChurned").default(false).notNull(),
+      churnMonth: int("churnMonth"),
+      // 1–12, null if not churned
+      churnYear: int("churnYear"),
+      // null if not churned
+      churnReason: text("churnReason"),
+      // optional reason for churn
       notes: text("notes"),
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()

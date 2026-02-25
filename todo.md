@@ -274,6 +274,15 @@
 
 ## Dashboard Issues - Feb 25 2026 Evening - FIXED
 - [x] Fix Joe Payne tier display: Updated tier.calculate to apply grace period ARR assumption
-- [x] Fix GBP conversion: Recalculated all payouts with proper FX conversion (£1832.30, £1798.72, £789.90)
-- [x] Fix payout summary: Populated commission numbers for all February 2026 payouts
+- [x] Fix GBP conversion: Batch-updated ALL 169 Joe Payne payouts with correct FX rate (0.7850)
+- [x] Fix payout summary: Populated commission numbers for all payouts
 - [x] Fixed deals.create mutation to apply grace period ARR in tier calculation
+
+
+## Tier Change Notifications & Deal Churn (Feb 25 2026)
+- [ ] Set up email notification system for tier changes
+- [ ] Add churn field to deals schema (churnMonth, churnYear, churnReason)
+- [ ] Create deals.markAsChurned mutation
+- [ ] Build churn button UI in deals view with modal for churn details
+- [ ] Implement payout schedule truncation when deal is churned
+- [ ] Test tier notifications and churn functionality
