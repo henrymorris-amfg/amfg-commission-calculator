@@ -814,9 +814,13 @@ export const pipedriveSyncRouter = router({
             });
             const tier = tierResult.tier as Tier;
 
+            // Get billing frequency from Pipedrive (monthly or annual)
+            const billingFrequencyField = pdDeal['8a8c3b2c5e8f9a1b2c3d4e5f6a7b8c9d'] || 'annual'; // Billing Frequency field
+            const contractType = billingFrequencyField === 'monthly' ? 'monthly' : 'annual';
+            
             // Calculate commission
             const commResult = calculateCommission({
-              contractType: "annual",
+              contractType,
               arrUsd,
               tier,
               onboardingFeePaid: true,
@@ -831,7 +835,7 @@ export const pipedriveSyncRouter = router({
             const dealId = await createDeal({
               aeId: ae.id,
               customerName: pdDeal.title,
-              contractType: "annual",
+              contractType,
               startYear,
               startMonth,
               startDay,
@@ -845,7 +849,7 @@ export const pipedriveSyncRouter = router({
               pipedriveId: pdDeal.id,
               pipedriveWonTime: wonDate ? new Date(wonDate) : null,
               contractStartDate: contractStartDate,
-              billingFrequency: "annual", // Default to annual; can be overridden via UI
+              billingFrequency: contractType,
               notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`,
             });
 

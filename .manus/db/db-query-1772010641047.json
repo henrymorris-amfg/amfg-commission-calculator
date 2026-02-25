@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, pipedriveId, customerName, startYear, startMonth, contractStartDate, contractType FROM deals WHERE pipedriveId IN (29121, 29120)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, pipedriveId, customerName, startYear, startMonth, contractStartDate, contractType FROM deals WHERE pipedriveId IN (29121, 29120)",
+  "rows": [
+    {
+      "id": "30213",
+      "pipedriveId": "29121",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "startYear": "2026",
+      "startMonth": "1",
+      "contractStartDate": "NULL",
+      "contractType": "annual"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpipedriveId\tcustomerName\tstartYear\tstartMonth\tcontractStartDate\tcontractType\n30213\t29121\tMachine Tool Engineering, Inc. lead\t2026\t1\tNULL\tannual\n",
+  "stderr": "",
+  "execution_time_ms": 351
+}

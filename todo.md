@@ -205,3 +205,8 @@
 - [ ] Add monthly ARR trend chart to dashboard (visualize ARR trajectory per AE)
 - [x] Add commission breakdown table to Deals page (already implemented) (show GBP commission per deal)
 - [ ] Allow users to toggle deal contract type (annual/monthly) with recalculation
+
+## Critical Bugs Fixed (Feb 25 2026)
+- [x] Fixed pipedriveSync.ts to use contract start date for ARR attribution (not deal signed date)
+- [x] Fixed pipedriveSync.ts to read billing frequency from Pipedrive (not hardcode to annual)
+- [ ] Re-import all deals from dashboard Sync Now button to apply corrected logic
