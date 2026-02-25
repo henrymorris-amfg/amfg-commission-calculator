@@ -924,9 +924,10 @@ export const appRouter = router({
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
-
-      const allPayouts = await getPayoutsForAe(aeId);
+      if (!aeId) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      }
+      const payouts = await getPayoutsForAe(aeId);
       const allDeals = await getDealsForAe(aeId);
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
 

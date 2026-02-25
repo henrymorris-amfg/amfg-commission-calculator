@@ -15,8 +15,12 @@ function getSecret(): string {
  */
 function parseAeToken(token: string): { aeId: number } | null {
   try {
+    console.log('[parseAeToken] Token:', token.substring(0, 20) + '...');
     const dotIdx = token.lastIndexOf(".");
-    if (dotIdx < 0) return null;
+    if (dotIdx < 0) {
+      console.log('[parseAeToken] No dot found');
+      return null;
+    }
     const payload = token.substring(0, dotIdx);
     const sig = token.substring(dotIdx + 1);
 
@@ -26,8 +30,14 @@ function parseAeToken(token: string): { aeId: number } | null {
       .digest("base64url");
     const sigBuf = Buffer.from(sig, "base64url");
     const expectedBuf = Buffer.from(expectedSig, "base64url");
-    if (sigBuf.length !== expectedBuf.length) return null;
-    if (!timingSafeEqual(sigBuf, expectedBuf)) return null;
+    if (sigBuf.length !== expectedBuf.length) {
+      console.log('[parseAeToken] Signature length mismatch', sigBuf.length, expectedBuf.length);
+      return null;
+    }
+    if (!timingSafeEqual(sigBuf, expectedBuf)) {
+      console.log('[parseAeToken] Signature verification failed');
+      return null;
+    }
 
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString());
     if (typeof parsed.aeId !== "number") return null;

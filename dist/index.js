@@ -545,15 +545,25 @@ function getSecret() {
 }
 function parseAeToken(token) {
   try {
+    console.log("[parseAeToken] Token:", token.substring(0, 20) + "...");
     const dotIdx = token.lastIndexOf(".");
-    if (dotIdx < 0) return null;
+    if (dotIdx < 0) {
+      console.log("[parseAeToken] No dot found");
+      return null;
+    }
     const payload = token.substring(0, dotIdx);
     const sig = token.substring(dotIdx + 1);
     const expectedSig = createHmac("sha256", getSecret()).update(payload).digest("base64url");
     const sigBuf = Buffer.from(sig, "base64url");
     const expectedBuf = Buffer.from(expectedSig, "base64url");
-    if (sigBuf.length !== expectedBuf.length) return null;
-    if (!timingSafeEqual(sigBuf, expectedBuf)) return null;
+    if (sigBuf.length !== expectedBuf.length) {
+      console.log("[parseAeToken] Signature length mismatch", sigBuf.length, expectedBuf.length);
+      return null;
+    }
+    if (!timingSafeEqual(sigBuf, expectedBuf)) {
+      console.log("[parseAeToken] Signature verification failed");
+      return null;
+    }
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString());
     if (typeof parsed.aeId !== "number") return null;
     return { aeId: parsed.aeId };
@@ -3600,11 +3610,11 @@ var appRouter = router({
     monthlySummary: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
-      const allPayouts = await getPayoutsForAe(aeId);
+      const allPayouts2 = await getPayoutsForAe(aeId);
       const allDeals = await getDealsForAe(aeId);
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
       const monthMap = /* @__PURE__ */ new Map();
-      for (const p of allPayouts) {
+      for (const p of allPayouts2) {
         const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
         if (!monthMap.has(key)) {
           monthMap.set(key, {
@@ -3642,8 +3652,10 @@ var appRouter = router({
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
-      const allPayouts = await getPayoutsForAe(aeId);
+      if (!aeId) {
+        throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
+      }
+      const payouts = await getPayoutsForAe(aeId);
       const allDeals = await getDealsForAe(aeId);
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
       const now = /* @__PURE__ */ new Date();

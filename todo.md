@@ -206,6 +206,13 @@
 - [x] Add commission breakdown table to Deals page (already implemented) (show GBP commission per deal)
 - [ ] Allow users to toggle deal contract type (annual/monthly) with recalculation
 
+## Refresh Buttons & Auto-Sync (Feb 25 2026)
+- [x] Add Refresh button to Commission Summary page (manual refetch of monthlySummary query)
+- [x] Add Refresh button to Payout Calendar page (manual refetch of payoutCalendar query)
+- [ ] Add auto-refresh on deal changes (refresh summary/calendar when new deal is logged or deal status changes)
+- [ ] Add success toast notification when Refresh button is clicked
+- [ ] DEBUG: Payout Calendar query returns empty data (token parsing issue with X-AE-Token header)
+
 ## Critical Bugs Fixed (Feb 25 2026)
 - [x] Fixed pipedriveSync.ts to use contract start date for ARR attribution (not deal signed date)
 - [x] Fixed pipedriveSync.ts to read billing frequency from Pipedrive (not hardcode to annual)
