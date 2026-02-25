@@ -200,3 +200,8 @@
 - [x] Fix: importDeals to use contract start date for ARR attribution, not deal signed date
 - [x] Re-import all deals with corrected monthly ARR based on contract start dates
 - [x] Add Sign Date and Contract Start Date columns to deals UI
+
+## Three New Features (Feb 25 2026)
+- [ ] Add monthly ARR trend chart to dashboard (visualize ARR trajectory per AE)
+- [ ] Add commission breakdown table to Deals page (show GBP commission per deal)
+- [ ] Allow users to toggle deal contract type (annual/monthly) with recalculation
