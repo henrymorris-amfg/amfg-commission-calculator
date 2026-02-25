@@ -452,7 +452,7 @@ export default function DealsPage() {
                             className="text-xs h-7 px-2"
                             disabled={updateDealMutation.isPending}
                           >
-                            {deal.contractType === "annual" ? "→ Monthly" : "→ Annual"}
+                            {deal.contractType === "annual" ? "Annual" : "Monthly"} (Click to toggle)
                           </Button>
                           <Button
                             onClick={(e) => {

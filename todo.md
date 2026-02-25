@@ -330,3 +330,11 @@
 - [x] Fix payout plan not updating when contract type changes: added getPayouts.invalidate()
 - [x] Verify payout schedule refreshes after contract type change
 - [x] All 35 tests passing
+
+
+## Contract Type Button Logic Fix (Feb 25 2026) - COMPLETED
+- [x] Fixed inverted button logic: now shows CURRENT contract type (Annual/Monthly)
+- [x] Button displays current type with "Click to toggle" hint
+- [x] Clicking button now correctly toggles between annual and monthly
+- [x] Payout schedule updates correctly after button click
+- [x] All 35 tests passing
