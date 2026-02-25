@@ -411,7 +411,7 @@ export const appRouter = router({
             demosTotal: m.demosTotal,
             dialsTotal: m.dialsTotal,
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-          }));
+          })) as any;
 
         let last6 = allMetrics
           .filter((m) => {
@@ -438,10 +438,10 @@ export const appRouter = router({
             demosTotal: m.demosTotal,
             dialsTotal: m.dialsTotal,
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-          }));
+          })) as any;
 
-        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
-        const avgRetentionRate = computeAvgRetention(last6);
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any);
+        const avgRetentionRate = computeAvgRetention(last6 as any);
         const newJoiner = isNewJoiner(profile.joinDate, targetDate);
 
         const result = calculateTier({

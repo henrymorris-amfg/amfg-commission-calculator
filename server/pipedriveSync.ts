@@ -67,6 +67,8 @@ interface PipedriveDeal {
   user_id: { id: number; name: string } | number;
   // Custom fields from Pipedrive (40-char hashes)
   "39365abf109ea01960620ae35f468978ae611bc8"?: string; // Contract Start Date (YYYY-MM-DD)
+  "8a8c3b2c5e8f9a1b2c3d4e5f6a7b8c9d"?: string; // Billing Frequency (monthly or annual)
+  [key: string]: any; // Allow other custom fields
 }
 
 interface PipedriveActivity {

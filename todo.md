@@ -211,3 +211,6 @@
 - [x] Fixed pipedriveSync.ts to read billing frequency from Pipedrive (not hardcode to annual)
 - [x] Manually moved Machine Tool Engineering ARR from January to March in monthly_metrics (Joe Payne: Jan now $14,321, Mar now $14,600)
 - [ ] Re-import all deals from dashboard Sync Now button to apply corrected logic to all other deals
+- [ ] Verify monthly contract calculations: (ARR ÷ 12) × tier rate is applied correctly
+- [ ] Create Billing Frequency custom field in Pipedrive for automatic contract type detection
+- [ ] Document which deals should be monthly and toggle them manually
