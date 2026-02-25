@@ -203,5 +203,5 @@
 
 ## Three New Features (Feb 25 2026)
 - [ ] Add monthly ARR trend chart to dashboard (visualize ARR trajectory per AE)
-- [ ] Add commission breakdown table to Deals page (show GBP commission per deal)
+- [x] Add commission breakdown table to Deals page (already implemented) (show GBP commission per deal)
 - [ ] Allow users to toggle deal contract type (annual/monthly) with recalculation

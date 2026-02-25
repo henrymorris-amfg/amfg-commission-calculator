@@ -77,6 +77,15 @@ export default function DealsPage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const updateDealMutation = trpc.deals.update.useMutation({
+    onSuccess: () => {
+      toast.success("Contract type updated. Commission recalculated.");
+      utils.deals.list.invalidate();
+      utils.commission.monthlySummary.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   useEffect(() => {
     if (!isLoading && !ae) navigate("/");
   }, [ae, isLoading]);
@@ -417,6 +426,19 @@ export default function DealsPage() {
                             style={{ background: `${tc.color}15`, color: tc.color }}>
                             {tc.label}
                           </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newType = deal.contractType === "annual" ? "monthly" : "annual";
+                              updateDealMutation.mutate({ dealId: deal.id, contractType: newType });
+                            }}
+                            className="text-xs h-7 px-2"
+                            disabled={updateDealMutation.isPending}
+                          >
+                            {deal.contractType === "annual" ? "→ Monthly" : "→ Annual"}
+                          </Button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

@@ -27,6 +27,7 @@ import {
   Info,
 } from "lucide-react";
 import { format } from "date-fns";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const TIER_CONFIG = {
   bronze: {
@@ -334,6 +335,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ARR Trend Chart */}
         {/* ── Tier Progress Indicators ─────────────────────────────────────────── */}
         <div className="rounded-2xl bg-card border border-border p-6">
           <div className="flex items-center justify-between mb-5">
