@@ -680,6 +680,51 @@ export const appRouter = router({
         }));
       }),
 
+    // Update deal contract type and recalculate commission
+    update: publicProcedure
+      .input(
+        z.object({
+          dealId: z.number().int(),
+          contractType: z.enum(["annual", "monthly"]).optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const deal = await getDealById(input.dealId);
+        if (!deal || deal.aeId !== aeId) throw new TRPCError({ code: "FORBIDDEN" });
+
+        if (input.contractType && input.contractType !== deal.contractType) {
+          // Update contract type
+          await db
+            .update(deals)
+            .set({ contractType: input.contractType })
+            .where(eq(deals.id, input.dealId));
+
+          // Recalculate commission with new contract type
+          const activeStructure = await getActiveCommissionStructure();
+          const commResult = calculateCommission({
+            contractType: input.contractType,
+            arrUsd: Number(deal.arrUsd),
+            tier: deal.tierAtStart as Tier,
+            onboardingFeePaid: deal.onboardingFeePaid,
+            isReferral: deal.isReferral,
+            fxRateUsdToGbp: Number(deal.fxRateAtEntry),
+            monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
+            onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
+            onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
+          });
+
+          // Delete old payouts
+          await deletePayoutsForDeal(input.dealId);
+
+          // Create new payouts
+          await createPayoutsForDeal(input.dealId, commResult.payoutSchedule);
+        }
+
+        return { success: true };
+      }),
+
     // Delete a deal and its payouts
     delete: publicProcedure
       .input(z.object({ dealId: z.number().int() }))

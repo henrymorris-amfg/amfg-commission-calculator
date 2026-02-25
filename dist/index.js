@@ -40,7 +40,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals2, commissionPayouts;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -120,7 +120,7 @@ var init_schema = __esm({
       // Enforce one row per AE per calendar month — prevents duplicate inserts from VOIP + Pipedrive syncs
       aeMonthUnique: unique("ae_month_unique").on(t2.aeId, t2.year, t2.month)
     }));
-    deals = mysqlTable("deals", {
+    deals2 = mysqlTable("deals", {
       id: int("id").autoincrement().primaryKey(),
       aeId: int("aeId").notNull(),
       customerName: varchar("customerName", { length: 256 }).notNull(),
@@ -228,7 +228,7 @@ __export(db_exports, {
   upsertMonthlyMetric: () => upsertMonthlyMetric,
   upsertUser: () => upsertUser
 });
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq as eq2 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -243,8 +243,8 @@ async function getDb() {
 }
 async function upsertUser(user) {
   if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) return;
+  const db2 = await getDb();
+  if (!db2) return;
   const values = { openId: user.openId };
   const updateSet = {};
   const textFields = ["name", "email", "loginMethod"];
@@ -268,61 +268,61 @@ async function upsertUser(user) {
   }
   if (!values.lastSignedIn) values.lastSignedIn = /* @__PURE__ */ new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = /* @__PURE__ */ new Date();
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await db2.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
 async function getUserByOpenId(openId) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(users).where(eq2(users.openId, openId)).limit(1);
   return result[0];
 }
 async function createAeProfile(data) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(aeProfiles).values(data);
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
+  const result = await db2.insert(aeProfiles).values(data);
   return result[0].insertId;
 }
 async function getAeProfileById(id) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(aeProfiles).where(eq(aeProfiles.id, id)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(aeProfiles).where(eq2(aeProfiles.id, id)).limit(1);
   return result[0];
 }
 async function getAeProfileByName(name) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(aeProfiles).where(eq(aeProfiles.name, name)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(aeProfiles).where(eq2(aeProfiles.name, name)).limit(1);
   return result[0];
 }
 async function getAllAeProfiles(includeInactive = false) {
-  const db = await getDb();
-  if (!db) return [];
+  const db2 = await getDb();
+  if (!db2) return [];
   if (includeInactive) {
-    return db.select().from(aeProfiles).orderBy(aeProfiles.name);
+    return db2.select().from(aeProfiles).orderBy(aeProfiles.name);
   }
-  return db.select().from(aeProfiles).where(eq(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
+  return db2.select().from(aeProfiles).where(eq2(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
 }
 async function updateAeProfile(id, data) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(aeProfiles).set(data).where(eq(aeProfiles.id, id));
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.update(aeProfiles).set(data).where(eq2(aeProfiles.id, id));
 }
 async function recordFailedPinAttempt(id, newAttemptCount, lockoutUntil) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(aeProfiles).set({
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.update(aeProfiles).set({
     failedPinAttempts: newAttemptCount,
     lockedUntil: lockoutUntil ?? null
-  }).where(eq(aeProfiles.id, id));
+  }).where(eq2(aeProfiles.id, id));
 }
 async function resetPinAttempts(id) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(aeProfiles).set({ failedPinAttempts: 0, lockedUntil: null }).where(eq(aeProfiles.id, id));
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.update(aeProfiles).set({ failedPinAttempts: 0, lockedUntil: null }).where(eq2(aeProfiles.id, id));
 }
 async function upsertMonthlyMetric(data) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
   const updateSet = {
     arrUsd: data.arrUsd,
     demosTotal: data.demosTotal,
@@ -333,129 +333,129 @@ async function upsertMonthlyMetric(data) {
   if (data.connectionRate !== void 0) updateSet.connectionRate = data.connectionRate;
   if (data.talkTimeSecs !== void 0) updateSet.talkTimeSecs = data.talkTimeSecs;
   if (data.demosFromPipedrive !== void 0) updateSet.demosFromPipedrive = data.demosFromPipedrive;
-  await db.insert(monthlyMetrics).values(data).onDuplicateKeyUpdate({ set: updateSet });
+  await db2.insert(monthlyMetrics).values(data).onDuplicateKeyUpdate({ set: updateSet });
 }
 async function getMetricsForAe(aeId, limit = 6) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(monthlyMetrics).where(eq(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit);
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(monthlyMetrics).where(eq2(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit);
 }
 async function getMetricsForMonth(aeId, year, month) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(monthlyMetrics).where(
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(monthlyMetrics).where(
     and(
-      eq(monthlyMetrics.aeId, aeId),
-      eq(monthlyMetrics.year, year),
-      eq(monthlyMetrics.month, month)
+      eq2(monthlyMetrics.aeId, aeId),
+      eq2(monthlyMetrics.year, year),
+      eq2(monthlyMetrics.month, month)
     )
   ).limit(1);
   return result[0];
 }
 async function createDeal(data) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(deals).values(data);
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
+  const result = await db2.insert(deals2).values(data);
   return result[0].insertId;
 }
 async function getDealsForAe(aeId) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(deals).where(eq(deals.aeId, aeId)).orderBy(desc(deals.startYear), desc(deals.startMonth), desc(deals.startDay));
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(deals2).where(eq2(deals2.aeId, aeId)).orderBy(desc(deals2.startYear), desc(deals2.startMonth), desc(deals2.startDay));
 }
 async function getDealById(id) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(deals).where(eq(deals.id, id)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(deals2).where(eq2(deals2.id, id)).limit(1);
   return result[0];
 }
 async function getDealByPipedriveId(aeId, pipedriveId) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(deals).where(and(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(deals2).where(and(eq2(deals2.aeId, aeId), eq2(deals2.pipedriveId, pipedriveId))).limit(1);
   return result[0];
 }
 async function deleteDeal(id, aeId) {
-  const db = await getDb();
-  if (!db) return;
-  await db.delete(deals).where(and(eq(deals.id, id), eq(deals.aeId, aeId)));
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.delete(deals2).where(and(eq2(deals2.id, id), eq2(deals2.aeId, aeId)));
 }
 async function createPayoutsForDeal(payouts) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
   if (payouts.length === 0) return;
-  await db.insert(commissionPayouts).values(payouts);
+  await db2.insert(commissionPayouts).values(payouts);
 }
 async function deletePayoutsForDeal(dealId) {
-  const db = await getDb();
-  if (!db) return;
-  await db.delete(commissionPayouts).where(eq(commissionPayouts.dealId, dealId));
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.delete(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId));
 }
 async function getPayoutsForAe(aeId) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(commissionPayouts).where(eq(commissionPayouts.aeId, aeId)).orderBy(
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(commissionPayouts).where(eq2(commissionPayouts.aeId, aeId)).orderBy(
     desc(commissionPayouts.payoutYear),
     desc(commissionPayouts.payoutMonth),
     commissionPayouts.dealId
   );
 }
 async function getPayoutsForMonth(aeId, year, month) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(commissionPayouts).where(
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(commissionPayouts).where(
     and(
-      eq(commissionPayouts.aeId, aeId),
-      eq(commissionPayouts.payoutYear, year),
-      eq(commissionPayouts.payoutMonth, month)
+      eq2(commissionPayouts.aeId, aeId),
+      eq2(commissionPayouts.payoutYear, year),
+      eq2(commissionPayouts.payoutMonth, month)
     )
   );
 }
 async function getPayoutsForDeal(dealId) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(commissionPayouts).where(eq(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
 }
 async function getActiveCommissionStructure() {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(commissionStructures).where(eq(commissionStructures.isActive, true)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(commissionStructures).where(eq2(commissionStructures.isActive, true)).limit(1);
   return result[0];
 }
 async function getAllCommissionStructures() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(commissionStructures).orderBy(desc(commissionStructures.effectiveFrom));
+  const db2 = await getDb();
+  if (!db2) return [];
+  return db2.select().from(commissionStructures).orderBy(desc(commissionStructures.effectiveFrom));
 }
 async function getCommissionStructureById(id) {
-  const db = await getDb();
-  if (!db) return void 0;
-  const result = await db.select().from(commissionStructures).where(eq(commissionStructures.id, id)).limit(1);
+  const db2 = await getDb();
+  if (!db2) return void 0;
+  const result = await db2.select().from(commissionStructures).where(eq2(commissionStructures.id, id)).limit(1);
   return result[0];
 }
 async function createCommissionStructure(data) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const result = await db.insert(commissionStructures).values(data);
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
+  const result = await db2.insert(commissionStructures).values(data);
   return result[0].insertId;
 }
 async function updateCommissionStructure(id, data) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(commissionStructures).set(data).where(eq(commissionStructures.id, id));
+  const db2 = await getDb();
+  if (!db2) return;
+  await db2.update(commissionStructures).set(data).where(eq2(commissionStructures.id, id));
 }
 async function activateCommissionStructure(id) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(commissionStructures).set({ isActive: false });
-  await db.update(commissionStructures).set({ isActive: true }).where(eq(commissionStructures.id, id));
+  const db2 = await getDb();
+  if (!db2) throw new Error("Database not available");
+  await db2.update(commissionStructures).set({ isActive: false });
+  await db2.update(commissionStructures).set({ isActive: true }).where(eq2(commissionStructures.id, id));
 }
 async function seedInitialCommissionStructure() {
-  const db = await getDb();
-  if (!db) return;
-  const existing = await db.select().from(commissionStructures).limit(1);
+  const db2 = await getDb();
+  if (!db2) return;
+  const existing = await db2.select().from(commissionStructures).limit(1);
   if (existing.length > 0) return;
-  await db.insert(commissionStructures).values({
+  await db2.insert(commissionStructures).values({
     versionLabel: "Q1 2026 \u2014 Initial",
     effectiveFrom: /* @__PURE__ */ new Date("2026-01-01"),
     isActive: true,
@@ -1489,12 +1489,12 @@ async function runPipedriveSync(months = 2) {
       const fromDate = joinDate.toISOString().substring(0, 10);
       const dealMap = /* @__PURE__ */ new Map();
       for (const pipelineId of TARGET_PIPELINE_IDS) {
-        const deals2 = await pipedriveGetAll("deals", {
+        const deals3 = await pipedriveGetAll("deals", {
           pipeline_id: pipelineId,
           user_id: pdUserId,
           status: "won"
         });
-        for (const d of deals2) {
+        for (const d of deals3) {
           if (dealMap.has(d.id)) continue;
           const wonDate = (d.won_time || d.close_time || "").substring(0, 10);
           if (wonDate >= fromDate && wonDate <= toDate) {
@@ -2253,12 +2253,12 @@ async function findPipedriveUserId2(aeName) {
 async function fetchWonDealsForUser(pipedriveUserId, fromDate, toDate) {
   const dealsById = /* @__PURE__ */ new Map();
   for (const pipelineId of TARGET_PIPELINE_IDS2) {
-    const deals2 = await pipedriveGetAll2("deals", {
+    const deals3 = await pipedriveGetAll2("deals", {
       pipeline_id: pipelineId,
       user_id: pipedriveUserId,
       status: "won"
     });
-    for (const d of deals2) {
+    for (const d of deals3) {
       if (dealsById.has(d.id)) continue;
       if (isDealExcluded(d.title)) continue;
       const wonDate = d.won_time || d.close_time;
@@ -2284,9 +2284,9 @@ async function fetchCompletedDemosForUser(pipedriveUserId, fromDate, toDate) {
     return doneDate >= fromDate && doneDate <= toDate;
   });
 }
-async function aggregateDealsToMonthlyArr(aeId, aeName, deals2) {
+async function aggregateDealsToMonthlyArr(aeId, aeName, deals3) {
   const map = /* @__PURE__ */ new Map();
-  for (const deal of deals2) {
+  for (const deal of deals3) {
     const wonDate = deal.won_time || deal.close_time;
     if (!wonDate) continue;
     const year = parseInt(wonDate.substring(0, 4), 10);
@@ -2401,8 +2401,8 @@ var pipedriveSyncRouter = router({
         });
         continue;
       }
-      const deals2 = await fetchWonDealsForUser(pdUserId, aeFromDate, toDate);
-      const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals2);
+      const deals3 = await fetchWonDealsForUser(pdUserId, aeFromDate, toDate);
+      const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals3);
       const demos = await fetchCompletedDemosForUser(pdUserId, aeFromDate, toDate);
       const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
       results.push({
@@ -2410,7 +2410,7 @@ var pipedriveSyncRouter = router({
         aeName: ae.name,
         pipedriveUserId: pdUserId,
         monthlyArr,
-        totalDeals: deals2.length,
+        totalDeals: deals3.length,
         totalArrUsd: monthlyArr.reduce((sum, m) => sum + m.totalArrUsd, 0),
         totalDemos: demos.length,
         monthlyDemos,
@@ -2468,8 +2468,8 @@ var pipedriveSyncRouter = router({
         continue;
       }
       const fromDate = input.useJoinDate ? new Date(ae.joinDate).toISOString().substring(0, 10) : globalFromDate;
-      const deals2 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
-      const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals2);
+      const deals3 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+      const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals3);
       const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
       const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
       const allMonthlyData = /* @__PURE__ */ new Map();
@@ -2547,10 +2547,10 @@ var pipedriveSyncRouter = router({
       now.getMonth() - (input.months - 1),
       1
     ).toISOString().substring(0, 10);
-    const deals2 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
-    const monthlyArr = await aggregateDealsToMonthlyArr(aeId, profile.name, deals2);
+    const deals3 = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
+    const monthlyArr = await aggregateDealsToMonthlyArr(aeId, profile.name, deals3);
     return {
-      deals: deals2.map((d) => ({
+      deals: deals3.map((d) => ({
         id: d.id,
         title: d.title,
         value: d.value,
@@ -3368,6 +3368,36 @@ var appRouter = router({
         fxRateUsed: Number(p.fxRateUsed),
         netCommissionGbp: Number(p.netCommissionGbp)
       }));
+    }),
+    // Update deal contract type and recalculate commission
+    update: publicProcedure.input(
+      z5.object({
+        dealId: z5.number().int(),
+        contractType: z5.enum(["annual", "monthly"]).optional()
+      })
+    ).mutation(async ({ input, ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const deal = await getDealById(input.dealId);
+      if (!deal || deal.aeId !== aeId) throw new TRPCError6({ code: "FORBIDDEN" });
+      if (input.contractType && input.contractType !== deal.contractType) {
+        await db.update(deals).set({ contractType: input.contractType }).where(eq(deals.id, input.dealId));
+        const activeStructure = await getActiveCommissionStructure();
+        const commResult = calculateCommission({
+          contractType: input.contractType,
+          arrUsd: Number(deal.arrUsd),
+          tier: deal.tierAtStart,
+          onboardingFeePaid: deal.onboardingFeePaid,
+          isReferral: deal.isReferral,
+          fxRateUsdToGbp: Number(deal.fxRateAtEntry),
+          monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : void 0,
+          onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : void 0,
+          onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : void 0
+        });
+        await deletePayoutsForDeal(input.dealId);
+        await createPayoutsForDeal(input.dealId, commResult.payoutSchedule);
+      }
+      return { success: true };
     }),
     // Delete a deal and its payouts
     delete: publicProcedure.input(z5.object({ dealId: z5.number().int() })).mutation(async ({ input, ctx }) => {
