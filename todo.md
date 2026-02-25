@@ -234,11 +234,13 @@
 - [x] Fixed monthly_metrics for Oct-Dec 2025 to match actual deal ARR
 - [x] Moved Machine Tool Engineering from January to March start date
 
-## NEXT STEPS (Feb 25 2026)
-- [ ] Call admin.fixCAxisMonth from dashboard to fix C-Axis deal month
-- [ ] Call admin.recalculateAllTiers to verify all deal tiers are correct
-- [ ] Verify C-Axis deal now shows February tier (not January)
-- [ ] Verify all deals show correct tiers based on contract start date
+## Joe Payne Tier Correction (Feb 25 2026) - COMPLETED
+- [x] Identified grace period logic: November 2025 should use $25k assumed ARR (month 6 of grace period)
+- [x] Recalculated January 2026: Silver tier ($30,908 ARR, 3.77 demos/wk, 164 dials/wk)
+- [x] Recalculated February 2026: Silver tier ($21,592 ARR with grace, 3.08 demos/wk, 154 dials/wk)
+- [x] Updated all 3 February 2026 deals to Silver tier (Recknagel, C-Axis, MakeFast)
+- [x] Generated comprehensive PDF explanation for team (joe_payne_tier_explanation.pdf)
+- [x] All 35 tests passing
 
 
 ## URGENT: Data Issues Found & FIXED (Feb 25 2026)
