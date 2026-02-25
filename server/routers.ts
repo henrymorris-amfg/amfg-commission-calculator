@@ -17,6 +17,7 @@ import {
   computeRollingAverages,
   isNewJoiner,
 } from "../shared/commission";
+import { isInGracePeriod, getGracePeriodStatus } from "../shared/gracePeriod";
 import { type InsertCommissionPayout } from "../drizzle/schema";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -336,16 +337,23 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Get recent metrics for current AE
+    // Get recent metrics for current AE with grace period info
     list: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const aeProfile = await getAeProfileById(aeId);
       const rows = await getMetricsForAe(aeId, 6);
-      return rows.map((r) => ({
-        ...r,
-        arrUsd: Number(r.arrUsd),
-        retentionRate: r.retentionRate != null ? Number(r.retentionRate) : null,
-      }));
+      return rows.map((r) => {
+        const inGracePeriod = aeProfile?.joinDate ? isInGracePeriod(aeProfile.joinDate, r.year, r.month) : false;
+        const gracePeriodStatus = aeProfile?.joinDate ? getGracePeriodStatus(aeProfile.joinDate, r.year, r.month) : 'Unknown';
+        return {
+          ...r,
+          arrUsd: Number(r.arrUsd),
+          retentionRate: r.retentionRate != null ? Number(r.retentionRate) : null,
+          inGracePeriod,
+          gracePeriodStatus,
+        };
+      });
     }),
 
     // Get metric for a specific month
@@ -354,12 +362,17 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const aeId = getAeIdFromCtx(ctx);
         if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const aeProfile = await getAeProfileById(aeId);
         const row = await getMetricsForMonth(aeId, input.year, input.month);
         if (!row) return null;
+        const inGracePeriod = aeProfile?.joinDate ? isInGracePeriod(aeProfile.joinDate, input.year, input.month) : false;
+        const gracePeriodStatus = aeProfile?.joinDate ? getGracePeriodStatus(aeProfile.joinDate, input.year, input.month) : 'Unknown';
         return {
           ...row,
           arrUsd: Number(row.arrUsd),
           retentionRate: row.retentionRate != null ? Number(row.retentionRate) : null,
+          inGracePeriod,
+          gracePeriodStatus,
         };
       }),
   }),

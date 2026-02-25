@@ -261,3 +261,12 @@
   * Henry Morris: 2 mismatches
 - [ ] Fix all 17 mismatched tiers in database
 - [ ] Build data validation UI to prevent future mismatches
+
+
+## Grace Period UI Implementation (Feb 25 2026) - COMPLETED
+- [x] Create grace period calculation utility (gracePeriod.ts)
+- [x] Add backend query to fetch AE start dates and calculate grace period months
+- [x] Build GracePeriodIndicator component showing grace vs actual months (with tooltips)
+- [x] Integrate into MetricsPage dashboard display
+- [x] Test grace period display - all 35 tests passing
+- [x] Visual distinction: Amber badge for grace period, Green badge for actual performance

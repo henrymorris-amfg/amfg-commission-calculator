@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { MONTH_NAMES } from "../../../shared/commission";
 import { Save, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { GracePeriodIndicator } from "@/components/GracePeriodIndicator";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const CURRENT_MONTH = new Date().getMonth() + 1;
@@ -134,6 +135,20 @@ export default function MetricsPage() {
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
+
+        {/* Grace Period Indicator */}
+        {existing && (
+          <div className="rounded-2xl bg-card border border-border p-4">
+            <GracePeriodIndicator
+              inGracePeriod={existing.inGracePeriod}
+              gracePeriodStatus={existing.gracePeriodStatus}
+              year={year}
+              month={month}
+              arrUsd={existing.arrUsd}
+              actualArr={existing.arrUsd}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Input Form */}

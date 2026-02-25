@@ -2827,6 +2827,28 @@ function makeAeToken(aeId) {
 // server/routers.ts
 init_aeTokenUtils();
 import { z as z5 } from "zod";
+
+// shared/gracePeriod.ts
+var GRACE_PERIOD_MONTHS = 6;
+function isInGracePeriod(aeStartDate, checkYear, checkMonth) {
+  const startDate = typeof aeStartDate === "string" ? new Date(aeStartDate) : aeStartDate;
+  const startYear = startDate.getFullYear();
+  const startMonth = startDate.getMonth() + 1;
+  const checkMonthNumber = (checkYear - startYear) * 12 + (checkMonth - startMonth);
+  return checkMonthNumber >= 0 && checkMonthNumber < GRACE_PERIOD_MONTHS;
+}
+function getGracePeriodStatus(aeStartDate, year, month) {
+  if (isInGracePeriod(aeStartDate, year, month)) {
+    const startDate = typeof aeStartDate === "string" ? new Date(aeStartDate) : aeStartDate;
+    const startMonth = startDate.getMonth() + 1;
+    const startYear = startDate.getFullYear();
+    const monthNumber = (year - startYear) * 12 + (month - startMonth);
+    return `Grace Period (Month ${monthNumber + 1}/6)`;
+  }
+  return "Actual Performance";
+}
+
+// server/routers.ts
 init_const();
 
 // server/_core/systemRouter.ts
@@ -3166,27 +3188,39 @@ var appRouter = router({
       });
       return { success: true };
     }),
-    // Get recent metrics for current AE
+    // Get recent metrics for current AE with grace period info
     list: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const aeProfile = await getAeProfileById(aeId);
       const rows = await getMetricsForAe(aeId, 6);
-      return rows.map((r) => ({
-        ...r,
-        arrUsd: Number(r.arrUsd),
-        retentionRate: r.retentionRate != null ? Number(r.retentionRate) : null
-      }));
+      return rows.map((r) => {
+        const inGracePeriod = aeProfile?.joinDate ? isInGracePeriod(aeProfile.joinDate, r.year, r.month) : false;
+        const gracePeriodStatus = aeProfile?.joinDate ? getGracePeriodStatus(aeProfile.joinDate, r.year, r.month) : "Unknown";
+        return {
+          ...r,
+          arrUsd: Number(r.arrUsd),
+          retentionRate: r.retentionRate != null ? Number(r.retentionRate) : null,
+          inGracePeriod,
+          gracePeriodStatus
+        };
+      });
     }),
     // Get metric for a specific month
     getForMonth: publicProcedure.input(z5.object({ year: z5.number().int(), month: z5.number().int() })).query(async ({ input, ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const aeProfile = await getAeProfileById(aeId);
       const row = await getMetricsForMonth(aeId, input.year, input.month);
       if (!row) return null;
+      const inGracePeriod = aeProfile?.joinDate ? isInGracePeriod(aeProfile.joinDate, input.year, input.month) : false;
+      const gracePeriodStatus = aeProfile?.joinDate ? getGracePeriodStatus(aeProfile.joinDate, input.year, input.month) : "Unknown";
       return {
         ...row,
         arrUsd: Number(row.arrUsd),
-        retentionRate: row.retentionRate != null ? Number(row.retentionRate) : null
+        retentionRate: row.retentionRate != null ? Number(row.retentionRate) : null,
+        inGracePeriod,
+        gracePeriodStatus
       };
     })
   }),
