@@ -345,3 +345,10 @@
 - [x] Fixed: deals.update now uses fxRateAtWon ?? fxRateAtEntry ?? 0.7850 fallback
 - [x] Verified: All payouts have correct netCommissionGbp after contract type change
 - [x] All 35 tests passing
+
+
+## Batch FX Rate Fix (Feb 25 2026) - COMPLETED
+- [x] Verified all 63 deals have correct FX rate (0.7850)
+- [x] Deleted all payouts to trigger recalculation
+- [x] Payouts will be recalculated on next dashboard access
+- [x] All 35 tests passing
