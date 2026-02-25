@@ -420,14 +420,20 @@ export const appRouter = router({
         }
         
         last3 = last3
-          .map((m) => ({
-            year: m.year,
-            month: m.month,
-            arrUsd: Number(m.arrUsd),
-            demosTotal: m.demosTotal,
-            dialsTotal: m.dialsTotal,
-            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-          })) as any;
+          .map((m) => {
+            // Apply grace period: if month is within 6 months of join date, assume $25k ARR
+            const monthDate = new Date(m.year, m.month - 1, 1);
+            const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+            const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
+            return {
+              year: m.year,
+              month: m.month,
+              arrUsd,
+              demosTotal: m.demosTotal,
+              dialsTotal: m.dialsTotal,
+              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+            };
+          }) as any;
 
         let last6 = allMetrics
           .filter((m) => {
@@ -560,28 +566,40 @@ export const appRouter = router({
               return monthDate < targetDate && monthDate >= joinDate;
             })
             .slice(0, 3)
-            .map((m) => ({
-              year: m.year,
-              month: m.month,
-              arrUsd: Number(m.arrUsd),
-              demosTotal: m.demosTotal,
-              dialsTotal: m.dialsTotal,
-              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-            }));
+            .map((m) => {
+              // Apply grace period: if month is within 6 months of join date, assume $25k ARR
+              const monthDate = new Date(m.year, m.month - 1, 1);
+              const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+              const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
+              return {
+                year: m.year,
+                month: m.month,
+                arrUsd,
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              };
+            });
           const last6 = allMetrics
             .filter((m) => {
               const monthDate = new Date(m.year, m.month - 1, 1);
               return monthDate < targetDate && monthDate >= joinDate;
             })
             .slice(0, 6)
-            .map((m) => ({
-              year: m.year,
-              month: m.month,
-              arrUsd: Number(m.arrUsd),
-              demosTotal: m.demosTotal,
-              dialsTotal: m.dialsTotal,
-              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-            }));
+            .map((m) => {
+              // Apply grace period: if month is within 6 months of join date, assume $25k ARR
+              const monthDate = new Date(m.year, m.month - 1, 1);
+              const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+              const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
+              return {
+                year: m.year,
+                month: m.month,
+                arrUsd,
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              };
+            });
 
           const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
           const avgRetentionRate = computeAvgRetention(last6);

@@ -3250,14 +3250,19 @@ var appRouter = router({
           return d.getFullYear() === input.year && d.getMonth() + 1 === input.month;
         }).slice(0, 1);
       }
-      last3 = last3.map((m) => ({
-        year: m.year,
-        month: m.month,
-        arrUsd: Number(m.arrUsd),
-        demosTotal: m.demosTotal,
-        dialsTotal: m.dialsTotal,
-        retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
-      }));
+      last3 = last3.map((m) => {
+        const monthDate = new Date(m.year, m.month - 1, 1);
+        const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+        const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+        return {
+          year: m.year,
+          month: m.month,
+          arrUsd,
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+        };
+      });
       let last6 = allMetrics.filter((m) => {
         const d = new Date(m.year, m.month - 1, 1);
         return d < targetDate && d >= joinDate;
@@ -3364,25 +3369,35 @@ var appRouter = router({
         const last3 = allMetrics.filter((m) => {
           const monthDate = new Date(m.year, m.month - 1, 1);
           return monthDate < targetDate && monthDate >= joinDate;
-        }).slice(0, 3).map((m) => ({
-          year: m.year,
-          month: m.month,
-          arrUsd: Number(m.arrUsd),
-          demosTotal: m.demosTotal,
-          dialsTotal: m.dialsTotal,
-          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
-        }));
+        }).slice(0, 3).map((m) => {
+          const monthDate = new Date(m.year, m.month - 1, 1);
+          const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+          const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+          return {
+            year: m.year,
+            month: m.month,
+            arrUsd,
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+          };
+        });
         const last6 = allMetrics.filter((m) => {
           const monthDate = new Date(m.year, m.month - 1, 1);
           return monthDate < targetDate && monthDate >= joinDate;
-        }).slice(0, 6).map((m) => ({
-          year: m.year,
-          month: m.month,
-          arrUsd: Number(m.arrUsd),
-          demosTotal: m.demosTotal,
-          dialsTotal: m.dialsTotal,
-          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
-        }));
+        }).slice(0, 6).map((m) => {
+          const monthDate = new Date(m.year, m.month - 1, 1);
+          const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+          const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+          return {
+            year: m.year,
+            month: m.month,
+            arrUsd,
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+          };
+        });
         const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
         const avgRetentionRate = computeAvgRetention(last6);
         const newJoiner = isNewJoiner(profile.joinDate, targetDate);

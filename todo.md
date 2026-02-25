@@ -270,3 +270,10 @@
 - [x] Integrate into MetricsPage dashboard display
 - [x] Test grace period display - all 35 tests passing
 - [x] Visual distinction: Amber badge for grace period, Green badge for actual performance
+
+
+## Dashboard Issues - Feb 25 2026 Evening - FIXED
+- [x] Fix Joe Payne tier display: Updated tier.calculate to apply grace period ARR assumption
+- [x] Fix GBP conversion: Recalculated all payouts with proper FX conversion (£1832.30, £1798.72, £789.90)
+- [x] Fix payout summary: Populated commission numbers for all February 2026 payouts
+- [x] Fixed deals.create mutation to apply grace period ARR in tier calculation
