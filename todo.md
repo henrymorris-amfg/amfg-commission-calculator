@@ -312,3 +312,14 @@
 - [x] Fixed total gross calculation: grossComm * 13 → grossComm * 12
 - [x] All 35 tests passing
 - [x] Monthly→annual and annual→monthly conversions now work correctly
+
+
+## Deal Churn & Tier Notifications (Feb 25 2026) - IN PROGRESS
+- [x] Add deals.markChurned mutation to truncate payout schedule
+- [x] Build ChurnModal component with date/reason picker
+- [x] Add churn button to deals view
+- [x] Integrate ChurnModal into DealsPage
+- [ ] Implement tier change email notifications with LLM
+- [ ] Integrate sendTierChangeEmail into tier.calculate
+- [ ] Test churn functionality truncates payouts correctly
+- [ ] Test tier change emails are sent with correct metrics

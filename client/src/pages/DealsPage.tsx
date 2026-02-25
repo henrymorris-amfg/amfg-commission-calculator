@@ -19,6 +19,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { format } from "date-fns";
+import { ChurnModal } from "@/components/ChurnModal";
 
 const TIER_CONFIG = {
   bronze: { label: "Bronze", color: "oklch(0.65 0.12 55)" },
@@ -42,6 +43,8 @@ export default function DealsPage() {
   const [tierOverride, setTierOverride] = useState<"" | "bronze" | "silver" | "gold">("");
   const [billingFrequency, setBillingFrequency] = useState<"annual" | "monthly">("annual");
   const [expandedDeal, setExpandedDeal] = useState<number | null>(null);
+  const [showChurnModal, setShowChurnModal] = useState(false);
+  const [churnDealId, setChurnDealId] = useState<number | null>(null);
 
   const { data: deals = [], isLoading: dealsLoading } = trpc.deals.list.useQuery(
     undefined,
@@ -82,6 +85,17 @@ export default function DealsPage() {
       toast.success("Contract type updated. Commission recalculated.");
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const churnDealMutation = trpc.deals.markChurned.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Deal marked as churned. Removed ${data.payoutsDeleted} future payouts.`);
+      utils.deals.list.invalidate();
+      utils.commission.monthlySummary.invalidate();
+      setShowChurnModal(false);
+      setChurnDealId(null);
     },
     onError: (err) => toast.error(err.message),
   });
@@ -439,6 +453,18 @@ export default function DealsPage() {
                           >
                             {deal.contractType === "annual" ? "→ Monthly" : "→ Annual"}
                           </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChurnDealId(deal.id);
+                              setShowChurnModal(true);
+                            }}
+                            variant="outline"
+                            className="text-xs h-7 px-2"
+                            disabled={churnDealMutation.isPending}
+                          >
+                            Churned
+                          </Button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -531,6 +557,25 @@ export default function DealsPage() {
           )}
         </div>
       </div>
+
+      <ChurnModal
+        isOpen={showChurnModal}
+        onClose={() => {
+          setShowChurnModal(false);
+          setChurnDealId(null);
+        }}
+        onConfirm={(churnYear, churnMonth, churnReason) => {
+          if (churnDealId) {
+            churnDealMutation.mutate({
+              dealId: churnDealId,
+              churnYear,
+              churnMonth,
+              churnReason,
+            });
+          }
+        }}
+        isLoading={churnDealMutation.isPending}
+      />
     </AppLayout>
   );
 }

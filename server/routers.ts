@@ -811,6 +811,46 @@ export const appRouter = router({
         await deleteDeal(input.dealId, aeId);
         return { success: true };
       }),
+
+    markChurned: publicProcedure
+      .input(
+        z.object({
+          dealId: z.number().int(),
+          churnYear: z.number().int(),
+          churnMonth: z.number().int().min(1).max(12),
+          churnReason: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const deal = await getDealById(input.dealId);
+        if (!deal || deal.aeId !== aeId) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+        await db
+          .update(deals)
+          .set({
+            isChurned: true,
+            churnMonth: input.churnMonth,
+            churnYear: input.churnYear,
+            churnReason: input.churnReason || null,
+          })
+          .where(eq(deals.id, input.dealId));
+
+        const payouts = await getPayoutsForDeal(input.dealId);
+        const payoutsToDelete = payouts.filter(
+          (p) => p.payoutYear > input.churnYear || (p.payoutYear === input.churnYear && p.payoutMonth > input.churnMonth)
+        );
+
+        for (const payout of payoutsToDelete) {
+          await db.delete(commissionPayouts).where(eq(commissionPayouts.id, payout.id));
+        }
+
+        return { success: true, payoutsDeleted: payoutsToDelete.length };
+      }),
   }),
 
   // ─── Commission Summary ─────────────────────────────────────────────────────
@@ -1233,5 +1273,3 @@ export const appRouter = router({
   }),
 });
 export type AppRouter = typeof appRouter;
-
-

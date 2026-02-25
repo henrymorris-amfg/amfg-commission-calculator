@@ -40,7 +40,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts2;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -161,7 +161,7 @@ var init_schema = __esm({
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
     });
-    commissionPayouts = mysqlTable("commission_payouts", {
+    commissionPayouts2 = mysqlTable("commission_payouts", {
       id: int("id").autoincrement().primaryKey(),
       dealId: int("dealId").notNull(),
       aeId: int("aeId").notNull(),
@@ -392,37 +392,37 @@ async function createPayoutsForDeal(payouts) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (payouts.length === 0) return;
-  await db.insert(commissionPayouts).values(payouts);
+  await db.insert(commissionPayouts2).values(payouts);
 }
 async function deletePayoutsForDeal(dealId) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(commissionPayouts).where(eq(commissionPayouts.dealId, dealId));
+  await db.delete(commissionPayouts2).where(eq(commissionPayouts2.dealId, dealId));
 }
 async function getPayoutsForAe(aeId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts).where(eq(commissionPayouts.aeId, aeId)).orderBy(
-    desc(commissionPayouts.payoutYear),
-    desc(commissionPayouts.payoutMonth),
-    commissionPayouts.dealId
+  return db.select().from(commissionPayouts2).where(eq(commissionPayouts2.aeId, aeId)).orderBy(
+    desc(commissionPayouts2.payoutYear),
+    desc(commissionPayouts2.payoutMonth),
+    commissionPayouts2.dealId
   );
 }
 async function getPayoutsForMonth(aeId, year, month) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts).where(
+  return db.select().from(commissionPayouts2).where(
     and(
-      eq(commissionPayouts.aeId, aeId),
-      eq(commissionPayouts.payoutYear, year),
-      eq(commissionPayouts.payoutMonth, month)
+      eq(commissionPayouts2.aeId, aeId),
+      eq(commissionPayouts2.payoutYear, year),
+      eq(commissionPayouts2.payoutMonth, month)
     )
   );
 }
 async function getPayoutsForDeal(dealId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts).where(eq(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
+  return db.select().from(commissionPayouts2).where(eq(commissionPayouts2.dealId, dealId)).orderBy(commissionPayouts2.payoutNumber);
 }
 async function getActiveCommissionStructure() {
   const db = await getDb();
@@ -3563,6 +3563,35 @@ var appRouter = router({
       await deletePayoutsForDeal(input.dealId);
       await deleteDeal(input.dealId, aeId);
       return { success: true };
+    }),
+    markChurned: publicProcedure.input(
+      z5.object({
+        dealId: z5.number().int(),
+        churnYear: z5.number().int(),
+        churnMonth: z5.number().int().min(1).max(12),
+        churnReason: z5.string().optional()
+      })
+    ).mutation(async ({ input, ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError7({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const deal = await getDealById(input.dealId);
+      if (!deal || deal.aeId !== aeId) throw new TRPCError7({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError7({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      await db.update(deals).set({
+        isChurned: true,
+        churnMonth: input.churnMonth,
+        churnYear: input.churnYear,
+        churnReason: input.churnReason || null
+      }).where(eq2(deals.id, input.dealId));
+      const payouts = await getPayoutsForDeal(input.dealId);
+      const payoutsToDelete = payouts.filter(
+        (p) => p.payoutYear > input.churnYear || p.payoutYear === input.churnYear && p.payoutMonth > input.churnMonth
+      );
+      for (const payout of payoutsToDelete) {
+        await db.delete(commissionPayouts).where(eq2(commissionPayouts.id, payout.id));
+      }
+      return { success: true, payoutsDeleted: payoutsToDelete.length };
     })
   }),
   // ─── Commission Summary ─────────────────────────────────────────────────────
