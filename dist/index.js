@@ -2876,7 +2876,7 @@ var systemRouter = router({
 init_trpc();
 init_db();
 init_schema();
-import { eq as eq2 } from "drizzle-orm";
+import { eq as eq2, like } from "drizzle-orm";
 seedInitialCommissionStructure().catch(console.error);
 var _fxCache = null;
 var FX_CACHE_TTL_MS = 5 * 60 * 1e3;
@@ -3417,15 +3417,17 @@ var appRouter = router({
             payoutYear: payoutDate.year,
             payoutMonth: payoutDate.month,
             payoutNumber: p.payoutNumber,
-            grossCommissionUsd: String(p.grossCommissionUsd),
-            referralDeductionUsd: String(p.referralDeductionUsd),
-            onboardingDeductionGbp: String(p.onboardingDeductionGbp),
-            netCommissionUsd: String(p.netCommissionUsd),
-            fxRateUsed: String(deal.fxRateAtWon),
-            netCommissionGbp: String(p.netCommissionGbp)
+            grossCommissionUsd: p.grossCommissionUsd.toString(),
+            referralDeductionUsd: p.referralDeductionUsd.toString(),
+            onboardingDeductionGbp: p.onboardingDeductionGbp.toString(),
+            netCommissionUsd: p.netCommissionUsd.toString(),
+            fxRateUsed: (deal.fxRateAtWon ?? deal.fxRateAtEntry).toString(),
+            netCommissionGbp: p.netCommissionGbp.toString()
           };
         });
-        await createPayoutsForDeal(payouts);
+        if (payouts.length > 0) {
+          await createPayoutsForDeal(payouts);
+        }
       }
       return { success: true };
     }),
@@ -3721,6 +3723,62 @@ var appRouter = router({
       if (!structure) throw new TRPCError6({ code: "NOT_FOUND", message: "Commission structure not found." });
       await activateCommissionStructure(input.id);
       return { success: true, activatedId: input.id };
+    })
+  }),
+  // ─── Admin Utilities ─────────────────────────────────────────────────────
+  admin: router({
+    fixCAxisMonth: publicProcedure.mutation(async ({ ctx }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError6({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+      const cAxisDeal = await db.select().from(deals).where(like(deals.customerName, "%C-Axis%")).limit(1);
+      if (cAxisDeal.length === 0) return { success: false, message: "C-Axis deal not found" };
+      const deal = cAxisDeal[0];
+      if (deal.startMonth !== 2) {
+        await db.update(deals).set({ startMonth: 2 }).where(eq2(deals.id, deal.id));
+        return { success: true, message: `Updated C-Axis from month ${deal.startMonth} to February (2)` };
+      }
+      return { success: true, message: "C-Axis already in February" };
+    }),
+    recalculateAllTiers: publicProcedure.mutation(async ({ ctx }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError6({ code: "FORBIDDEN" });
+      const db = await getDb();
+      if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+      const allDeals = await db.select().from(deals);
+      let updated = 0;
+      for (const deal of allDeals) {
+        const metrics = await getMetricsForAe(deal.aeId);
+        const targetDate = new Date(deal.startYear, deal.startMonth - 1, 1);
+        const last3 = metrics.filter((m) => {
+          const d = new Date(m.year, m.month - 1, 1);
+          return d < targetDate;
+        }).slice(0, 3);
+        if (last3.length > 0) {
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+          const avgRetention = computeAvgRetention(last3);
+          const profile = await getAeProfileById(deal.aeId);
+          const newJoiner = isNewJoiner(profile?.joinDate || /* @__PURE__ */ new Date(), targetDate);
+          const tier = calculateTier({
+            avgArrUsd,
+            avgDemosPw,
+            avgDialsPw,
+            avgRetentionRate: avgRetention,
+            isNewJoiner: newJoiner,
+            isTeamLeader: profile?.isTeamLeader || false
+          });
+          if (tier.tier !== deal.tierAtStart) {
+            await db.update(deals).set({ tierAtStart: tier.tier }).where(eq2(deals.id, deal.id));
+            updated++;
+          }
+        }
+      }
+      return { success: true, message: `Recalculated ${updated} deal tiers` };
     })
   })
 });
