@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+// import { TierHistory } from "@/components/TierHistory"; // TODO: Add tier history display
 
 const TIER_CONFIG = {
   bronze: {
@@ -80,6 +81,8 @@ export default function DashboardPage() {
     { year: selectedYear, month: selectedMonth },
     { enabled: !!ae }
   );
+
+  // TODO: Get tier history for the past 12 months when monthlyTiers is added to tier.calculate
 
   const { data: deals = [], isLoading: dealsLoading } = trpc.deals.list.useQuery(
     undefined,

@@ -6,7 +6,7 @@
 import { ENV } from "./_core/env";
 
 const PIPEDRIVE_BASE_URL = "https://api.pipedrive.com/v1";
-const API_KEY = ENV.pipedriveApiKey;
+const API_KEY = process.env.PIPEDRIVE_API_KEY || "";
 
 export interface PipedriveResponse<T> {
   success: boolean;

@@ -1,0 +1,42 @@
+--- a/server/routers.ts
++++ b/server/routers.ts
+@@ -454,6 +454,33 @@ export const appRouter = router({
+           isTeamLeader: profile.isTeamLeader,
+         });
+ 
++        const monthlyTiers = allMetrics.slice(0, 12).map((m) => {
++          const monthMetrics = allMetrics.filter((x) => {
++            const d = new Date(x.year, x.month - 1, 1);
++            const md = new Date(m.year, m.month - 1, 1);
++            return d < md && d >= joinDate;
++          }).slice(0, 3).map((x) => ({
++            year: x.year,
++            month: x.month,
++            arrUsd: Number(x.arrUsd),
++            demosTotal: x.demosTotal,
++            dialsTotal: x.dialsTotal,
++            retentionRate: x.retentionRate != null ? Number(x.retentionRate) : null,
++          }));
++          if (monthMetrics.length === 0) return null;
++          const { avgArrUsd: mArrUsd, avgDemosPw: mDemos, avgDialsPw: mDials } = computeRollingAverages(monthMetrics as any);
++          const mRetention = computeAvgRetention(monthMetrics as any);
++          const mTier = calculateTier({
++            avgArrUsd: mArrUsd, avgDemosPw: mDemos, avgDialsPw: mDials,
++            avgRetentionRate: mRetention,
++            isNewJoiner: isNewJoiner(profile.joinDate, new Date(m.year, m.month - 1, 1)),
++            isTeamLeader: profile.isTeamLeader,
++          });
++          return { year: m.year, month: m.month, label: `${MONTH_NAMES[m.month - 1]} ${m.year}`, tier: mTier.tier, rate: mTier.rate, arrUsd: Number(m.arrUsd) };
++        }).filter((x) => x !== null);
++
+         return {
+           ...result,
+           avgArrUsd,
+@@ -468,6 +495,7 @@ export const appRouter = router({
+             demosTotal: m.demosTotal,
+             dialsTotal: m.dialsTotal,
+           })),
++          monthlyTiers,
+         };
+       }),
+ 
