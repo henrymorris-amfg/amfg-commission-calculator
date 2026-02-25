@@ -696,7 +696,7 @@ export const appRouter = router({
 
         if (input.contractType && input.contractType !== deal.contractType) {
           // Update contract type
-          await db
+          await getDb()
             .update(deals)
             .set({ contractType: input.contractType })
             .where(eq(deals.id, input.dealId));

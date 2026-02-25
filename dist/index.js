@@ -210,7 +210,7 @@ __export(db_exports, {
   getAllAeProfiles: () => getAllAeProfiles,
   getAllCommissionStructures: () => getAllCommissionStructures,
   getCommissionStructureById: () => getCommissionStructureById,
-  getDb: () => getDb,
+  getDb: () => getDb2,
   getDealById: () => getDealById,
   getDealByPipedriveId: () => getDealByPipedriveId,
   getDealsForAe: () => getDealsForAe,
@@ -230,7 +230,7 @@ __export(db_exports, {
 });
 import { and, desc, eq as eq2 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-async function getDb() {
+async function getDb2() {
   if (!_db && process.env.DATABASE_URL) {
     try {
       _db = drizzle(process.env.DATABASE_URL);
@@ -243,8 +243,8 @@ async function getDb() {
 }
 async function upsertUser(user) {
   if (!user.openId) throw new Error("User openId is required for upsert");
-  const db2 = await getDb();
-  if (!db2) return;
+  const db = await getDb2();
+  if (!db) return;
   const values = { openId: user.openId };
   const updateSet = {};
   const textFields = ["name", "email", "loginMethod"];
@@ -268,61 +268,61 @@ async function upsertUser(user) {
   }
   if (!values.lastSignedIn) values.lastSignedIn = /* @__PURE__ */ new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = /* @__PURE__ */ new Date();
-  await db2.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
 async function getUserByOpenId(openId) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(users).where(eq2(users.openId, openId)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(users).where(eq2(users.openId, openId)).limit(1);
   return result[0];
 }
 async function createAeProfile(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(aeProfiles).values(data);
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(aeProfiles).values(data);
   return result[0].insertId;
 }
 async function getAeProfileById(id) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(aeProfiles).where(eq2(aeProfiles.id, id)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(aeProfiles).where(eq2(aeProfiles.id, id)).limit(1);
   return result[0];
 }
 async function getAeProfileByName(name) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(aeProfiles).where(eq2(aeProfiles.name, name)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(aeProfiles).where(eq2(aeProfiles.name, name)).limit(1);
   return result[0];
 }
 async function getAllAeProfiles(includeInactive = false) {
-  const db2 = await getDb();
-  if (!db2) return [];
+  const db = await getDb2();
+  if (!db) return [];
   if (includeInactive) {
-    return db2.select().from(aeProfiles).orderBy(aeProfiles.name);
+    return db.select().from(aeProfiles).orderBy(aeProfiles.name);
   }
-  return db2.select().from(aeProfiles).where(eq2(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
+  return db.select().from(aeProfiles).where(eq2(aeProfiles.isActive, true)).orderBy(aeProfiles.name);
 }
 async function updateAeProfile(id, data) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.update(aeProfiles).set(data).where(eq2(aeProfiles.id, id));
+  const db = await getDb2();
+  if (!db) return;
+  await db.update(aeProfiles).set(data).where(eq2(aeProfiles.id, id));
 }
 async function recordFailedPinAttempt(id, newAttemptCount, lockoutUntil) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.update(aeProfiles).set({
+  const db = await getDb2();
+  if (!db) return;
+  await db.update(aeProfiles).set({
     failedPinAttempts: newAttemptCount,
     lockedUntil: lockoutUntil ?? null
   }).where(eq2(aeProfiles.id, id));
 }
 async function resetPinAttempts(id) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.update(aeProfiles).set({ failedPinAttempts: 0, lockedUntil: null }).where(eq2(aeProfiles.id, id));
+  const db = await getDb2();
+  if (!db) return;
+  await db.update(aeProfiles).set({ failedPinAttempts: 0, lockedUntil: null }).where(eq2(aeProfiles.id, id));
 }
 async function upsertMonthlyMetric(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
   const updateSet = {
     arrUsd: data.arrUsd,
     demosTotal: data.demosTotal,
@@ -333,17 +333,17 @@ async function upsertMonthlyMetric(data) {
   if (data.connectionRate !== void 0) updateSet.connectionRate = data.connectionRate;
   if (data.talkTimeSecs !== void 0) updateSet.talkTimeSecs = data.talkTimeSecs;
   if (data.demosFromPipedrive !== void 0) updateSet.demosFromPipedrive = data.demosFromPipedrive;
-  await db2.insert(monthlyMetrics).values(data).onDuplicateKeyUpdate({ set: updateSet });
+  await db.insert(monthlyMetrics).values(data).onDuplicateKeyUpdate({ set: updateSet });
 }
 async function getMetricsForAe(aeId, limit = 6) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(monthlyMetrics).where(eq2(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit);
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(monthlyMetrics).where(eq2(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit);
 }
 async function getMetricsForMonth(aeId, year, month) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(monthlyMetrics).where(
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(monthlyMetrics).where(
     and(
       eq2(monthlyMetrics.aeId, aeId),
       eq2(monthlyMetrics.year, year),
@@ -353,57 +353,57 @@ async function getMetricsForMonth(aeId, year, month) {
   return result[0];
 }
 async function createDeal(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(deals2).values(data);
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(deals2).values(data);
   return result[0].insertId;
 }
 async function getDealsForAe(aeId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(deals2).where(eq2(deals2.aeId, aeId)).orderBy(desc(deals2.startYear), desc(deals2.startMonth), desc(deals2.startDay));
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(deals2).where(eq2(deals2.aeId, aeId)).orderBy(desc(deals2.startYear), desc(deals2.startMonth), desc(deals2.startDay));
 }
 async function getDealById(id) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(deals2).where(eq2(deals2.id, id)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(deals2).where(eq2(deals2.id, id)).limit(1);
   return result[0];
 }
 async function getDealByPipedriveId(aeId, pipedriveId) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(deals2).where(and(eq2(deals2.aeId, aeId), eq2(deals2.pipedriveId, pipedriveId))).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(deals2).where(and(eq2(deals2.aeId, aeId), eq2(deals2.pipedriveId, pipedriveId))).limit(1);
   return result[0];
 }
 async function deleteDeal(id, aeId) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.delete(deals2).where(and(eq2(deals2.id, id), eq2(deals2.aeId, aeId)));
+  const db = await getDb2();
+  if (!db) return;
+  await db.delete(deals2).where(and(eq2(deals2.id, id), eq2(deals2.aeId, aeId)));
 }
 async function createPayoutsForDeal(payouts) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
   if (payouts.length === 0) return;
-  await db2.insert(commissionPayouts).values(payouts);
+  await db.insert(commissionPayouts).values(payouts);
 }
 async function deletePayoutsForDeal(dealId) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.delete(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId));
+  const db = await getDb2();
+  if (!db) return;
+  await db.delete(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId));
 }
 async function getPayoutsForAe(aeId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(commissionPayouts).where(eq2(commissionPayouts.aeId, aeId)).orderBy(
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(commissionPayouts).where(eq2(commissionPayouts.aeId, aeId)).orderBy(
     desc(commissionPayouts.payoutYear),
     desc(commissionPayouts.payoutMonth),
     commissionPayouts.dealId
   );
 }
 async function getPayoutsForMonth(aeId, year, month) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(commissionPayouts).where(
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(commissionPayouts).where(
     and(
       eq2(commissionPayouts.aeId, aeId),
       eq2(commissionPayouts.payoutYear, year),
@@ -412,50 +412,50 @@ async function getPayoutsForMonth(aeId, year, month) {
   );
 }
 async function getPayoutsForDeal(dealId) {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(commissionPayouts).where(eq2(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
 }
 async function getActiveCommissionStructure() {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(commissionStructures).where(eq2(commissionStructures.isActive, true)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(commissionStructures).where(eq2(commissionStructures.isActive, true)).limit(1);
   return result[0];
 }
 async function getAllCommissionStructures() {
-  const db2 = await getDb();
-  if (!db2) return [];
-  return db2.select().from(commissionStructures).orderBy(desc(commissionStructures.effectiveFrom));
+  const db = await getDb2();
+  if (!db) return [];
+  return db.select().from(commissionStructures).orderBy(desc(commissionStructures.effectiveFrom));
 }
 async function getCommissionStructureById(id) {
-  const db2 = await getDb();
-  if (!db2) return void 0;
-  const result = await db2.select().from(commissionStructures).where(eq2(commissionStructures.id, id)).limit(1);
+  const db = await getDb2();
+  if (!db) return void 0;
+  const result = await db.select().from(commissionStructures).where(eq2(commissionStructures.id, id)).limit(1);
   return result[0];
 }
 async function createCommissionStructure(data) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  const result = await db2.insert(commissionStructures).values(data);
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(commissionStructures).values(data);
   return result[0].insertId;
 }
 async function updateCommissionStructure(id, data) {
-  const db2 = await getDb();
-  if (!db2) return;
-  await db2.update(commissionStructures).set(data).where(eq2(commissionStructures.id, id));
+  const db = await getDb2();
+  if (!db) return;
+  await db.update(commissionStructures).set(data).where(eq2(commissionStructures.id, id));
 }
 async function activateCommissionStructure(id) {
-  const db2 = await getDb();
-  if (!db2) throw new Error("Database not available");
-  await db2.update(commissionStructures).set({ isActive: false });
-  await db2.update(commissionStructures).set({ isActive: true }).where(eq2(commissionStructures.id, id));
+  const db = await getDb2();
+  if (!db) throw new Error("Database not available");
+  await db.update(commissionStructures).set({ isActive: false });
+  await db.update(commissionStructures).set({ isActive: true }).where(eq2(commissionStructures.id, id));
 }
 async function seedInitialCommissionStructure() {
-  const db2 = await getDb();
-  if (!db2) return;
-  const existing = await db2.select().from(commissionStructures).limit(1);
+  const db = await getDb2();
+  if (!db) return;
+  const existing = await db.select().from(commissionStructures).limit(1);
   if (existing.length > 0) return;
-  await db2.insert(commissionStructures).values({
+  await db.insert(commissionStructures).values({
     versionLabel: "Q1 2026 \u2014 Initial",
     effectiveFrom: /* @__PURE__ */ new Date("2026-01-01"),
     isActive: true,
@@ -3382,7 +3382,7 @@ var appRouter = router({
       const deal = await getDealById(input.dealId);
       if (!deal || deal.aeId !== aeId) throw new TRPCError6({ code: "FORBIDDEN" });
       if (input.contractType && input.contractType !== deal.contractType) {
-        await db.update(deals).set({ contractType: input.contractType }).where(eq(deals.id, input.dealId));
+        await getDb().update(deals).set({ contractType: input.contractType }).where(eq(deals.id, input.dealId));
         const activeStructure = await getActiveCommissionStructure();
         const commResult = calculateCommission({
           contractType: input.contractType,
