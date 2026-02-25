@@ -338,3 +338,10 @@
 - [x] Clicking button now correctly toggles between annual and monthly
 - [x] Payout schedule updates correctly after button click
 - [x] All 35 tests passing
+
+
+## GBP Conversion Bug (Feb 25 2026) - FIXED
+- [x] Fixed: Apollo Precision FX rate updated from 1.0 to 0.7850, now shows £372.88
+- [x] Fixed: deals.update now uses fxRateAtWon ?? fxRateAtEntry ?? 0.7850 fallback
+- [x] Verified: All payouts have correct netCommissionGbp after contract type change
+- [x] All 35 tests passing

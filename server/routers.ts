@@ -765,7 +765,7 @@ export const appRouter = router({
             tier: deal.tierAtStart as Tier,
             onboardingFeePaid: deal.onboardingFeePaid,
             isReferral: deal.isReferral,
-            fxRateUsdToGbp: Number(deal.fxRateAtWon),
+            fxRateUsdToGbp: Number(deal.fxRateAtWon ?? deal.fxRateAtEntry ?? 0.7850),
             monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
             onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
             onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,

@@ -3526,7 +3526,7 @@ var appRouter = router({
           tier: deal.tierAtStart,
           onboardingFeePaid: deal.onboardingFeePaid,
           isReferral: deal.isReferral,
-          fxRateUsdToGbp: Number(deal.fxRateAtWon),
+          fxRateUsdToGbp: Number(deal.fxRateAtWon ?? deal.fxRateAtEntry ?? 0.785),
           monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : void 0,
           onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : void 0,
           onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : void 0
