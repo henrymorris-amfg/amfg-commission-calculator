@@ -3,7 +3,8 @@ import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
 import * as bcrypt from "bcryptjs";
-import { makeAeToken, getAeIdFromCtx } from "./aeAuth";
+import { makeAeToken } from "./aeAuth";
+import { getAeIdFromCtx } from "./aeTokenUtils";
 import { z } from "zod";
 import {
   MONTH_NAMES,

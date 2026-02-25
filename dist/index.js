@@ -530,7 +530,7 @@ var init_trpc = __esm({
   }
 });
 
-// server/aeAuth.ts
+// server/aeTokenUtils.ts
 import { createHmac, timingSafeEqual } from "crypto";
 function getSecret() {
   return ENV.cookieSecret || "fallback-dev-secret";
@@ -553,11 +553,6 @@ function parseAeToken(token) {
     return null;
   }
 }
-function makeAeToken(aeId) {
-  const payload = Buffer.from(JSON.stringify({ aeId, ts: Date.now() })).toString("base64url");
-  const sig = createHmac("sha256", getSecret()).update(payload).digest("base64url");
-  return `${payload}.${sig}`;
-}
 function getAeIdFromCtx(ctx) {
   const headerToken = ctx.req.headers["x-ae-token"];
   if (headerToken) {
@@ -574,8 +569,8 @@ function getAeIdFromCtx(ctx) {
   }
   return null;
 }
-var init_aeAuth = __esm({
-  "server/aeAuth.ts"() {
+var init_aeTokenUtils = __esm({
+  "server/aeTokenUtils.ts"() {
     "use strict";
     init_env();
   }
@@ -746,7 +741,7 @@ var init_voipSync = __esm({
     "use strict";
     init_trpc();
     init_const();
-    init_aeAuth();
+    init_aeTokenUtils();
     init_db();
     VOIP_BASE = "https://l7api.com/v1.2/voipstudio";
     voipSyncRouter = router({
@@ -1991,7 +1986,7 @@ var spreadsheetSyncRouter = router({
 // server/pipedriveSync.ts
 init_trpc();
 init_const();
-init_aeAuth();
+init_aeTokenUtils();
 init_db();
 import { z as z3 } from "zod";
 import { TRPCError as TRPCError4 } from "@trpc/server";
@@ -2749,8 +2744,22 @@ var pipedriveSyncRouter = router({
 
 // server/routers.ts
 init_voipSync();
-init_aeAuth();
 import * as bcrypt2 from "bcryptjs";
+
+// server/aeAuth.ts
+init_env();
+import { createHmac as createHmac2, timingSafeEqual as timingSafeEqual2 } from "crypto";
+function getSecret2() {
+  return ENV.cookieSecret || "fallback-dev-secret";
+}
+function makeAeToken(aeId) {
+  const payload = Buffer.from(JSON.stringify({ aeId, ts: Date.now() })).toString("base64url");
+  const sig = createHmac2("sha256", getSecret2()).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
+}
+
+// server/routers.ts
+init_aeTokenUtils();
 import { z as z5 } from "zod";
 init_const();
 

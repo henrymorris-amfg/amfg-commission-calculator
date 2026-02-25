@@ -20,7 +20,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
-import { getAeIdFromCtx } from "./aeAuth";
+import { getAeIdFromCtx } from "./aeTokenUtils";
 import {
   getAllAeProfiles,
   getAeProfileById,
