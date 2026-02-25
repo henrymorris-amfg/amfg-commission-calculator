@@ -1,0 +1,76 @@
+{
+  "query": "SELECT id, customerName, aeId, startMonth FROM deals WHERE customerName LIKE '%Machine%' OR customerName LIKE '%Tool%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, aeId, startMonth FROM deals WHERE customerName LIKE '%Machine%' OR customerName LIKE '%Tool%';",
+  "rows": [
+    {
+      "id": "60021",
+      "customerName": "P&N Machine deal",
+      "aeId": "1",
+      "startMonth": "8"
+    },
+    {
+      "id": "60022",
+      "customerName": "Cardic Machine Products deal",
+      "aeId": "1",
+      "startMonth": "8"
+    },
+    {
+      "id": "60028",
+      "customerName": "Accurate Tool & Die",
+      "aeId": "1",
+      "startMonth": "2"
+    },
+    {
+      "id": "60030",
+      "customerName": "Motive Machine Works",
+      "aeId": "1",
+      "startMonth": "2"
+    },
+    {
+      "id": "60033",
+      "customerName": "JD Machine (SSO Upsell)",
+      "aeId": "1",
+      "startMonth": "5"
+    },
+    {
+      "id": "60034",
+      "customerName": "Bechtel Plant Machinery, Inc.(POC)",
+      "aeId": "1",
+      "startMonth": "9"
+    },
+    {
+      "id": "60047",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "aeId": "30002",
+      "startMonth": "3"
+    },
+    {
+      "id": "60049",
+      "customerName": "McAllister Tool & Machine deal",
+      "aeId": "30002",
+      "startMonth": "9"
+    },
+    {
+      "id": "60050",
+      "customerName": "Air-lake Machine & Welding deal",
+      "aeId": "30002",
+      "startMonth": "7"
+    },
+    {
+      "id": "60053",
+      "customerName": "Lowrance Machine Shop",
+      "aeId": "30002",
+      "startMonth": "10"
+    },
+    {
+      "id": "60056",
+      "customerName": "ACME Machine & Weld",
+      "aeId": "30002",
+      "startMonth": "12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\taeId\tstartMonth\n60021\tP&N Machine deal\t1\t8\n60022\tCardic Machine Products deal\t1\t8\n60028\tAccurate Tool & Die\t1\t2\n60030\tMotive Machine Works\t1\t2\n60033\tJD Machine (SSO Upsell)\t1\t5\n60034\tBechtel Plant Machinery, Inc.(POC)\t1\t9\n60047\tMachine Tool Engineering, Inc. lead\t30002\t3\n60049\tMcAllister Tool & Machine deal\t30002\t9\n60050\tAir-lake Machine & Welding deal\t30002\t7\n60053\tLowrance Machine Shop\t30002\t10\n60056\tACME Machine & Weld\t30002\t12\n",
+  "stderr": "",
+  "execution_time_ms": 354
+}

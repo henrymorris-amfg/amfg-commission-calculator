@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, aeId, year, month, arrUsd FROM monthly_metrics WHERE aeId = 30002 AND year = 2026 AND month = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, aeId, year, month, arrUsd FROM monthly_metrics WHERE aeId = 30002 AND year = 2026 AND month = 1;",
+  "rows": [
+    {
+      "id": "30021",
+      "aeId": "30002",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "28921.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taeId\tyear\tmonth\tarrUsd\n30021\t30002\t2026\t1\t28921.00\n",
+  "stderr": "",
+  "execution_time_ms": 353
+}

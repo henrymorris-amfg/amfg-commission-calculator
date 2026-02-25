@@ -46,7 +46,10 @@ import {
   updateAeProfile,
   recordFailedPinAttempt,
   resetPinAttempts,
+  getDb,
 } from "./db";
+import { deals } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 // Seed the initial commission structure on first startup
 seedInitialCommissionStructure().catch(console.error);
@@ -696,7 +699,9 @@ export const appRouter = router({
 
         if (input.contractType && input.contractType !== deal.contractType) {
           // Update contract type
-          await getDb()
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+          await db
             .update(deals)
             .set({ contractType: input.contractType })
             .where(eq(deals.id, input.dealId));
@@ -709,7 +714,7 @@ export const appRouter = router({
             tier: deal.tierAtStart as Tier,
             onboardingFeePaid: deal.onboardingFeePaid,
             isReferral: deal.isReferral,
-            fxRateUsdToGbp: Number(deal.fxRateAtEntry),
+            fxRateUsdToGbp: Number(deal.fxRateAtWon),
             monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
             onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
             onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
@@ -719,7 +724,23 @@ export const appRouter = router({
           await deletePayoutsForDeal(input.dealId);
 
           // Create new payouts
-          await createPayoutsForDeal(input.dealId, commResult.payoutSchedule);
+          const payouts = commResult.payoutSchedule.map((p, i) => {
+            const payoutDate = addMonths(deal.startYear, deal.startMonth, i);
+            return {
+              dealId: input.dealId,
+              aeId: aeId,
+              payoutYear: payoutDate.year,
+              payoutMonth: payoutDate.month,
+              payoutNumber: p.payoutNumber,
+              grossCommissionUsd: String(p.grossCommissionUsd),
+              referralDeductionUsd: String(p.referralDeductionUsd),
+              onboardingDeductionGbp: String(p.onboardingDeductionGbp),
+              netCommissionUsd: String(p.netCommissionUsd),
+              fxRateUsed: String(deal.fxRateAtWon),
+              netCommissionGbp: String(p.netCommissionGbp),
+            };
+          });
+          await createPayoutsForDeal(payouts);
         }
 
         return { success: true };

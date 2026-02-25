@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, customerName, pipedriveId, startYear, startMonth, contractStartDate, arrUsd FROM deals WHERE customerName LIKE '%Machine Tool%' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, pipedriveId, startYear, startMonth, contractStartDate, arrUsd FROM deals WHERE customerName LIKE '%Machine Tool%' LIMIT 1;",
+  "rows": [
+    {
+      "id": "60047",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "pipedriveId": "29121",
+      "startYear": "2026",
+      "startMonth": "3",
+      "contractStartDate": "2026-03-31 00:00:00",
+      "arrUsd": "14600.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tpipedriveId\tstartYear\tstartMonth\tcontractStartDate\tarrUsd\n60047\tMachine Tool Engineering, Inc. lead\t29121\t2026\t3\t2026-03-31 00:00:00\t14600.00\n",
+  "stderr": "",
+  "execution_time_ms": 353
+}
