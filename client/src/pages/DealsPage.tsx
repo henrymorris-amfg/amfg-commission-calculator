@@ -84,6 +84,7 @@ export default function DealsPage() {
     onSuccess: () => {
       toast.success("Contract type updated. Commission recalculated.");
       utils.deals.list.invalidate();
+      utils.deals.getPayouts.invalidate();
       utils.commission.monthlySummary.invalidate();
     },
     onError: (err) => toast.error(err.message),
@@ -459,11 +460,14 @@ export default function DealsPage() {
                               setChurnDealId(deal.id);
                               setShowChurnModal(true);
                             }}
-                            variant="outline"
-                            className="text-xs h-7 px-2"
+                            className={`text-xs h-7 px-2 ${
+                              deal.isChurned
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : "bg-green-600 hover:bg-green-700 text-white"
+                            }`}
                             disabled={churnDealMutation.isPending}
                           >
-                            Churned
+                            {deal.isChurned ? "Churned" : "Active"}
                           </Button>
                           <button
                             onClick={(e) => {

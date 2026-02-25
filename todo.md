@@ -323,3 +323,10 @@
 - [x] Fixed emailNotifications.ts import path (./_core/llm)
 - [x] Generated and tested tier change email (Bronze → Silver for Joe Payne)
 - [x] All 35 tests passing
+
+
+## UI & Payout Fixes (Feb 25 2026) - COMPLETED
+- [x] Add color indicators to churn button: red for churned, green for active
+- [x] Fix payout plan not updating when contract type changes: added getPayouts.invalidate()
+- [x] Verify payout schedule refreshes after contract type change
+- [x] All 35 tests passing
