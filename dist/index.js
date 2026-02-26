@@ -3823,20 +3823,11 @@ var appRouter = router({
     }),
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
-      console.log("[payoutCalendar] Starting query");
-      console.log("[payoutCalendar] ctx.req?.headers:", ctx.req?.headers);
-      console.log("[payoutCalendar] X-AE-Token header:", ctx.req?.headers?.["x-ae-token"]);
       const aeId = getAeIdFromCtx(ctx);
-      console.log("[payoutCalendar] aeId from context:", aeId);
       if (!aeId) {
-        console.log("[payoutCalendar] UNAUTHORIZED: aeId is null");
         throw new TRPCError8({ code: "UNAUTHORIZED", message: "Not logged in." });
       }
       const payouts = await getPayoutsForAe(aeId);
-      console.log("[payoutCalendar] fetched", payouts.length, "payouts for aeId", aeId);
-      if (payouts.length === 0) {
-        console.log("[payoutCalendar] WARNING: No payouts found for aeId", aeId);
-      }
       const allDeals = await getDealsForAe(aeId);
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
       const now = /* @__PURE__ */ new Date();

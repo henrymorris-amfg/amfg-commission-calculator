@@ -1,0 +1,410 @@
+{
+  "query": "SELECT id, customerName, arrUsd, originalCurrency, originalAmount, conversionRate FROM deals ORDER BY id DESC LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, originalCurrency, originalAmount, conversionRate FROM deals ORDER BY id DESC LIMIT 50;",
+  "rows": [
+    {
+      "id": "90071",
+      "customerName": "Nutechnologies",
+      "arrUsd": "12995.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90070",
+      "customerName": "Advanced 3D, Inc",
+      "arrUsd": "11292.60",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90069",
+      "customerName": "Printerior deal",
+      "arrUsd": "10296.79",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90068",
+      "customerName": "JODDB deal",
+      "arrUsd": "16788.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90067",
+      "customerName": "Advantage Prototype Systems deal",
+      "arrUsd": "10907.40",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90066",
+      "customerName": "MAKEFAST LIMITED",
+      "arrUsd": "6289.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90065",
+      "customerName": "Apollo Precision deal",
+      "arrUsd": "2500.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90064",
+      "customerName": "Tower Machining",
+      "arrUsd": "5708.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90063",
+      "customerName": "KL Engineering, Inc.",
+      "arrUsd": "5708.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90062",
+      "customerName": "C-axis",
+      "arrUsd": "14321.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90061",
+      "customerName": "Modern Aluminum",
+      "arrUsd": "8800.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "arrUsd": "14588.40",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90059",
+      "customerName": "Bridge - EU sro",
+      "arrUsd": "6000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90058",
+      "customerName": "ACME Machine & Weld",
+      "arrUsd": "6995.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90057",
+      "customerName": "Stoba",
+      "arrUsd": "10064.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90056",
+      "customerName": "Technimetals",
+      "arrUsd": "15950.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90055",
+      "customerName": "Lowrance Machine Shop",
+      "arrUsd": "12000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90054",
+      "customerName": "Keymet Ab Oy deal",
+      "arrUsd": "8400.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90053",
+      "customerName": "AMERICAN VALMARK deal",
+      "arrUsd": "8100.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90052",
+      "customerName": "Air-lake Machine & Welding deal",
+      "arrUsd": "6500.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90051",
+      "customerName": "McAllister Tool & Machine deal",
+      "arrUsd": "7500.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90050",
+      "customerName": "Busch Brothers Machining lead",
+      "arrUsd": "6500.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90049",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "arrUsd": "14600.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90048",
+      "customerName": "RBD Engineers PVT LTD",
+      "arrUsd": "4000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90047",
+      "customerName": "K+G Industrial Group",
+      "arrUsd": "4000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90046",
+      "customerName": "Pyxis Aero",
+      "arrUsd": "5176.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90045",
+      "customerName": "SOLMETO",
+      "arrUsd": "5412.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90044",
+      "customerName": "West Tech Precision deal",
+      "arrUsd": "3600.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90043",
+      "customerName": "CNC Solutions deal",
+      "arrUsd": "4200.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90042",
+      "customerName": "MSP Manufacturing Inc. deal",
+      "arrUsd": "22888.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90040",
+      "customerName": "Method Manufacturing - Portal upsell deal",
+      "arrUsd": "2340.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90039",
+      "customerName": "ActionPlas Group",
+      "arrUsd": "5000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90038",
+      "customerName": "Oberg Industries",
+      "arrUsd": "40000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90037",
+      "customerName": "Universal Machining & Engineering Ltd",
+      "arrUsd": "9000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90034",
+      "customerName": "Aviary Studios deal",
+      "arrUsd": "6648.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90033",
+      "customerName": "Frigate Manufacturing",
+      "arrUsd": "17100.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90032",
+      "customerName": "Motive Machine Works",
+      "arrUsd": "9540.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90031",
+      "customerName": "Paragon Rapid Technologies (CNC License)",
+      "arrUsd": "9540.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90030",
+      "customerName": "Accurate Tool & Die",
+      "arrUsd": "12000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90028",
+      "customerName": "Mercier Creation Labs deal",
+      "arrUsd": "6240.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90026",
+      "customerName": "Code CSR deal",
+      "arrUsd": "7140.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90024",
+      "customerName": "BetterCNC lead",
+      "arrUsd": "3600.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90023",
+      "customerName": "Cardic Machine Products deal",
+      "arrUsd": "10740.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90022",
+      "customerName": "P&N Machine deal",
+      "arrUsd": "14040.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90021",
+      "customerName": "Adaero Precision Components deal",
+      "arrUsd": "5000.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90020",
+      "customerName": "PDQ Precision deal",
+      "arrUsd": "4740.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90019",
+      "customerName": "Precision Molding & Machining Inc.",
+      "arrUsd": "16680.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90017",
+      "customerName": "Monolution Limited deal",
+      "arrUsd": "5940.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90016",
+      "customerName": "Precizo Sp",
+      "arrUsd": "8100.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    },
+    {
+      "id": "90015",
+      "customerName": "Defi Laser Company",
+      "arrUsd": "1800.00",
+      "originalCurrency": "USD",
+      "originalAmount": "0.00",
+      "conversionRate": "1.000000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\toriginalCurrency\toriginalAmount\tconversionRate\n90071\tNutechnologies\t12995.00\tUSD\t0.00\t1.000000\n90070\tAdvanced 3D, Inc\t11292.60\tUSD\t0.00\t1.000000\n90069\tPrinterior deal\t10296.79\tUSD\t0.00\t1.000000\n90068\tJODDB deal\t16788.00\tUSD\t0.00\t1.000000\n90067\tAdvantage Prototype Systems deal\t10907.40\tUSD\t0.00\t1.000000\n90066\tMAKEFAST LIMITED\t6289.00\tUSD\t0.00\t1.000000\n90065\tApollo Precision deal\t2500.00\tUSD\t0.00\t1.000000\n90064\tTower Machining\t5708.00\tUSD\t0.00\t1.000000\n90063\tKL Engineering, Inc.\t5708.00\tUSD\t0.00\t1.000000\n90062\tC-axis\t14321.00\tUSD\t0.00\t1.000000\n90061\tModern Aluminum\t8800.00\tUSD\t0.00\t1.000000\n90060\tRecknagel Präzisionsstahl\t14588.40\tUSD\t0.00\t1.000000\n90059\tBridge - EU sro\t6000.00\tUSD\t0.00\t1.000000\n90058\tACME Machine & Weld\t6995.00\tUSD\t0.00\t1.000000\n90057\tStoba\t10064.00\tUSD\t0.00\t1.000000\n90056\tTechnimetals\t15950.00\tUSD\t0.00\t1.000000\n90055\tLowrance Machine Shop\t12000.00\tUSD\t0.00\t1.000000\n90054\tKeymet Ab Oy deal\t8400.00\tUSD\t0.00\t1.000000\n90053\tAMERICAN VALMARK deal\t8100.00\tUSD\t0.00\t1.000000\n90052\tAir-lake Machine & Welding deal\t6500.00\tUSD\t0.00\t1.000000\n90051\tMcAllister Tool & Machine deal\t7500.00\tUSD\t0.00\t1.000000\n90050\tBusch Brothers Machining lead\t6500.00\tUSD\t0.00\t1.000000\n90049\tMachine Tool Engineering, Inc. lead\t14600.00\tUSD\t0.00\t1.000000\n90048\tRBD Engineers PVT LTD\t4000.00\tUSD\t0.00\t1.000000\n90047\tK+G Industrial Group\t4000.00\tUSD\t0.00\t1.000000\n90046\tPyxis Aero\t5176.00\tUSD\t0.00\t1.000000\n90045\tSOLMETO\t5412.00\tUSD\t0.00\t1.000000\n90044\tWest Tech Precision deal\t3600.00\tUSD\t0.00\t1.000000\n90043\tCNC Solutions deal\t4200.00\tUSD\t0.00\t1.000000\n90042\tMSP Manufacturing Inc. deal\t22888.00\tUSD\t0.00\t1.000000\n90040\tMethod Manufacturing - Portal upsell deal\t2340.00\tUSD\t0.00\t1.000000\n90039\tActionPlas Group\t5000.00\tUSD\t0.00\t1.000000\n90038\tOberg Industries\t40000.00\tUSD\t0.00\t1.000000\n90037\tUniversal Machining & Engineering Ltd\t9000.00\tUSD\t0.00\t1.000000\n90034\tAviary Studios deal\t6648.00\tUSD\t0.00\t1.000000\n90033\tFrigate Manufacturing\t17100.00\tUSD\t0.00\t1.000000\n90032\tMotive Machine Works\t9540.00\tUSD\t0.00\t1.000000\n90031\tParagon Rapid Technologies (CNC License)\t9540.00\tUSD\t0.00\t1.000000\n90030\tAccurate Tool & Die\t12000.00\tUSD\t0.00\t1.000000\n90028\tMercier Creation Labs deal\t6240.00\tUSD\t0.00\t1.000000\n90026\tCode CSR deal\t7140.00\tUSD\t0.00\t1.000000\n90024\tBetterCNC lead\t3600.00\tUSD\t0.00\t1.000000\n90023\tCardic Machine Products deal\t10740.00\tUSD\t0.00\t1.000000\n90022\tP&N Machine deal\t14040.00\tUSD\t0.00\t1.000000\n90021\tAdaero Precision Components deal\t5000.00\tUSD\t0.00\t1.000000\n90020\tPDQ Precision deal\t4740.00\tUSD\t0.00\t1.000000\n90019\tPrecision Molding & Machining Inc.\t16680.00\tUSD\t0.00\t1.000000\n90017\tMonolution Limited deal\t5940.00\tUSD\t0.00\t1.000000\n90016\tPrecizo Sp\t8100.00\tUSD\t0.00\t1.000000\n90015\tDefi Laser Company\t1800.00\tUSD\t0.00\t1.000000\n",
+  "stderr": "",
+  "execution_time_ms": 350
+}
