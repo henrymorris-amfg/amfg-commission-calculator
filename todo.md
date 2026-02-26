@@ -408,3 +408,13 @@
 - [ ] Verify X-AE-Token header is sent correctly from frontend
 - [ ] Test with direct SQL to confirm payouts exist for logged-in AE
 - [ ] Fix Payout Calendar display to show resynced payouts
+
+
+## URGENT Fixes (Feb 26 2026)
+- [ ] Move Recknagel deal from January to March (contract start date is March, not January)
+- [ ] Remove Machine Tool Engineering from January payouts (contract start date is March)
+- [ ] Remove C-Axis from January payouts (contract start date is February)
+- [ ] Remove onboarding deductions from Recknagel deal
+- [ ] Remove onboarding deductions from Apollo deal
+- [ ] DEBUG: Fix Payout Calendar display - payouts exist in DB but not showing in UI
+- [ ] Re-run payout resync with corrected deal start dates

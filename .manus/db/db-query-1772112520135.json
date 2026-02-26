@@ -1,0 +1,9 @@
+{
+  "query": "-- Update Recknagel to March start date (2025-03-01)\nUPDATE deals \nSET contractStartDate = '2025-03-01'\nWHERE customerName = 'Recknagel' AND aeId IN (2, 30002);\n\n-- Remove onboarding fee from Recknagel\nUPDATE deals \nSET onboardingFeePaid = false\nWHERE customerName = 'Recknagel' AND aeId IN (2, 30002);\n\n-- Remove onboarding fee from Apollo\nUPDATE deals \nSET onboardingFeePaid = false\nWHERE customerName = 'Apollo' AND aeId IN (2, 30002);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute -- Update Recknagel to March start date (2025-03-01)\nUPDATE deals \nSET contractStartDate = '2025-03-01'\nWHERE customerName = 'Recknagel' AND aeId IN (2, 30002);\n\n-- Remove onboarding fee from Recknagel\nUPDATE deals \nSET onboardingFeePaid = false\nWHERE customerName = 'Recknagel' AND aeId IN (2, 30002);\n\n-- Remove onboarding fee from Apollo\nUPDATE deals \nSET onboardingFeePaid = false\nWHERE customerName = 'Apollo' AND aeId IN (2, 30002);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 457
+}

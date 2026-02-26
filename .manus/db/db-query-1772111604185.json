@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, customerName, contractStartDate, contractType, arrUsd, onboardingFeePaid, aeId \nFROM deals \nWHERE customerName IN ('Recknagel', 'Machine Tool Engineering', 'C-Axis', 'Apollo')\nORDER BY customerName",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, contractStartDate, contractType, arrUsd, onboardingFeePaid, aeId \nFROM deals \nWHERE customerName IN ('Recknagel', 'Machine Tool Engineering', 'C-Axis', 'Apollo')\nORDER BY customerName",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 364
+}

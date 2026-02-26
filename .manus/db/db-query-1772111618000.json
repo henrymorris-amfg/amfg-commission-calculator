@@ -1,0 +1,208 @@
+{
+  "query": "SELECT id, customerName, contractStartDate, MONTH(contractStartDate) as startMonth, YEAR(contractStartDate) as startYear, contractType, arrUsd, onboardingFeePaid, aeId \nFROM deals \nWHERE aeId IN (2, 30002)\nORDER BY aeId, contractStartDate",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, contractStartDate, MONTH(contractStartDate) as startMonth, YEAR(contractStartDate) as startYear, contractType, arrUsd, onboardingFeePaid, aeId \nFROM deals \nWHERE aeId IN (2, 30002)\nORDER BY aeId, contractStartDate",
+  "rows": [
+    {
+      "id": "90050",
+      "customerName": "Busch Brothers Machining lead",
+      "contractStartDate": "2025-07-18 09:08:08",
+      "startMonth": "7",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "6500.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90052",
+      "customerName": "Air-lake Machine & Welding deal",
+      "contractStartDate": "2025-07-18 09:08:12",
+      "startMonth": "7",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "6500.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90053",
+      "customerName": "AMERICAN VALMARK deal",
+      "contractStartDate": "2025-08-21 08:48:25",
+      "startMonth": "8",
+      "startYear": "2025",
+      "contractType": "monthly",
+      "arrUsd": "8100.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90054",
+      "customerName": "Keymet Ab Oy deal",
+      "contractStartDate": "2025-09-26 10:38:46",
+      "startMonth": "9",
+      "startYear": "2025",
+      "contractType": "monthly",
+      "arrUsd": "8400.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90051",
+      "customerName": "McAllister Tool & Machine deal",
+      "contractStartDate": "2025-09-30 17:37:06",
+      "startMonth": "9",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "7500.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90055",
+      "customerName": "Lowrance Machine Shop",
+      "contractStartDate": "2025-10-10 16:04:33",
+      "startMonth": "10",
+      "startYear": "2025",
+      "contractType": "monthly",
+      "arrUsd": "12000.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90056",
+      "customerName": "Technimetals",
+      "contractStartDate": "2025-10-30 21:32:36",
+      "startMonth": "10",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "15950.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90059",
+      "customerName": "Bridge - EU sro",
+      "contractStartDate": "2025-11-20 14:47:17",
+      "startMonth": "11",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "6000.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90061",
+      "customerName": "Modern Aluminum",
+      "contractStartDate": "2025-12-02 08:58:40",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "8800.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90058",
+      "customerName": "ACME Machine & Weld",
+      "contractStartDate": "2025-12-08 16:34:32",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "6995.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90063",
+      "customerName": "KL Engineering, Inc.",
+      "contractStartDate": "2025-12-16 09:40:57",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "5708.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90057",
+      "customerName": "Stoba",
+      "contractStartDate": "2025-12-18 11:01:37",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "10064.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90064",
+      "customerName": "Tower Machining",
+      "contractStartDate": "2025-12-19 15:14:30",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "5708.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90065",
+      "customerName": "Apollo Precision deal",
+      "contractStartDate": "2025-12-24 12:14:08",
+      "startMonth": "12",
+      "startYear": "2025",
+      "contractType": "annual",
+      "arrUsd": "2500.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90049",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "contractStartDate": "2026-01-05 10:13:53",
+      "startMonth": "1",
+      "startYear": "2026",
+      "contractType": "annual",
+      "arrUsd": "14600.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90062",
+      "customerName": "C-axis",
+      "contractStartDate": "2026-01-30 09:24:49",
+      "startMonth": "1",
+      "startYear": "2026",
+      "contractType": "annual",
+      "arrUsd": "14321.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90066",
+      "customerName": "MAKEFAST LIMITED",
+      "contractStartDate": "2026-02-19 16:21:49",
+      "startMonth": "2",
+      "startYear": "2026",
+      "contractType": "annual",
+      "arrUsd": "6289.00",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    },
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "contractStartDate": "2026-02-20 16:25:46",
+      "startMonth": "2",
+      "startYear": "2026",
+      "contractType": "monthly",
+      "arrUsd": "14588.40",
+      "onboardingFeePaid": "1",
+      "aeId": "30002"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tcontractStartDate\tstartMonth\tstartYear\tcontractType\tarrUsd\tonboardingFeePaid\taeId\n90050\tBusch Brothers Machining lead\t2025-07-18 09:08:08\t7\t2025\tannual\t6500.00\t1\t30002\n90052\tAir-lake Machine & Welding deal\t2025-07-18 09:08:12\t7\t2025\tannual\t6500.00\t1\t30002\n90053\tAMERICAN VALMARK deal\t2025-08-21 08:48:25\t8\t2025\tmonthly\t8100.00\t1\t30002\n90054\tKeymet Ab Oy deal\t2025-09-26 10:38:46\t9\t2025\tmonthly\t8400.00\t1\t30002\n90051\tMcAllister Tool & Machine deal\t2025-09-30 17:37:06\t9\t2025\tannual\t7500.00\t1\t30002\n90055\tLowrance Machine Shop\t2025-10-10 16:04:33\t10\t2025\tmonthly\t12000.00\t1\t30002\n90056\tTechnimetals\t2025-10-30 21:32:36\t10\t2025\tannual\t15950.00\t1\t30002\n90059\tBridge - EU sro\t2025-11-20 14:47:17\t11\t2025\tannual\t6000.00\t1\t30002\n90061\tModern Aluminum\t2025-12-02 08:58:40\t12\t2025\tannual\t8800.00\t1\t30002\n90058\tACME Machine & Weld\t2025-12-08 16:34:32\t12\t2025\tannual\t6995.00\t1\t30002\n90063\tKL Engineering, Inc.\t2025-12-16 09:40:57\t12\t2025\tannual\t5708.00\t1\t30002\n90057\tStoba\t2025-12-18 11:01:37\t12\t2025\tannual\t10064.00\t1\t30002\n90064\tTower Machining\t2025-12-19 15:14:30\t12\t2025\tannual\t5708.00\t1\t30002\n90065\tApollo Precision deal\t2025-12-24 12:14:08\t12\t2025\tannual\t2500.00\t1\t30002\n90049\tMachine Tool Engineering, Inc. lead\t2026-01-05 10:13:53\t1\t2026\tannual\t14600.00\t1\t30002\n90062\tC-axis\t2026-01-30 09:24:49\t1\t2026\tannual\t14321.00\t1\t30002\n90066\tMAKEFAST LIMITED\t2026-02-19 16:21:49\t2\t2026\tannual\t6289.00\t1\t30002\n90060\tRecknagel Präzisionsstahl\t2026-02-20 16:25:46\t2\t2026\tmonthly\t14588.40\t1\t30002\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

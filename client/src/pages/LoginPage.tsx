@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { setAeToken } from "@/lib/aeToken";
+import { setAeToken, clearAeToken } from "@/lib/aeToken";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,8 @@ export default function LoginPage() {
     onSuccess: async (data) => {
       setLoginError(null);
       setIsLocked(false);
-      setAeToken(data.token);
+      clearAeToken(); // Clear old token first
+      setAeToken(data.token); // Then set new token
       await refetch();
       navigate("/dashboard");
     },
