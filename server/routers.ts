@@ -3,6 +3,7 @@ import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
 import { validationRouter } from "./validationRouter";
+import { resyncAllPayouts } from "./resyncPayouts";
 import * as bcrypt from "bcryptjs";
 import { makeAeToken } from "./aeAuth";
 import { getAeIdFromCtx } from "./aeTokenUtils";
@@ -956,7 +957,7 @@ export const appRouter = router({
 
       const monthMap = new Map<string, CalendarMonth>();
 
-      for (const p of allPayouts) {
+      for (const p of payouts) {
         const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
         if (!monthMap.has(key)) {
           const yr = p.payoutYear;
@@ -977,7 +978,7 @@ export const appRouter = router({
         const deal = dealMap.get(p.dealId);
 
         // Count total payouts for this deal
-        const dealPayoutCount = allPayouts.filter(pp => pp.dealId === p.dealId).length;
+        const dealPayoutCount = payouts.filter(pp => pp.dealId === p.dealId).length;
 
         entry.payouts.push({
           dealId: p.dealId,
@@ -1016,9 +1017,16 @@ export const appRouter = router({
           .reduce((sum, m) => sum + m.totalGbp, 0),
       };
     }),
+
+    // Resync all payouts from scratch (team leader only)
+    resyncAllPayouts: publicProcedure.mutation(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      return resyncAllPayouts(aeId);
+    }),
   }),
 
-  // ─── Spreadsheet Sync ────────────────────────────────────────────────────
+  // --- Spreadsheet Sync ────────────────────────────────────────────────────
   spreadsheetSync: spreadsheetSyncRouter,
   pipedriveSync: pipedriveSyncRouter,
   voipSync: voipSyncRouter,

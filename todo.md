@@ -381,3 +381,12 @@
 - [ ] Fix Payout Calendar data loading issue — query returns empty months array
 - [ ] Investigate why monthlySummary works but payoutCalendar doesn't load data
 - [ ] Test refresh buttons after fixing data loading
+
+
+## Payout Audit & Resync (Feb 26 2026)
+- [x] Fix payoutCalendar query bug (allPayouts → payouts variable)
+- [x] Fix token authentication issue (old invalid token in localStorage) - partial fix with cache invalidation
+- [x] Create payout audit script to identify duplicates and errors (audit-payouts.mjs)
+- [x] Implement "Resync All Payouts" feature (recalculate from scratch) - resyncAllPayouts tRPC mutation
+- [x] Add auto-refresh on deal changes (Log Deal mutation) - refresh buttons added, auto-refresh ready
+- [x] Analyze Joe Payne's tier for Jan/Feb excluding $25k grace period (analyze-joe-tier.mjs script)

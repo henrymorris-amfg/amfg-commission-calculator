@@ -1,0 +1,50 @@
+{
+  "query": "SELECT month, year, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = (SELECT id FROM ae_profiles WHERE name LIKE '%Joe%') AND year IN (2025, 2026) AND month IN (10, 11, 12, 1, 2) ORDER BY year, month;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT month, year, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = (SELECT id FROM ae_profiles WHERE name LIKE '%Joe%') AND year IN (2025, 2026) AND month IN (10, 11, 12, 1, 2) ORDER BY year, month;",
+  "rows": [
+    {
+      "month": "10",
+      "year": "2025",
+      "arrUsd": "27950.00",
+      "demosTotal": "26",
+      "dialsTotal": "779",
+      "retentionRate": "NULL"
+    },
+    {
+      "month": "11",
+      "year": "2025",
+      "arrUsd": "6000.00",
+      "demosTotal": "16",
+      "dialsTotal": "963",
+      "retentionRate": "NULL"
+    },
+    {
+      "month": "12",
+      "year": "2025",
+      "arrUsd": "39775.00",
+      "demosTotal": "7",
+      "dialsTotal": "385",
+      "retentionRate": "NULL"
+    },
+    {
+      "month": "1",
+      "year": "2026",
+      "arrUsd": "0.00",
+      "demosTotal": "17",
+      "dialsTotal": "655",
+      "retentionRate": "NULL"
+    },
+    {
+      "month": "2",
+      "year": "2026",
+      "arrUsd": "35198.40",
+      "demosTotal": "14",
+      "dialsTotal": "629",
+      "retentionRate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "month\tyear\tarrUsd\tdemosTotal\tdialsTotal\tretentionRate\n10\t2025\t27950.00\t26\t779\tNULL\n11\t2025\t6000.00\t16\t963\tNULL\n12\t2025\t39775.00\t7\t385\tNULL\n1\t2026\t0.00\t17\t655\tNULL\n2\t2026\t35198.40\t14\t629\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
