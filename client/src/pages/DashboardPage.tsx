@@ -105,6 +105,18 @@ export default function DashboardPage() {
     },
   });
 
+  // Resync All Payouts mutation (team leader only)
+  const resyncMutation = trpc.commission.resyncAllPayouts.useMutation({
+    onSuccess: () => {
+      toast.success("Payouts resynced successfully!");
+      utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Resync failed: ${err.message}`);
+    },
+  });
+
   const handleSyncNow = useCallback(() => {
     syncMutation.mutate({ months: 4, mergeMode: "replace", useJoinDate: true });
   }, [syncMutation]);
@@ -214,15 +226,27 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 self-start">
             {ae.isTeamLeader && (
-              <Button
-                variant="outline"
-                onClick={handleSyncNow}
-                disabled={syncMutation.isPending}
-                className="gap-2 border-border text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-                {syncMutation.isPending ? "Syncing…" : "Sync Now"}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => resyncMutation.mutate()}
+                  disabled={resyncMutation.isPending}
+                  className="gap-2 border-border text-muted-foreground hover:text-foreground"
+                  title="Resync all payouts from scratch"
+                >
+                  <RefreshCw className={`w-4 h-4 ${resyncMutation.isPending ? "animate-spin" : ""}`} />
+                  {resyncMutation.isPending ? "Resyncing…" : "Resync Payouts"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSyncNow}
+                  disabled={syncMutation.isPending}
+                  className="gap-2 border-border text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+                  {syncMutation.isPending ? "Syncing…" : "Sync Now"}
+                </Button>
+              </>
             )}
             <Button
               onClick={() => navigate("/deals")}

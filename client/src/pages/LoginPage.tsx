@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { setAeToken } from "@/lib/aeToken";
+import { setAeToken, clearAeToken } from "@/lib/aeToken";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,8 @@ export default function LoginPage() {
     onSuccess: async (data) => {
       setLoginError(null);
       setIsLocked(false);
+      // Clear old token and set new one
+      clearAeToken();
       setAeToken(data.token);
       await refetch();
       navigate("/dashboard");
@@ -49,229 +51,209 @@ export default function LoginPage() {
   });
 
   const registerMutation = trpc.ae.register.useMutation({
-    onSuccess: (data) => {
-      toast.success(`Welcome, ${data.name}! Your profile has been created.`);
-      setMode("login");
-      setSelectedName(data.name);
-      setPin("");
+    onSuccess: async (data) => {
+      setLoginError(null);
+      // Clear old token and set new one
+      clearAeToken();
+      setAeToken(data.token);
+      await refetch();
+      navigate("/dashboard");
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      setLoginError(err.message);
+    },
   });
 
-  // If already logged in, redirect — must be in useEffect to avoid setState-during-render
-  useEffect(() => {
-    if (!isLoading && ae) {
-      navigate("/dashboard");
+  const handleLogin = async () => {
+    if (!selectedName || !pin) {
+      setLoginError("Please select an AE and enter your PIN");
+      return;
     }
-  }, [ae, isLoading]);
-
-  if (!isLoading && ae) return null;
-
-  const handleLogin = () => {
-    if (!selectedName) return toast.error("Please select your name.");
-    if (pin.length !== 4) return toast.error("PIN must be 4 digits.");
     loginMutation.mutate({ name: selectedName, pin });
   };
 
-  const handleRegister = () => {
-    if (regName.trim().length < 2) return toast.error("Name must be at least 2 characters.");
-    if (!/^\d{4}$/.test(regPin)) return toast.error("PIN must be exactly 4 digits.");
-    if (regPin !== regConfirmPin) return toast.error("PINs do not match.");
+  const handleRegister = async () => {
+    if (!regName || !regPin || !regConfirmPin) {
+      setLoginError("All fields are required");
+      return;
+    }
+    if (regPin !== regConfirmPin) {
+      setLoginError("PINs do not match");
+      return;
+    }
     registerMutation.mutate({
-      name: regName.trim(),
+      name: regName,
       pin: regPin,
       joinDate: regJoinDate,
       isTeamLeader: regIsTeamLeader,
     });
   };
 
-  return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left Panel — Branding */}
-      <div className="hidden lg:flex w-1/2 flex-col justify-between p-12 relative overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, oklch(0.14 0.016 250) 0%, oklch(0.10 0.02 260) 100%)",
-          borderRight: "1px solid oklch(0.22 0.02 250)"
-        }}
-      >
-        {/* Decorative circles */}
-        <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] rounded-full opacity-5"
-          style={{ background: "radial-gradient(circle, oklch(0.78 0.12 75), transparent)" }} />
-        <div className="absolute bottom-[-80px] left-[-80px] w-[300px] h-[300px] rounded-full opacity-5"
-          style={{ background: "radial-gradient(circle, oklch(0.78 0.12 75), transparent)" }} />
-
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Medal className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase font-medium">AMFG</p>
-            <p className="text-base font-semibold text-foreground">Commission Calculator</p>
-          </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Hero text */}
-        <div className="space-y-6">
-          <h1 className="text-5xl text-foreground leading-tight">
-            Track your<br />
-            <span style={{
-              background: "linear-gradient(135deg, oklch(0.88 0.14 75), oklch(0.70 0.10 55))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}>
-              commission
-            </span>
-            <br />with precision.
-          </h1>
-          <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
+  if (ae) {
+    navigate("/dashboard");
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* Left side - Branding */}
+      <div className="lg:w-1/2 bg-gradient-to-br from-amber-900/20 to-amber-950/40 flex flex-col justify-between p-8 lg:p-12">
+        <div>
+          <div className="flex items-center gap-3 mb-12">
+            <Medal className="w-8 h-8 text-amber-500" />
+            <h1 className="text-2xl font-bold text-foreground">AMFG</h1>
+          </div>
+          <h2 className="text-4xl lg:text-5xl font-serif text-foreground mb-6">
+            Track your <span className="text-amber-500">commission</span> with precision.
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-md">
             Know your tier, track your deals, and see exactly what you'll earn — all in one place.
           </p>
-
-          {/* Tier badges */}
-          <div className="flex gap-3 pt-2">
-            {[
-              { label: "Bronze", pct: "13%", color: "oklch(0.65 0.12 55)" },
-              { label: "Silver", pct: "16%", color: "oklch(0.75 0.02 250)" },
-              { label: "Gold", pct: "19%", color: "oklch(0.82 0.14 75)" },
-            ].map((t) => (
-              <div key={t.label} className="flex flex-col items-center px-4 py-3 rounded-xl border"
-                style={{
-                  borderColor: `${t.color}40`,
-                  background: `${t.color}10`,
-                }}>
-                <span className="text-lg font-bold" style={{ color: t.color }}>{t.pct}</span>
-                <span className="text-xs text-muted-foreground mt-0.5">{t.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">© 2026 AMFG · Q1 Commission Model</p>
+        <div className="flex gap-8">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-500 mb-1">13%</div>
+            <div className="text-sm text-muted-foreground">Bronze</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-400 mb-1">16%</div>
+            <div className="text-sm text-muted-foreground">Silver</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-amber-300 mb-1">19%</div>
+            <div className="text-sm text-muted-foreground">Gold</div>
+          </div>
+        </div>
       </div>
 
-      {/* Right Panel — Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm space-y-8">
-
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Medal className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground tracking-widest uppercase">AMFG</p>
-              <p className="text-sm font-semibold">Commission Calculator</p>
-            </div>
-          </div>
-
+      {/* Right side - Auth Form */}
+      <div className="lg:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
           {mode === "select" && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-3xl text-foreground">Welcome back</h2>
-                <p className="text-muted-foreground mt-1">Select your profile to continue.</p>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Welcome back</h3>
+                <p className="text-muted-foreground">Select your profile to continue.</p>
               </div>
 
-              {aeNames.length > 0 ? (
-                <div className="space-y-2">
-                  {aeNames.map((ae) => (
-                    <button
-                      key={ae.id}
-                      onClick={() => { setSelectedName(ae.name); setMode("login"); }}
-                      className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-accent/20 transition-all duration-150 text-left group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-semibold text-primary">
-                            {ae.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="font-medium text-foreground">{ae.name}</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">No profiles yet. Create yours below.</p>
-                </div>
-              )}
+              <div className="space-y-3">
+                {aeNames.map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      setSelectedName(name);
+                      setMode("login");
+                      setLoginError(null);
+                      setPin("");
+                    }}
+                    className="w-full p-4 border border-border rounded-lg hover:bg-accent transition-colors text-left flex items-center justify-between group"
+                  >
+                    <span className="font-medium text-foreground">{name}</span>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </button>
+                ))}
+              </div>
 
-              {aeNames.length === 0 && (
-                <button
-                  onClick={() => setMode("register")}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all duration-150 text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create new profile
-                </button>
-              )}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-background text-muted-foreground">or</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setMode("register");
+                  setLoginError(null);
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Register New AE
+              </Button>
             </div>
           )}
 
           {mode === "login" && (
             <div className="space-y-6">
-              <div>
-                <button onClick={() => { setMode("select"); setLoginError(null); setIsLocked(false); setPin(""); }} className="text-xs text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 transition-colors">
-                  ← Back
-                </button>
-                <h2 className="text-3xl text-foreground">Enter your PIN</h2>
-                <p className="text-muted-foreground mt-1">Signing in as <span className="text-foreground font-medium">{selectedName}</span></p>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Enter your PIN</h3>
+                <p className="text-muted-foreground">Signing in as {selectedName}</p>
               </div>
 
-              {/* Error / Lockout Banner */}
-              {loginError && (
-                <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-sm ${
-                  isLocked
-                    ? "border-destructive/40 bg-destructive/10 text-destructive"
-                    : "border-amber-500/40 bg-amber-500/10 text-amber-400"
-                }`}>
-                  <span className="text-base leading-none mt-0.5">{isLocked ? "🔒" : "⚠️"}</span>
-                  <span>{loginError}</span>
-                </div>
-              )}
-
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">4-Digit PIN</Label>
-                  <div className="relative">
+                <div>
+                  <Label htmlFor="pin" className="text-sm font-medium text-foreground">
+                    4-Digit PIN
+                  </Label>
+                  <div className="relative mt-2">
                     <Input
+                      id="pin"
                       type={showPin ? "text" : "password"}
-                      inputMode="numeric"
-                      maxLength={4}
                       value={pin}
-                      onChange={(e) => { setPin(e.target.value.replace(/\D/g, "").slice(0, 4)); if (loginError && !isLocked) setLoginError(null); }}
-                      onKeyDown={(e) => e.key === "Enter" && !isLocked && handleLogin()}
+                      onChange={(e) => setPin(e.target.value.slice(0, 4))}
                       placeholder="••••"
-                      disabled={isLocked}
-                      className={`text-center text-2xl tracking-[0.5em] h-14 bg-input border-border focus:border-primary pr-12 ${
-                        isLocked ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      maxLength={4}
+                      className="text-center text-2xl tracking-widest font-mono"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleLogin();
+                      }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPin ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
+                {loginError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+                    {loginError}
+                  </div>
+                )}
+
                 <Button
                   onClick={handleLogin}
-                  disabled={pin.length !== 4 || loginMutation.isPending || isLocked}
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold disabled:opacity-50"
+                  disabled={loginMutation.isPending || isLocked || pin.length !== 4}
+                  className="w-full"
+                  size="lg"
                 >
-                  {loginMutation.isPending ? (
-                    <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Signing in...</span>
-                  ) : isLocked ? (
-                    <span className="flex items-center gap-2">🔒 Account Locked</span>
-                  ) : (
-                    <span className="flex items-center gap-2"><LogIn className="w-4 h-4" />Sign In</span>
-                  )}
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    setMode("select");
+                    setPin("");
+                    setLoginError(null);
+                  }}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  ← Back
                 </Button>
               </div>
             </div>
@@ -279,87 +261,106 @@ export default function LoginPage() {
 
           {mode === "register" && (
             <div className="space-y-6">
-              <div>
-                <button onClick={() => setMode("select")} className="text-xs text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 transition-colors">
-                  ← Back
-                </button>
-                <h2 className="text-3xl text-foreground">Create profile</h2>
-                <p className="text-muted-foreground mt-1">Set up your AE account.</p>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-foreground mb-2">Register New AE</h3>
+                <p className="text-muted-foreground">Create a new account</p>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Full Name</Label>
+                <div>
+                  <Label htmlFor="regName" className="text-sm font-medium text-foreground">
+                    Name
+                  </Label>
                   <Input
+                    id="regName"
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
-                    placeholder="e.g. Alex Johnson"
-                    className="bg-input border-border focus:border-primary h-11"
+                    placeholder="Full name"
+                    className="mt-2"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Join Date</Label>
+                <div>
+                  <Label htmlFor="regPin" className="text-sm font-medium text-foreground">
+                    4-Digit PIN
+                  </Label>
                   <Input
+                    id="regPin"
+                    type="password"
+                    value={regPin}
+                    onChange={(e) => setRegPin(e.target.value.slice(0, 4))}
+                    placeholder="••••"
+                    maxLength={4}
+                    className="mt-2 text-center text-2xl tracking-widest font-mono"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="regConfirmPin" className="text-sm font-medium text-foreground">
+                    Confirm PIN
+                  </Label>
+                  <Input
+                    id="regConfirmPin"
+                    type="password"
+                    value={regConfirmPin}
+                    onChange={(e) => setRegConfirmPin(e.target.value.slice(0, 4))}
+                    placeholder="••••"
+                    maxLength={4}
+                    className="mt-2 text-center text-2xl tracking-widest font-mono"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="regJoinDate" className="text-sm font-medium text-foreground">
+                    Join Date
+                  </Label>
+                  <Input
+                    id="regJoinDate"
                     type="date"
                     value={regJoinDate}
                     onChange={(e) => setRegJoinDate(e.target.value)}
-                    className="bg-input border-border focus:border-primary h-11"
+                    className="mt-2"
                   />
-                  <p className="text-xs text-muted-foreground">Used to determine new joiner grace period (first 6 months).</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">PIN (4 digits)</Label>
-                    <Input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={regPin}
-                      onChange={(e) => setRegPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      placeholder="••••"
-                      className="text-center tracking-widest bg-input border-border focus:border-primary h-11"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">Confirm PIN</Label>
-                    <Input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={regConfirmPin}
-                      onChange={(e) => setRegConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      placeholder="••••"
-                      className="text-center tracking-widest bg-input border-border focus:border-primary h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-card">
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="teamLeader"
                     checked={regIsTeamLeader}
                     onChange={(e) => setRegIsTeamLeader(e.target.checked)}
-                    className="w-4 h-4 accent-primary"
+                    className="rounded border-border"
                   />
-                  <div>
-                    <label htmlFor="teamLeader" className="text-sm font-medium text-foreground cursor-pointer">Team Leader</label>
-                    <p className="text-xs text-muted-foreground">Halved targets (rounded up)</p>
-                  </div>
+                  <Label htmlFor="teamLeader" className="text-sm font-medium text-foreground cursor-pointer">
+                    Team Leader
+                  </Label>
                 </div>
+
+                {loginError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+                    {loginError}
+                  </div>
+                )}
 
                 <Button
                   onClick={handleRegister}
                   disabled={registerMutation.isPending}
-                  className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+                  className="w-full"
+                  size="lg"
                 >
-                  {registerMutation.isPending ? (
-                    <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Creating...</span>
-                  ) : (
-                    <span className="flex items-center gap-2"><Plus className="w-4 h-4" />Create Profile</span>
-                  )}
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Account
+                </Button>
+
+                <Button
+                  onClick={() => {
+                    setMode("select");
+                    setLoginError(null);
+                  }}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  ← Back
                 </Button>
               </div>
             </div>
