@@ -1,0 +1,1218 @@
+{
+  "query": "SELECT aeId, dealId, payoutMonth, payoutYear, COUNT(*) as count, GROUP_CONCAT(id) as payout_ids FROM commission_payouts GROUP BY aeId, dealId, payoutMonth, payoutYear HAVING count > 1 ORDER BY aeId, dealId, payoutYear, payoutMonth;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, dealId, payoutMonth, payoutYear, COUNT(*) as count, GROUP_CONCAT(id) as payout_ids FROM commission_payouts GROUP BY aeId, dealId, payoutMonth, payoutYear HAVING count > 1 ORDER BY aeId, dealId, payoutYear, payoutMonth;",
+  "rows": [
+    {
+      "aeId": "1",
+      "dealId": "90001",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121083,121234"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90002",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121084,121235"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90003",
+      "payoutMonth": "4",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121085,121236"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90004",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121086,121237"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90006",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121087,121238"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90007",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121088,121239"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90008",
+      "payoutMonth": "1",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121089,121240"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90009",
+      "payoutMonth": "6",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121090,121241"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90010",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121091,121242"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90011",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121092,121243"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90012",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121093,121244"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90013",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121094,121245"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90014",
+      "payoutMonth": "5",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121095,121246"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90015",
+      "payoutMonth": "3",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121096,121247"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90016",
+      "payoutMonth": "3",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121097,121248"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90017",
+      "payoutMonth": "4",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121098,121249"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90019",
+      "payoutMonth": "4",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121099,121250"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90020",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121100,121251"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90021",
+      "payoutMonth": "6",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121101,121252"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90022",
+      "payoutMonth": "7",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121102,121253"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90023",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121103,121254"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90024",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121104,121255"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90026",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121105,121256"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90028",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121106,121257"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90030",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121107,121258"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90031",
+      "payoutMonth": "3",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121108,121259"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90032",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121109,121260"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90033",
+      "payoutMonth": "6",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121110,121261"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121111,121262"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121112,121263"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121113,121264"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121114,121265"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121115,121266"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121116,121267"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121117,121268"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121118,121269"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121119,121270"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "9",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121120,121271"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "10",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121121,121272"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90034",
+      "payoutMonth": "11",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121122,121273"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90037",
+      "payoutMonth": "6",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121123,121274"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121124,121275"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121125,121276"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121126,121277"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121127,121278"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121128,121279"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121129,121280"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121130,121281"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121131,121282"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121132,121283"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121133,121284"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121134,121285"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90038",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121135,121286"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121136,121287"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121137,121288"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121138,121289"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121139,121290"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121140,121291"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121141,121292"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121142,121293"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121143,121294"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121144,121295"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "9",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121145,121296"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "10",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121146,121297"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90039",
+      "payoutMonth": "11",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121147,121298"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90040",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121148,121299"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90042",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121149,121300"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90043",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121150,121301"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90044",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121151,121302"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90045",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121152,121303"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121153,121304"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121154,121305"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121155,121306"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121156,121307"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121157,121308"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121158,121309"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121159,121310"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121160,121311"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121161,121312"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "9",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121162,121313"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "10",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121163,121314"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90046",
+      "payoutMonth": "11",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121164,121315"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90047",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121165,121316"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121166,121317"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121167,121318"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121168,121319"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121169,121320"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121170,121321"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121171,121322"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121172,121323"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121173,121324"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121174,121325"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "9",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121175,121326"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "10",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121176,121327"
+    },
+    {
+      "aeId": "1",
+      "dealId": "90048",
+      "payoutMonth": "11",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121177,121328"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90049",
+      "payoutMonth": "3",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121178,121329"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90050",
+      "payoutMonth": "7",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121179,121330"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90051",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121180,121331"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90052",
+      "payoutMonth": "7",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121181,121332"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121182,121333"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121183,121334"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121184,121335"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121185,121336"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121186,121337"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121187,121338"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121188,121339"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121189,121340"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121190,121341"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121191,121342"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121192,121343"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90053",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121193,121344"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90054",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121194,121345"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90055",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121195,121346"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121196,121347"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121197,121348"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121198,121349"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121199,121350"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "2",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121200,121351"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "3",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121201,121352"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "4",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121202,121353"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "5",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121203,121354"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "6",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121204,121355"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "7",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121205,121356"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "8",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121206,121357"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90056",
+      "payoutMonth": "9",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121207,121358"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90057",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121208,121359"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90058",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121209,121360"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90059",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121210,121361"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121211,121362"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "3",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121212,121363"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "4",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121213,121364"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "5",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121214,121365"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "6",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121215,121366"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "7",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121216,121367"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121217,121368"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "9",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121218,121369"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121219,121370"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "11",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121220,121371"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121221,121372"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90060",
+      "payoutMonth": "1",
+      "payoutYear": "2026",
+      "count": "2",
+      "payout_ids": "121222,121373"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90061",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121223,121374"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90062",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121224,121375"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90063",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121225,121376"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90064",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121226,121377"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90065",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121227,121378"
+    },
+    {
+      "aeId": "30002",
+      "dealId": "90066",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121228,121379"
+    },
+    {
+      "aeId": "30004",
+      "dealId": "90067",
+      "payoutMonth": "8",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121229,121380"
+    },
+    {
+      "aeId": "30004",
+      "dealId": "90068",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121230,121381"
+    },
+    {
+      "aeId": "30004",
+      "dealId": "90069",
+      "payoutMonth": "12",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121231,121382"
+    },
+    {
+      "aeId": "30004",
+      "dealId": "90070",
+      "payoutMonth": "10",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121232,121383"
+    },
+    {
+      "aeId": "30004",
+      "dealId": "90071",
+      "payoutMonth": "2",
+      "payoutYear": "2025",
+      "count": "2",
+      "payout_ids": "121233,121384"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tdealId\tpayoutMonth\tpayoutYear\tcount\tpayout_ids\n1\t90001\t8\t2025\t2\t121083,121234\n1\t90002\t2\t2025\t2\t121084,121235\n1\t90003\t4\t2025\t2\t121085,121236\n1\t90004\t12\t2025\t2\t121086,121237\n1\t90006\t11\t2025\t2\t121087,121238\n1\t90007\t12\t2025\t2\t121088,121239\n1\t90008\t1\t2025\t2\t121089,121240\n1\t90009\t6\t2025\t2\t121090,121241\n1\t90010\t2\t2025\t2\t121091,121242\n1\t90011\t2\t2025\t2\t121092,121243\n1\t90012\t2\t2025\t2\t121093,121244\n1\t90013\t8\t2025\t2\t121094,121245\n1\t90014\t5\t2025\t2\t121095,121246\n1\t90015\t3\t2025\t2\t121096,121247\n1\t90016\t3\t2025\t2\t121097,121248\n1\t90017\t4\t2025\t2\t121098,121249\n1\t90019\t4\t2025\t2\t121099,121250\n1\t90020\t9\t2025\t2\t121100,121251\n1\t90021\t6\t2025\t2\t121101,121252\n1\t90022\t7\t2025\t2\t121102,121253\n1\t90023\t8\t2025\t2\t121103,121254\n1\t90024\t8\t2025\t2\t121104,121255\n1\t90026\t9\t2025\t2\t121105,121256\n1\t90028\t2\t2025\t2\t121106,121257\n1\t90030\t2\t2025\t2\t121107,121258\n1\t90031\t3\t2025\t2\t121108,121259\n1\t90032\t2\t2025\t2\t121109,121260\n1\t90033\t6\t2025\t2\t121110,121261\n1\t90034\t12\t2025\t2\t121111,121262\n1\t90034\t1\t2026\t2\t121112,121263\n1\t90034\t2\t2026\t2\t121113,121264\n1\t90034\t3\t2026\t2\t121114,121265\n1\t90034\t4\t2026\t2\t121115,121266\n1\t90034\t5\t2026\t2\t121116,121267\n1\t90034\t6\t2026\t2\t121117,121268\n1\t90034\t7\t2026\t2\t121118,121269\n1\t90034\t8\t2026\t2\t121119,121270\n1\t90034\t9\t2026\t2\t121120,121271\n1\t90034\t10\t2026\t2\t121121,121272\n1\t90034\t11\t2026\t2\t121122,121273\n1\t90037\t6\t2025\t2\t121123,121274\n1\t90038\t9\t2025\t2\t121124,121275\n1\t90038\t10\t2025\t2\t121125,121276\n1\t90038\t11\t2025\t2\t121126,121277\n1\t90038\t12\t2025\t2\t121127,121278\n1\t90038\t1\t2026\t2\t121128,121279\n1\t90038\t2\t2026\t2\t121129,121280\n1\t90038\t3\t2026\t2\t121130,121281\n1\t90038\t4\t2026\t2\t121131,121282\n1\t90038\t5\t2026\t2\t121132,121283\n1\t90038\t6\t2026\t2\t121133,121284\n1\t90038\t7\t2026\t2\t121134,121285\n1\t90038\t8\t2026\t2\t121135,121286\n1\t90039\t12\t2025\t2\t121136,121287\n1\t90039\t1\t2026\t2\t121137,121288\n1\t90039\t2\t2026\t2\t121138,121289\n1\t90039\t3\t2026\t2\t121139,121290\n1\t90039\t4\t2026\t2\t121140,121291\n1\t90039\t5\t2026\t2\t121141,121292\n1\t90039\t6\t2026\t2\t121142,121293\n1\t90039\t7\t2026\t2\t121143,121294\n1\t90039\t8\t2026\t2\t121144,121295\n1\t90039\t9\t2026\t2\t121145,121296\n1\t90039\t10\t2026\t2\t121146,121297\n1\t90039\t11\t2026\t2\t121147,121298\n1\t90040\t8\t2025\t2\t121148,121299\n1\t90042\t2\t2025\t2\t121149,121300\n1\t90043\t9\t2025\t2\t121150,121301\n1\t90044\t9\t2025\t2\t121151,121302\n1\t90045\t12\t2025\t2\t121152,121303\n1\t90046\t12\t2025\t2\t121153,121304\n1\t90046\t1\t2026\t2\t121154,121305\n1\t90046\t2\t2026\t2\t121155,121306\n1\t90046\t3\t2026\t2\t121156,121307\n1\t90046\t4\t2026\t2\t121157,121308\n1\t90046\t5\t2026\t2\t121158,121309\n1\t90046\t6\t2026\t2\t121159,121310\n1\t90046\t7\t2026\t2\t121160,121311\n1\t90046\t8\t2026\t2\t121161,121312\n1\t90046\t9\t2026\t2\t121162,121313\n1\t90046\t10\t2026\t2\t121163,121314\n1\t90046\t11\t2026\t2\t121164,121315\n1\t90047\t11\t2025\t2\t121165,121316\n1\t90048\t12\t2025\t2\t121166,121317\n1\t90048\t1\t2026\t2\t121167,121318\n1\t90048\t2\t2026\t2\t121168,121319\n1\t90048\t3\t2026\t2\t121169,121320\n1\t90048\t4\t2026\t2\t121170,121321\n1\t90048\t5\t2026\t2\t121171,121322\n1\t90048\t6\t2026\t2\t121172,121323\n1\t90048\t7\t2026\t2\t121173,121324\n1\t90048\t8\t2026\t2\t121174,121325\n1\t90048\t9\t2026\t2\t121175,121326\n1\t90048\t10\t2026\t2\t121176,121327\n1\t90048\t11\t2026\t2\t121177,121328\n30002\t90049\t3\t2025\t2\t121178,121329\n30002\t90050\t7\t2025\t2\t121179,121330\n30002\t90051\t9\t2025\t2\t121180,121331\n30002\t90052\t7\t2025\t2\t121181,121332\n30002\t90053\t8\t2025\t2\t121182,121333\n30002\t90053\t9\t2025\t2\t121183,121334\n30002\t90053\t10\t2025\t2\t121184,121335\n30002\t90053\t11\t2025\t2\t121185,121336\n30002\t90053\t12\t2025\t2\t121186,121337\n30002\t90053\t1\t2026\t2\t121187,121338\n30002\t90053\t2\t2026\t2\t121188,121339\n30002\t90053\t3\t2026\t2\t121189,121340\n30002\t90053\t4\t2026\t2\t121190,121341\n30002\t90053\t5\t2026\t2\t121191,121342\n30002\t90053\t6\t2026\t2\t121192,121343\n30002\t90053\t7\t2026\t2\t121193,121344\n30002\t90054\t9\t2025\t2\t121194,121345\n30002\t90055\t10\t2025\t2\t121195,121346\n30002\t90056\t10\t2025\t2\t121196,121347\n30002\t90056\t11\t2025\t2\t121197,121348\n30002\t90056\t12\t2025\t2\t121198,121349\n30002\t90056\t1\t2026\t2\t121199,121350\n30002\t90056\t2\t2026\t2\t121200,121351\n30002\t90056\t3\t2026\t2\t121201,121352\n30002\t90056\t4\t2026\t2\t121202,121353\n30002\t90056\t5\t2026\t2\t121203,121354\n30002\t90056\t6\t2026\t2\t121204,121355\n30002\t90056\t7\t2026\t2\t121205,121356\n30002\t90056\t8\t2026\t2\t121206,121357\n30002\t90056\t9\t2026\t2\t121207,121358\n30002\t90057\t12\t2025\t2\t121208,121359\n30002\t90058\t12\t2025\t2\t121209,121360\n30002\t90059\t11\t2025\t2\t121210,121361\n30002\t90060\t2\t2025\t2\t121211,121362\n30002\t90060\t3\t2025\t2\t121212,121363\n30002\t90060\t4\t2025\t2\t121213,121364\n30002\t90060\t5\t2025\t2\t121214,121365\n30002\t90060\t6\t2025\t2\t121215,121366\n30002\t90060\t7\t2025\t2\t121216,121367\n30002\t90060\t8\t2025\t2\t121217,121368\n30002\t90060\t9\t2025\t2\t121218,121369\n30002\t90060\t10\t2025\t2\t121219,121370\n30002\t90060\t11\t2025\t2\t121220,121371\n30002\t90060\t12\t2025\t2\t121221,121372\n30002\t90060\t1\t2026\t2\t121222,121373\n30002\t90061\t12\t2025\t2\t121223,121374\n30002\t90062\t2\t2025\t2\t121224,121375\n30002\t90063\t12\t2025\t2\t121225,121376\n30002\t90064\t12\t2025\t2\t121226,121377\n30002\t90065\t12\t2025\t2\t121227,121378\n30002\t90066\t2\t2025\t2\t121228,121379\n30004\t90067\t8\t2025\t2\t121229,121380\n30004\t90068\t12\t2025\t2\t121230,121381\n30004\t90069\t12\t2025\t2\t121231,121382\n30004\t90070\t10\t2025\t2\t121232,121383\n30004\t90071\t2\t2025\t2\t121233,121384\n",
+  "stderr": "",
+  "execution_time_ms": 373
+}

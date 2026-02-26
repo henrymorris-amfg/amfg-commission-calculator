@@ -1,0 +1,18 @@
+{
+  "query": "SELECT COUNT(*) as total_payouts, COUNT(DISTINCT dealId) as deals_with_payouts, SUM(netCommissionGbp) as total_gbp, SUM(netCommissionUsd) as total_usd, MIN(payoutYear) as earliest_year, MAX(payoutYear) as latest_year FROM commission_payouts;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT COUNT(*) as total_payouts, COUNT(DISTINCT dealId) as deals_with_payouts, SUM(netCommissionGbp) as total_gbp, SUM(netCommissionUsd) as total_usd, MIN(payoutYear) as earliest_year, MAX(payoutYear) as latest_year FROM commission_payouts;",
+  "rows": [
+    {
+      "total_payouts": "159",
+      "deals_with_payouts": "63",
+      "total_gbp": "31163.10",
+      "total_usd": "42226.24",
+      "earliest_year": "2023",
+      "latest_year": "2027"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_payouts\tdeals_with_payouts\ttotal_gbp\ttotal_usd\tearliest_year\tlatest_year\n159\t63\t31163.10\t42226.24\t2023\t2027\n",
+  "stderr": "",
+  "execution_time_ms": 352
+}

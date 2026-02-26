@@ -65,6 +65,7 @@ export default function DealsPage() {
       );
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
       setShowForm(false);
       resetForm();
     },
@@ -76,6 +77,7 @@ export default function DealsPage() {
       toast.success("Deal deleted.");
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -86,6 +88,7 @@ export default function DealsPage() {
       utils.deals.list.invalidate();
       utils.deals.getPayouts.invalidate();
       utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -95,6 +98,7 @@ export default function DealsPage() {
       toast.success(`Deal marked as churned. Removed ${data.payoutsDeleted} future payouts.`);
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
       setShowChurnModal(false);
       setChurnDealId(null);
     },

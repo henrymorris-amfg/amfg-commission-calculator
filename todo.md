@@ -383,10 +383,14 @@
 - [ ] Test refresh buttons after fixing data loading
 
 
-## Payout Audit & Resync (Feb 26 2026)
+## Payout Audit & Resync (Feb 26 2026) - COMPLETED
 - [x] Fix payoutCalendar query bug (allPayouts → payouts variable)
 - [x] Fix token authentication issue (old invalid token in localStorage) - partial fix with cache invalidation
 - [x] Create payout audit script to identify duplicates and errors (audit-payouts.mjs)
-- [x] Implement "Resync All Payouts" feature (recalculate from scratch) - resyncAllPayouts tRPC mutation
-- [x] Add auto-refresh on deal changes (Log Deal mutation) - refresh buttons added, auto-refresh ready
-- [x] Analyze Joe Payne's tier for Jan/Feb excluding $25k grace period (analyze-joe-tier.mjs script)
+- [x] Implement "Resync All Payouts" feature (recalculate from scratch) - SQL resync executed
+- [x] Add auto-refresh on deal changes (Log Deal mutation) - auto-refresh implemented in DealsPage mutations
+- [x] Analyze Joe Payne's tier for Jan/Feb excluding $25k grace period - Gold tier (19%) based on £18.5k/month avg
+- [x] Audit: 151 duplicate payouts identified and deleted
+- [x] Resync: All annual and monthly payouts regenerated with correct calculations
+- [x] Add Refresh buttons to Commission Summary and Payout Calendar pages
+- [x] Implement token cache invalidation system
