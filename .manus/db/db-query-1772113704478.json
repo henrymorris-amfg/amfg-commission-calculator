@@ -1,0 +1,388 @@
+{
+  "query": "SELECT id, customerName, arrUsd, notes FROM deals ORDER BY customerName",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, notes FROM deals ORDER BY customerName",
+  "rows": [
+    {
+      "id": "90008",
+      "customerName": "3D Smart Solutions (CNC Upsell) deal",
+      "arrUsd": "3000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.807Z"
+    },
+    {
+      "id": "90058",
+      "customerName": "ACME Machine & Weld",
+      "arrUsd": "6995.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.991Z"
+    },
+    {
+      "id": "90053",
+      "customerName": "AMERICAN VALMARK deal",
+      "arrUsd": "8100.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.716Z"
+    },
+    {
+      "id": "90030",
+      "customerName": "Accurate Tool & Die",
+      "arrUsd": "12000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.013Z"
+    },
+    {
+      "id": "90039",
+      "customerName": "ActionPlas Group",
+      "arrUsd": "5000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.507Z"
+    },
+    {
+      "id": "90021",
+      "customerName": "Adaero Precision Components deal",
+      "arrUsd": "5000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.517Z"
+    },
+    {
+      "id": "90070",
+      "customerName": "Advanced 3D, Inc",
+      "arrUsd": "11292.60",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:10.336Z"
+    },
+    {
+      "id": "90067",
+      "customerName": "Advantage Prototype Systems deal",
+      "arrUsd": "10907.40",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:10.172Z"
+    },
+    {
+      "id": "90052",
+      "customerName": "Air-lake Machine & Welding deal",
+      "arrUsd": "6500.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.661Z"
+    },
+    {
+      "id": "90065",
+      "customerName": "Apollo Precision deal",
+      "arrUsd": "2500.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.379Z"
+    },
+    {
+      "id": "90034",
+      "customerName": "Aviary Studios deal",
+      "arrUsd": "6648.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.233Z"
+    },
+    {
+      "id": "90024",
+      "customerName": "BetterCNC lead",
+      "arrUsd": "3600.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.682Z"
+    },
+    {
+      "id": "90059",
+      "customerName": "Bridge - EU sro",
+      "arrUsd": "6000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.047Z"
+    },
+    {
+      "id": "90050",
+      "customerName": "Busch Brothers Machining lead",
+      "arrUsd": "6500.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.552Z"
+    },
+    {
+      "id": "90062",
+      "customerName": "C-axis",
+      "arrUsd": "14321.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.214Z"
+    },
+    {
+      "id": "90043",
+      "customerName": "CNC Solutions deal",
+      "arrUsd": "4200.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.728Z"
+    },
+    {
+      "id": "90023",
+      "customerName": "Cardic Machine Products deal",
+      "arrUsd": "10740.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.626Z"
+    },
+    {
+      "id": "90026",
+      "customerName": "Code CSR deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.794Z"
+    },
+    {
+      "id": "90014",
+      "customerName": "Craft Precision Engineering deal",
+      "arrUsd": "4212.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.134Z"
+    },
+    {
+      "id": "90004",
+      "customerName": "D&M Design & Fabrications deal",
+      "arrUsd": "6528.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.585Z"
+    },
+    {
+      "id": "90015",
+      "customerName": "Defi Laser Company",
+      "arrUsd": "1800.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.189Z"
+    },
+    {
+      "id": "90033",
+      "customerName": "Frigate Manufacturing",
+      "arrUsd": "17100.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.179Z"
+    },
+    {
+      "id": "90002",
+      "customerName": "HLH Rapid deal",
+      "arrUsd": "8109.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.474Z"
+    },
+    {
+      "id": "90068",
+      "customerName": "JODDB deal",
+      "arrUsd": "16788.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:10.227Z"
+    },
+    {
+      "id": "90047",
+      "customerName": "K+G Industrial Group",
+      "arrUsd": "4000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.952Z"
+    },
+    {
+      "id": "90063",
+      "customerName": "KL Engineering, Inc.",
+      "arrUsd": "5708.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.269Z"
+    },
+    {
+      "id": "90054",
+      "customerName": "Keymet Ab Oy deal",
+      "arrUsd": "8400.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.771Z"
+    },
+    {
+      "id": "90055",
+      "customerName": "Lowrance Machine Shop",
+      "arrUsd": "12000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.827Z"
+    },
+    {
+      "id": "90066",
+      "customerName": "MAKEFAST LIMITED",
+      "arrUsd": "6289.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.433Z"
+    },
+    {
+      "id": "90042",
+      "customerName": "MSP Manufacturing Inc. deal",
+      "arrUsd": "22888.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.672Z"
+    },
+    {
+      "id": "90049",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "arrUsd": "14600.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.498Z"
+    },
+    {
+      "id": "90051",
+      "customerName": "McAllister Tool & Machine deal",
+      "arrUsd": "7500.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.607Z"
+    },
+    {
+      "id": "90028",
+      "customerName": "Mercier Creation Labs deal",
+      "arrUsd": "6240.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.904Z"
+    },
+    {
+      "id": "90040",
+      "customerName": "Method Manufacturing - Portal upsell deal",
+      "arrUsd": "2340.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.563Z"
+    },
+    {
+      "id": "90061",
+      "customerName": "Modern Aluminum",
+      "arrUsd": "8800.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.159Z"
+    },
+    {
+      "id": "90017",
+      "customerName": "Monolution Limited deal",
+      "arrUsd": "5940.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.299Z"
+    },
+    {
+      "id": "90032",
+      "customerName": "Motive Machine Works",
+      "arrUsd": "9540.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.124Z"
+    },
+    {
+      "id": "90006",
+      "customerName": "NTG Group Ltd deal",
+      "arrUsd": "15540.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.695Z"
+    },
+    {
+      "id": "90071",
+      "customerName": "Nutechnologies",
+      "arrUsd": "12995.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:10.391Z"
+    },
+    {
+      "id": "90038",
+      "customerName": "Oberg Industries",
+      "arrUsd": "40000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.452Z"
+    },
+    {
+      "id": "90013",
+      "customerName": "OÜ Afterone",
+      "arrUsd": "4200.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.080Z"
+    },
+    {
+      "id": "90022",
+      "customerName": "P&N Machine deal",
+      "arrUsd": "14040.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.571Z"
+    },
+    {
+      "id": "90020",
+      "customerName": "PDQ Precision deal",
+      "arrUsd": "4740.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.463Z"
+    },
+    {
+      "id": "90031",
+      "customerName": "Paragon Rapid Technologies (CNC License)",
+      "arrUsd": "9540.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.068Z"
+    },
+    {
+      "id": "90019",
+      "customerName": "Precision Molding & Machining Inc.",
+      "arrUsd": "16680.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.408Z"
+    },
+    {
+      "id": "90016",
+      "customerName": "Precizo Sp",
+      "arrUsd": "8100.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.244Z"
+    },
+    {
+      "id": "90069",
+      "customerName": "Printerior deal",
+      "arrUsd": "10296.79",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:10.281Z"
+    },
+    {
+      "id": "90009",
+      "customerName": "Proform Manufacturing deal",
+      "arrUsd": "9336.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.862Z"
+    },
+    {
+      "id": "90046",
+      "customerName": "Pyxis Aero",
+      "arrUsd": "5176.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.893Z"
+    },
+    {
+      "id": "90048",
+      "customerName": "RBD Engineers PVT LTD",
+      "arrUsd": "4000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.007Z"
+    },
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "arrUsd": "14588.40",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.102Z"
+    },
+    {
+      "id": "90045",
+      "customerName": "SOLMETO",
+      "arrUsd": "5412.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.838Z"
+    },
+    {
+      "id": "90057",
+      "customerName": "Stoba",
+      "arrUsd": "10064.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.936Z"
+    },
+    {
+      "id": "90003",
+      "customerName": "Stratos Precision Engineering deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.530Z"
+    },
+    {
+      "id": "90007",
+      "customerName": "Swope Design Solutions deal",
+      "arrUsd": "9324.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.750Z"
+    },
+    {
+      "id": "90012",
+      "customerName": "Tallers Fontanet S.L",
+      "arrUsd": "3000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:06.025Z"
+    },
+    {
+      "id": "90056",
+      "customerName": "Technimetals",
+      "arrUsd": "15950.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:08.881Z"
+    },
+    {
+      "id": "90010",
+      "customerName": "Thes3D / Cavazos Facades (CNC Upsell) deal",
+      "arrUsd": "3564.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.917Z"
+    },
+    {
+      "id": "90064",
+      "customerName": "Tower Machining",
+      "arrUsd": "5708.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:09.323Z"
+    },
+    {
+      "id": "90001",
+      "customerName": "UAB Protozauras deal",
+      "arrUsd": "4788.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.407Z"
+    },
+    {
+      "id": "90037",
+      "customerName": "Universal Machining & Engineering Ltd",
+      "arrUsd": "9000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.397Z"
+    },
+    {
+      "id": "90011",
+      "customerName": "WB Machining & Mechanical deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.971Z"
+    },
+    {
+      "id": "90044",
+      "customerName": "West Tech Precision deal",
+      "arrUsd": "3600.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:07.783Z"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tnotes\n90008\t3D Smart Solutions (CNC Upsell) deal\t3000.00\tImported from Pipedrive on 2026-02-25T12:38:05.807Z\n90058\tACME Machine & Weld\t6995.00\tImported from Pipedrive on 2026-02-25T12:38:08.991Z\n90053\tAMERICAN VALMARK deal\t8100.00\tImported from Pipedrive on 2026-02-25T12:38:08.716Z\n90030\tAccurate Tool & Die\t12000.00\tImported from Pipedrive on 2026-02-25T12:38:07.013Z\n90039\tActionPlas Group\t5000.00\tImported from Pipedrive on 2026-02-25T12:38:07.507Z\n90021\tAdaero Precision Components deal\t5000.00\tImported from Pipedrive on 2026-02-25T12:38:06.517Z\n90070\tAdvanced 3D, Inc\t11292.60\tImported from Pipedrive on 2026-02-25T12:38:10.336Z\n90067\tAdvantage Prototype Systems deal\t10907.40\tImported from Pipedrive on 2026-02-25T12:38:10.172Z\n90052\tAir-lake Machine & Welding deal\t6500.00\tImported from Pipedrive on 2026-02-25T12:38:08.661Z\n90065\tApollo Precision deal\t2500.00\tImported from Pipedrive on 2026-02-25T12:38:09.379Z\n90034\tAviary Studios deal\t6648.00\tImported from Pipedrive on 2026-02-25T12:38:07.233Z\n90024\tBetterCNC lead\t3600.00\tImported from Pipedrive on 2026-02-25T12:38:06.682Z\n90059\tBridge - EU sro\t6000.00\tImported from Pipedrive on 2026-02-25T12:38:09.047Z\n90050\tBusch Brothers Machining lead\t6500.00\tImported from Pipedrive on 2026-02-25T12:38:08.552Z\n90062\tC-axis\t14321.00\tImported from Pipedrive on 2026-02-25T12:38:09.214Z\n90043\tCNC Solutions deal\t4200.00\tImported from Pipedrive on 2026-02-25T12:38:07.728Z\n90023\tCardic Machine Products deal\t10740.00\tImported from Pipedrive on 2026-02-25T12:38:06.626Z\n90026\tCode CSR deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:06.794Z\n90014\tCraft Precision Engineering deal\t4212.00\tImported from Pipedrive on 2026-02-25T12:38:06.134Z\n90004\tD&M Design & Fabrications deal\t6528.00\tImported from Pipedrive on 2026-02-25T12:38:05.585Z\n90015\tDefi Laser Company\t1800.00\tImported from Pipedrive on 2026-02-25T12:38:06.189Z\n90033\tFrigate Manufacturing\t17100.00\tImported from Pipedrive on 2026-02-25T12:38:07.179Z\n90002\tHLH Rapid deal\t8109.00\tImported from Pipedrive on 2026-02-25T12:38:05.474Z\n90068\tJODDB deal\t16788.00\tImported from Pipedrive on 2026-02-25T12:38:10.227Z\n90047\tK+G Industrial Group\t4000.00\tImported from Pipedrive on 2026-02-25T12:38:07.952Z\n90063\tKL Engineering, Inc.\t5708.00\tImported from Pipedrive on 2026-02-25T12:38:09.269Z\n90054\tKeymet Ab Oy deal\t8400.00\tImported from Pipedrive on 2026-02-25T12:38:08.771Z\n90055\tLowrance Machine Shop\t12000.00\tImported from Pipedrive on 2026-02-25T12:38:08.827Z\n90066\tMAKEFAST LIMITED\t6289.00\tImported from Pipedrive on 2026-02-25T12:38:09.433Z\n90042\tMSP Manufacturing Inc. deal\t22888.00\tImported from Pipedrive on 2026-02-25T12:38:07.672Z\n90049\tMachine Tool Engineering, Inc. lead\t14600.00\tImported from Pipedrive on 2026-02-25T12:38:08.498Z\n90051\tMcAllister Tool & Machine deal\t7500.00\tImported from Pipedrive on 2026-02-25T12:38:08.607Z\n90028\tMercier Creation Labs deal\t6240.00\tImported from Pipedrive on 2026-02-25T12:38:06.904Z\n90040\tMethod Manufacturing - Portal upsell deal\t2340.00\tImported from Pipedrive on 2026-02-25T12:38:07.563Z\n90061\tModern Aluminum\t8800.00\tImported from Pipedrive on 2026-02-25T12:38:09.159Z\n90017\tMonolution Limited deal\t5940.00\tImported from Pipedrive on 2026-02-25T12:38:06.299Z\n90032\tMotive Machine Works\t9540.00\tImported from Pipedrive on 2026-02-25T12:38:07.124Z\n90006\tNTG Group Ltd deal\t15540.00\tImported from Pipedrive on 2026-02-25T12:38:05.695Z\n90071\tNutechnologies\t12995.00\tImported from Pipedrive on 2026-02-25T12:38:10.391Z\n90038\tOberg Industries\t40000.00\tImported from Pipedrive on 2026-02-25T12:38:07.452Z\n90013\tOÜ Afterone\t4200.00\tImported from Pipedrive on 2026-02-25T12:38:06.080Z\n90022\tP&N Machine deal\t14040.00\tImported from Pipedrive on 2026-02-25T12:38:06.571Z\n90020\tPDQ Precision deal\t4740.00\tImported from Pipedrive on 2026-02-25T12:38:06.463Z\n90031\tParagon Rapid Technologies (CNC License)\t9540.00\tImported from Pipedrive on 2026-02-25T12:38:07.068Z\n90019\tPrecision Molding & Machining Inc.\t16680.00\tImported from Pipedrive on 2026-02-25T12:38:06.408Z\n90016\tPrecizo Sp\t8100.00\tImported from Pipedrive on 2026-02-25T12:38:06.244Z\n90069\tPrinterior deal\t10296.79\tImported from Pipedrive on 2026-02-25T12:38:10.281Z\n90009\tProform Manufacturing deal\t9336.00\tImported from Pipedrive on 2026-02-25T12:38:05.862Z\n90046\tPyxis Aero\t5176.00\tImported from Pipedrive on 2026-02-25T12:38:07.893Z\n90048\tRBD Engineers PVT LTD\t4000.00\tImported from Pipedrive on 2026-02-25T12:38:08.007Z\n90060\tRecknagel Präzisionsstahl\t14588.40\tImported from Pipedrive on 2026-02-25T12:38:09.102Z\n90045\tSOLMETO\t5412.00\tImported from Pipedrive on 2026-02-25T12:38:07.838Z\n90057\tStoba\t10064.00\tImported from Pipedrive on 2026-02-25T12:38:08.936Z\n90003\tStratos Precision Engineering deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:05.530Z\n90007\tSwope Design Solutions deal\t9324.00\tImported from Pipedrive on 2026-02-25T12:38:05.750Z\n90012\tTallers Fontanet S.L\t3000.00\tImported from Pipedrive on 2026-02-25T12:38:06.025Z\n90056\tTechnimetals\t15950.00\tImported from Pipedrive on 2026-02-25T12:38:08.881Z\n90010\tThes3D / Cavazos Facades (CNC Upsell) deal\t3564.00\tImported from Pipedrive on 2026-02-25T12:38:05.917Z\n90064\tTower Machining\t5708.00\tImported from Pipedrive on 2026-02-25T12:38:09.323Z\n90001\tUAB Protozauras deal\t4788.00\tImported from Pipedrive on 2026-02-25T12:38:05.407Z\n90037\tUniversal Machining & Engineering Ltd\t9000.00\tImported from Pipedrive on 2026-02-25T12:38:07.397Z\n90011\tWB Machining & Mechanical deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:05.971Z\n90044\tWest Tech Precision deal\t3600.00\tImported from Pipedrive on 2026-02-25T12:38:07.783Z\n",
+  "stderr": "",
+  "execution_time_ms": 347
+}

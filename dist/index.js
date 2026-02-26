@@ -130,7 +130,13 @@ var init_schema = __esm({
       startMonth: int("startMonth").notNull(),
       // 1–12
       startDay: int("startDay").notNull(),
+      // Original amount and currency (for audit trail)
+      originalAmount: decimal("originalAmount", { precision: 12, scale: 2 }).notNull(),
+      originalCurrency: mysqlEnum("originalCurrency", ["USD", "EUR", "GBP"]).default("USD").notNull(),
+      // Converted to USD for commission calculations
       arrUsd: decimal("arrUsd", { precision: 12, scale: 2 }).notNull(),
+      // FX rate used for conversion (if originalCurrency != USD)
+      conversionRate: decimal("conversionRate", { precision: 10, scale: 6 }).default("1.000000").notNull(),
       onboardingFeePaid: boolean("onboardingFeePaid").default(true).notNull(),
       isReferral: boolean("isReferral").default(false).notNull(),
       // Tier locked at the time the contract started
@@ -3503,7 +3509,10 @@ var appRouter = router({
         startYear: z5.number().int(),
         startMonth: z5.number().int().min(1).max(12),
         startDay: z5.number().int().min(1).max(31),
-        arrUsd: z5.number().positive(),
+        // Support both old arrUsd (for backward compat) and new originalAmount+originalCurrency
+        arrUsd: z5.number().positive().optional(),
+        originalAmount: z5.number().positive().optional(),
+        originalCurrency: z5.enum(["USD", "EUR", "GBP"]).default("USD"),
         onboardingFeePaid: z5.boolean(),
         isReferral: z5.boolean(),
         billingFrequency: z5.enum(["annual", "monthly"]).default("annual"),
@@ -3515,6 +3524,28 @@ var appRouter = router({
       if (!aeId) throw new TRPCError8({ code: "UNAUTHORIZED", message: "Not logged in." });
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError8({ code: "NOT_FOUND" });
+      const EUR_TO_USD = 1.08;
+      const GBP_TO_USD = 1.27;
+      let arrUsd = input.arrUsd ?? 0;
+      let originalAmount = input.originalAmount ?? arrUsd;
+      let originalCurrency = input.originalCurrency ?? "USD";
+      let conversionRate = 1;
+      if (input.originalAmount) {
+        originalAmount = input.originalAmount;
+        originalCurrency = input.originalCurrency;
+        if (originalCurrency === "EUR") {
+          conversionRate = EUR_TO_USD;
+          arrUsd = originalAmount * EUR_TO_USD;
+        } else if (originalCurrency === "GBP") {
+          conversionRate = GBP_TO_USD;
+          arrUsd = originalAmount * GBP_TO_USD;
+        } else {
+          conversionRate = 1;
+          arrUsd = originalAmount;
+        }
+      } else if (!input.arrUsd) {
+        throw new TRPCError8({ code: "BAD_REQUEST", message: "Either arrUsd or originalAmount is required" });
+      }
       let tier;
       if (input.tierOverride) {
         tier = input.tierOverride;
@@ -3528,11 +3559,11 @@ var appRouter = router({
         }).slice(0, 3).map((m) => {
           const monthDate = new Date(m.year, m.month - 1, 1);
           const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
-          const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+          const arrUsd2 = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
           return {
             year: m.year,
             month: m.month,
-            arrUsd,
+            arrUsd: arrUsd2,
             demosTotal: m.demosTotal,
             dialsTotal: m.dialsTotal,
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
@@ -3544,11 +3575,11 @@ var appRouter = router({
         }).slice(0, 6).map((m) => {
           const monthDate = new Date(m.year, m.month - 1, 1);
           const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
-          const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+          const arrUsd2 = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
           return {
             year: m.year,
             month: m.month,
-            arrUsd,
+            arrUsd: arrUsd2,
             demosTotal: m.demosTotal,
             dialsTotal: m.dialsTotal,
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
@@ -3571,7 +3602,7 @@ var appRouter = router({
       const activeStructure = await getActiveCommissionStructure();
       const commResult = calculateCommission({
         contractType: input.contractType,
-        arrUsd: input.arrUsd,
+        arrUsd,
         tier,
         onboardingFeePaid: input.onboardingFeePaid,
         isReferral: input.isReferral,
@@ -3587,7 +3618,10 @@ var appRouter = router({
         startYear: input.startYear,
         startMonth: input.startMonth,
         startDay: input.startDay,
-        arrUsd: String(input.arrUsd),
+        originalAmount: String(originalAmount),
+        originalCurrency,
+        arrUsd: String(arrUsd),
+        conversionRate: String(conversionRate),
         onboardingFeePaid: input.onboardingFeePaid,
         isReferral: input.isReferral,
         tierAtStart: tier,

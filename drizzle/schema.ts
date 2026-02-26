@@ -113,7 +113,13 @@ export const deals = mysqlTable("deals", {
   startYear: int("startYear").notNull(),
   startMonth: int("startMonth").notNull(), // 1–12
   startDay: int("startDay").notNull(),
+  // Original amount and currency (for audit trail)
+  originalAmount: decimal("originalAmount", { precision: 12, scale: 2 }).notNull(),
+  originalCurrency: mysqlEnum("originalCurrency", ["USD", "EUR", "GBP"]).default("USD").notNull(),
+  // Converted to USD for commission calculations
   arrUsd: decimal("arrUsd", { precision: 12, scale: 2 }).notNull(),
+  // FX rate used for conversion (if originalCurrency != USD)
+  conversionRate: decimal("conversionRate", { precision: 10, scale: 6 }).default("1.000000").notNull(),
   onboardingFeePaid: boolean("onboardingFeePaid").default(true).notNull(),
   isReferral: boolean("isReferral").default(false).notNull(),
   // Tier locked at the time the contract started

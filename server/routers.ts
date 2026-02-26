@@ -554,7 +554,10 @@ export const appRouter = router({
           startYear: z.number().int(),
           startMonth: z.number().int().min(1).max(12),
           startDay: z.number().int().min(1).max(31),
-          arrUsd: z.number().positive(),
+          // Support both old arrUsd (for backward compat) and new originalAmount+originalCurrency
+          arrUsd: z.number().positive().optional(),
+          originalAmount: z.number().positive().optional(),
+          originalCurrency: z.enum(["USD", "EUR", "GBP"]).default("USD"),
           onboardingFeePaid: z.boolean(),
           isReferral: z.boolean(),
           billingFrequency: z.enum(["annual", "monthly"]).default("annual"),
@@ -568,6 +571,31 @@ export const appRouter = router({
 
         const profile = await getAeProfileById(aeId);
         if (!profile) throw new TRPCError({ code: "NOT_FOUND" });
+
+        // Convert currency to USD if needed
+        const EUR_TO_USD = 1.08;
+        const GBP_TO_USD = 1.27;
+        let arrUsd = input.arrUsd ?? 0;
+        let originalAmount = input.originalAmount ?? arrUsd;
+        let originalCurrency = input.originalCurrency ?? "USD";
+        let conversionRate = 1.0;
+
+        if (input.originalAmount) {
+          originalAmount = input.originalAmount;
+          originalCurrency = input.originalCurrency;
+          if (originalCurrency === "EUR") {
+            conversionRate = EUR_TO_USD;
+            arrUsd = originalAmount * EUR_TO_USD;
+          } else if (originalCurrency === "GBP") {
+            conversionRate = GBP_TO_USD;
+            arrUsd = originalAmount * GBP_TO_USD;
+          } else {
+            conversionRate = 1.0;
+            arrUsd = originalAmount;
+          }
+        } else if (!input.arrUsd) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Either arrUsd or originalAmount is required" });
+        }
 
         // Determine tier for the contract start month
         let tier: Tier;
@@ -643,7 +671,7 @@ export const appRouter = router({
         // Calculate commission
         const commResult = calculateCommission({
           contractType: input.contractType,
-          arrUsd: input.arrUsd,
+          arrUsd,
           tier,
           onboardingFeePaid: input.onboardingFeePaid,
           isReferral: input.isReferral,
@@ -661,7 +689,10 @@ export const appRouter = router({
           startYear: input.startYear,
           startMonth: input.startMonth,
           startDay: input.startDay,
-          arrUsd: String(input.arrUsd),
+          originalAmount: String(originalAmount),
+          originalCurrency,
+          arrUsd: String(arrUsd),
+          conversionRate: String(conversionRate),
           onboardingFeePaid: input.onboardingFeePaid,
           isReferral: input.isReferral,
           tierAtStart: tier,

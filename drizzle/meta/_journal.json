@@ -78,6 +78,13 @@
       "when": 1772044090455,
       "tag": "0010_long_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1772113728355,
+      "tag": "0011_fearless_tigra",
+      "breakpoints": true
     }
   ]
 }

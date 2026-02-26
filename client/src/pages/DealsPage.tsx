@@ -37,6 +37,8 @@ export default function DealsPage() {
   const [customerName, setCustomerName] = useState("");
   const [contractType, setContractType] = useState<"annual" | "monthly">("annual");
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [originalAmount, setOriginalAmount] = useState("");
+  const [originalCurrency, setOriginalCurrency] = useState<"USD" | "EUR" | "GBP">("USD");
   const [arrUsd, setArrUsd] = useState("");
   const [onboardingFeePaid, setOnboardingFeePaid] = useState(true);
   const [isReferral, setIsReferral] = useState(false);
@@ -113,6 +115,8 @@ export default function DealsPage() {
     setCustomerName("");
     setContractType("annual");
     setStartDate(format(new Date(), "yyyy-MM-dd"));
+    setOriginalAmount("");
+    setOriginalCurrency("USD");
     setArrUsd("");
     setOnboardingFeePaid(true);
     setIsReferral(false);
@@ -122,8 +126,8 @@ export default function DealsPage() {
 
   const handleCreate = () => {
     if (!customerName.trim()) return toast.error("Customer name is required.");
-    const arr = parseFloat(arrUsd);
-    if (!arr || arr <= 0) return toast.error("ARR must be a positive number.");
+    const amount = parseFloat(originalAmount);
+    if (!amount || amount <= 0) return toast.error("Amount must be a positive number.");
     const [sy, sm, sd] = startDate.split("-").map(Number);
     createDealMutation.mutate({
       customerName: customerName.trim(),
@@ -131,7 +135,8 @@ export default function DealsPage() {
       startYear: sy,
       startMonth: sm,
       startDay: sd,
-      arrUsd: arr,
+      originalAmount: amount,
+      originalCurrency,
       onboardingFeePaid,
       isReferral,
       billingFrequency,
@@ -244,19 +249,34 @@ export default function DealsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Annual ARR (USD) *</Label>
+                <Label className="text-sm text-muted-foreground">Currency *</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["USD", "EUR", "GBP"] as const).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setOriginalCurrency(c)}
+                      className={`h-11 rounded-xl border text-sm font-medium transition-all ${originalCurrency === c ? "bg-primary/15 border-primary/40 text-primary" : "bg-input border-border text-muted-foreground hover:border-border/80"}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Annual ARR ({originalCurrency}) *</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{originalCurrency === "GBP" ? "£" : originalCurrency === "EUR" ? "€" : "$"}</span>
                   <Input
                     type="number"
                     min="0"
-                    value={arrUsd}
-                    onChange={(e) => setArrUsd(e.target.value)}
+                    value={originalAmount}
+                    onChange={(e) => setOriginalAmount(e.target.value)}
                     placeholder="e.g. 24000"
                     className="pl-7 bg-input border-border focus:border-primary h-11"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Annual contract value in USD (from Customer Sheet)</p>
+                <p className="text-xs text-muted-foreground">Annual contract value in {originalCurrency} (auto-converts to USD)</p>
               </div>
             </div>
 
@@ -429,10 +449,15 @@ export default function DealsPage() {
                       </div>
                       <div className="flex items-center gap-6">
                         <div className="text-right hidden sm:block">
-                          <p className="text-xs text-muted-foreground">ARR</p>
+                          <p className="text-xs text-muted-foreground">ARR (USD)</p>
                           <p className="text-sm font-semibold text-foreground">
                             ${deal.arrUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </p>
+                          {deal.originalCurrency && deal.originalCurrency !== "USD" && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              ({deal.originalCurrency} {deal.originalAmount?.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">Est. Total Commission</p>
