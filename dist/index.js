@@ -572,19 +572,33 @@ function parseAeToken(token) {
   }
 }
 function getAeIdFromCtx(ctx) {
+  console.log("[getAeIdFromCtx] Checking headers for authentication");
   const headerToken = ctx.req.headers["x-ae-token"];
+  console.log("[getAeIdFromCtx] X-AE-Token header present:", !!headerToken);
   if (headerToken) {
+    console.log("[getAeIdFromCtx] Parsing X-AE-Token header");
     const parsed = parseAeToken(headerToken);
-    if (parsed) return parsed.aeId;
+    if (parsed) {
+      console.log("[getAeIdFromCtx] Successfully parsed aeId from header:", parsed.aeId);
+      return parsed.aeId;
+    }
+    console.log("[getAeIdFromCtx] Failed to parse X-AE-Token header");
   }
   const cookieHeader = ctx.req.headers["cookie"];
+  console.log("[getAeIdFromCtx] Cookie header present:", !!cookieHeader);
   if (cookieHeader) {
     const match = cookieHeader.match(/ae_session=([^;]+)/);
     if (match?.[1]) {
+      console.log("[getAeIdFromCtx] Parsing ae_session cookie");
       const parsed = parseAeToken(match[1]);
-      if (parsed) return parsed.aeId;
+      if (parsed) {
+        console.log("[getAeIdFromCtx] Successfully parsed aeId from cookie:", parsed.aeId);
+        return parsed.aeId;
+      }
+      console.log("[getAeIdFromCtx] Failed to parse ae_session cookie");
     }
   }
+  console.log("[getAeIdFromCtx] No valid authentication found - returning null");
   return null;
 }
 var init_aeTokenUtils = __esm({
@@ -3775,11 +3789,20 @@ var appRouter = router({
     }),
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
+      console.log("[payoutCalendar] Starting query");
+      console.log("[payoutCalendar] ctx.req?.headers:", ctx.req?.headers);
+      console.log("[payoutCalendar] X-AE-Token header:", ctx.req?.headers?.["x-ae-token"]);
       const aeId = getAeIdFromCtx(ctx);
+      console.log("[payoutCalendar] aeId from context:", aeId);
       if (!aeId) {
+        console.log("[payoutCalendar] UNAUTHORIZED: aeId is null");
         throw new TRPCError8({ code: "UNAUTHORIZED", message: "Not logged in." });
       }
       const payouts = await getPayoutsForAe(aeId);
+      console.log("[payoutCalendar] fetched", payouts.length, "payouts for aeId", aeId);
+      if (payouts.length === 0) {
+        console.log("[payoutCalendar] WARNING: No payouts found for aeId", aeId);
+      }
       const allDeals = await getDealsForAe(aeId);
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
       const now = /* @__PURE__ */ new Date();

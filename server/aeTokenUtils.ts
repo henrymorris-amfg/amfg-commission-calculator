@@ -54,20 +54,32 @@ function parseAeToken(token: string): { aeId: number } | null {
 export function getAeIdFromCtx(ctx: {
   req: { headers: Record<string, string | string[] | undefined> };
 }): number | null {
-  // Primary: X-AE-Token header (localStorage-based, production-safe)
+  console.log('[getAeIdFromCtx] Checking headers for authentication');
   const headerToken = ctx.req.headers["x-ae-token"] as string | undefined;
+  console.log('[getAeIdFromCtx] X-AE-Token header present:', !!headerToken);
   if (headerToken) {
+    console.log('[getAeIdFromCtx] Parsing X-AE-Token header');
     const parsed = parseAeToken(headerToken);
-    if (parsed) return parsed.aeId;
+    if (parsed) {
+      console.log('[getAeIdFromCtx] Successfully parsed aeId from header:', parsed.aeId);
+      return parsed.aeId;
+    }
+    console.log('[getAeIdFromCtx] Failed to parse X-AE-Token header');
   }
-  // Fallback: cookie (backward compatibility)
   const cookieHeader = ctx.req.headers["cookie"] as string | undefined;
+  console.log('[getAeIdFromCtx] Cookie header present:', !!cookieHeader);
   if (cookieHeader) {
     const match = cookieHeader.match(/ae_session=([^;]+)/);
     if (match?.[1]) {
+      console.log('[getAeIdFromCtx] Parsing ae_session cookie');
       const parsed = parseAeToken(match[1]);
-      if (parsed) return parsed.aeId;
+      if (parsed) {
+        console.log('[getAeIdFromCtx] Successfully parsed aeId from cookie:', parsed.aeId);
+        return parsed.aeId;
+      }
+      console.log('[getAeIdFromCtx] Failed to parse ae_session cookie');
     }
   }
+  console.log('[getAeIdFromCtx] No valid authentication found - returning null');
   return null;
 }

@@ -1,0 +1,9 @@
+{
+  "query": "-- Check American Valmark deal and its payouts\nSELECT \n  d.id,\n  d.customerName,\n  d.contractType,\n  d.isChurned,\n  d.churnMonth,\n  d.churnYear,\n  DATE_ADD(\n    DATE(CONCAT_WS('-', d.churnYear, LPAD(d.churnMonth, 2, '0'), '01')), \n    INTERVAL 30 DAY\n  ) as churnPlus30Days,\n  COUNT(cp.id) as payoutCount,\n  MIN(cp.payoutYear * 100 + cp.payoutMonth) as firstPayoutYearMonth,\n  MAX(cp.payoutYear * 100 + cp.payoutMonth) as lastPayoutYearMonth\nFROM deals d\nLEFT JOIN commission_payouts cp ON d.id = cp.dealId\nWHERE d.customerName LIKE '%American Valmark%'\nGROUP BY d.id, d.customerName, d.contractType, d.isChurned, d.churnMonth, d.churnYear",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute -- Check American Valmark deal and its payouts\nSELECT \n  d.id,\n  d.customerName,\n  d.contractType,\n  d.isChurned,\n  d.churnMonth,\n  d.churnYear,\n  DATE_ADD(\n    DATE(CONCAT_WS('-', d.churnYear, LPAD(d.churnMonth, 2, '0'), '01')), \n    INTERVAL 30 DAY\n  ) as churnPlus30Days,\n  COUNT(cp.id) as payoutCount,\n  MIN(cp.payoutYear * 100 + cp.payoutMonth) as firstPayoutYearMonth,\n  MAX(cp.payoutYear * 100 + cp.payoutMonth) as lastPayoutYearMonth\nFROM deals d\nLEFT JOIN commission_payouts cp ON d.id = cp.dealId\nWHERE d.customerName LIKE '%American Valmark%'\nGROUP BY d.id, d.customerName, d.contractType, d.isChurned, d.churnMonth, d.churnYear",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 349
+}

@@ -251,6 +251,13 @@
 - [x] All 35 tests passing
 
 
+## Churn Logic Implementation (Feb 26 2026) - COMPLETED
+- [x] Check database schema for churn date fields (isChurned, churnMonth, churnYear, churnReason)
+- [x] Update payout calculation logic to respect 30-day churn cutoff
+- [x] Execute churn-aware payout resync (annual and monthly contracts)
+- [x] Verify payouts exclude churned deals after churn+30 days
+- [x] Payout resync completed: all annual and monthly payouts regenerated with churn logic
+
 ## URGENT: Data Issues Found & FIXED (Feb 25 2026)
 - [x] Fix C-Axis deal: moved from January (startMonth=1) to February (startMonth=2)
 - [x] Fix MakeFast tier: changed from GOLD to SILVER
@@ -394,3 +401,10 @@
 - [x] Resync: All annual and monthly payouts regenerated with correct calculations
 - [x] Add Refresh buttons to Commission Summary and Payout Calendar pages
 - [x] Implement token cache invalidation system
+
+
+## Payout Calendar Debug Fixes (Feb 26 2026)
+- [ ] Add detailed logging to payoutCalendar backend query
+- [ ] Verify X-AE-Token header is sent correctly from frontend
+- [ ] Test with direct SQL to confirm payouts exist for logged-in AE
+- [ ] Fix Payout Calendar display to show resynced payouts
