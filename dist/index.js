@@ -145,6 +145,12 @@ var init_schema = __esm({
       fxRateAtWon: decimal("fxRateAtWon", { precision: 10, scale: 6 }),
       // Snapshot of FX rate at time of deal entry (USD→GBP) — legacy
       fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
+      // Locked GBP conversion rate at deal creation (for deterministic payouts)
+      fxRateLockedAtCreation: decimal("fxRateLockedAtCreation", { precision: 10, scale: 6 }),
+      // When the deal was signed (for FX rate locking)
+      dealSignedDate: timestamp("dealSignedDate"),
+      // When the locked GBP rate was captured
+      fxRateLockDate: timestamp("fxRateLockDate"),
       // Reference to the commission structure version active when the deal was created
       commissionStructureId: int("commissionStructureId"),
       // Pipedrive deal ID — set when imported from Pipedrive, null for manually entered deals
@@ -203,7 +209,8 @@ var init_env = __esm({
       ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
       isProduction: process.env.NODE_ENV === "production",
       forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-      forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? ""
+      forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+      fxApiKey: process.env.FX_API_KEY ?? ""
     };
   }
 });
@@ -967,6 +974,312 @@ var init_voipSync = __esm({
         return { stats, unmatchedAes };
       })
     });
+  }
+});
+
+// shared/commission.ts
+function calculateTier(inputs) {
+  const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+  const retentionAvailable = inputs.avgRetentionRate != null;
+  const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
+  const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
+  const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
+  const meetsRetentionGold = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_GOLD_MIN;
+  const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
+  const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
+  const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
+  const meetsRetentionSilver = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_SILVER_MIN;
+  const reasons = [];
+  if (meetsArrGold && meetsDemosGold && meetsDialsGold && meetsRetentionGold) {
+    return {
+      tier: "gold",
+      reasons,
+      meetsArr: meetsArrGold,
+      meetsDemos: meetsDemosGold,
+      meetsDials: meetsDialsGold,
+      meetsRetention: meetsRetentionGold,
+      targets: targets.gold
+    };
+  }
+  if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
+  if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
+  if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
+  if (!meetsRetentionGold && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
+  if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
+    return {
+      tier: "silver",
+      reasons,
+      meetsArr: meetsArrSilver,
+      meetsDemos: meetsDemosSilver,
+      meetsDials: meetsDialsSilver,
+      meetsRetention: meetsRetentionSilver,
+      targets: targets.silver
+    };
+  }
+  if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
+  if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
+  if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
+  if (!meetsRetentionSilver && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
+  return {
+    tier: "bronze",
+    reasons,
+    meetsArr: meetsArrSilver,
+    meetsDemos: meetsDemosSilver,
+    meetsDials: meetsDialsSilver,
+    meetsRetention: meetsRetentionSilver,
+    targets: targets.silver
+  };
+}
+function computeRollingAverages(last3Months) {
+  if (last3Months.length === 0) {
+    return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
+  }
+  const totalArr = last3Months.reduce((s, m) => s + m.arrUsd, 0);
+  const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
+  const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
+  const n = last3Months.length;
+  return {
+    avgArrUsd: totalArr / n,
+    avgDemosPw: totalDemos / 12,
+    // always divide by 12 weeks
+    avgDialsPw: totalDials / 12
+  };
+}
+function computeAvgRetention(last6Months) {
+  const withRetention = last6Months.filter((m) => m.retentionRate != null);
+  if (withRetention.length === 0) return null;
+  const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
+  return total / withRetention.length;
+}
+function calculateCommission(input) {
+  const rate = TIER_COMMISSION_RATE[input.tier];
+  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5e3;
+  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
+  const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
+  const effectiveArrUsd = input.onboardingFeePaid ? input.arrUsd : Math.max(0, input.arrUsd - arrReductionUsd);
+  const numPayouts = input.contractType === "annual" ? ANNUAL_CONTRACT_PAYOUT_MONTHS : payoutMonths;
+  const payoutAmountUsd = input.contractType === "annual" ? effectiveArrUsd * rate : effectiveArrUsd / 12 * rate;
+  const payoutSchedule = [];
+  for (let i = 1; i <= numPayouts; i++) {
+    const grossCommissionUsd = payoutAmountUsd;
+    const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
+    const onboardingDeductionGbp = !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
+    const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
+    const netCommissionGbp = netCommissionUsd * input.fxRateUsdToGbp - onboardingDeductionGbp;
+    payoutSchedule.push({
+      payoutNumber: i,
+      grossCommissionUsd,
+      referralDeductionUsd,
+      onboardingDeductionGbp,
+      netCommissionUsd,
+      netCommissionGbp: Math.max(0, netCommissionGbp)
+    });
+  }
+  const totalGrossUsd = payoutSchedule.reduce((s, p) => s + p.grossCommissionUsd, 0);
+  const totalNetUsd = payoutSchedule.reduce((s, p) => s + p.netCommissionUsd, 0);
+  const totalNetGbp = payoutSchedule.reduce((s, p) => s + p.netCommissionGbp, 0);
+  return {
+    tier: input.tier,
+    rate,
+    payoutSchedule,
+    totalGrossUsd,
+    totalNetUsd,
+    totalNetGbp,
+    effectiveArrUsd
+  };
+}
+function isNewJoiner(joinDate, forDate = /* @__PURE__ */ new Date()) {
+  const diffMs = forDate.getTime() - joinDate.getTime();
+  const diffMonths = diffMs / (1e3 * 60 * 60 * 24 * 30.44);
+  return diffMonths < NEW_JOINER_GRACE_MONTHS;
+}
+function addMonths(year, month, n) {
+  const date = new Date(year, month - 1 + n, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+var TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS, RETENTION_SILVER_MIN, RETENTION_GOLD_MIN, MONTHLY_CONTRACT_PAYOUT_MONTHS, ANNUAL_CONTRACT_PAYOUT_MONTHS, ONBOARDING_DEDUCTION_GBP, NEW_JOINER_GRACE_MONTHS, MONTH_NAMES;
+var init_commission = __esm({
+  "shared/commission.ts"() {
+    "use strict";
+    TIER_COMMISSION_RATE = {
+      bronze: 0.13,
+      silver: 0.16,
+      gold: 0.19
+    };
+    STANDARD_TARGETS = {
+      silver: { arrUsd: 2e4, demosPw: 3, dialsPw: 100, retentionMin: 61 },
+      gold: { arrUsd: 25e3, demosPw: 4, dialsPw: 200, retentionMin: 71 }
+    };
+    TEAM_LEADER_TARGETS = {
+      silver: { arrUsd: 1e4, demosPw: 2, dialsPw: 50, retentionMin: 61 },
+      gold: { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 }
+    };
+    RETENTION_SILVER_MIN = 61;
+    RETENTION_GOLD_MIN = 71;
+    MONTHLY_CONTRACT_PAYOUT_MONTHS = 12;
+    ANNUAL_CONTRACT_PAYOUT_MONTHS = 1;
+    ONBOARDING_DEDUCTION_GBP = 500;
+    NEW_JOINER_GRACE_MONTHS = 6;
+    MONTH_NAMES = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+  }
+});
+
+// server/fxService.ts
+var fxService_exports = {};
+__export(fxService_exports, {
+  clearFxCache: () => clearFxCache,
+  convertToGbp: () => convertToGbp,
+  convertToUsd: () => convertToUsd,
+  fetchLiveFxRates: () => fetchLiveFxRates,
+  getCurrentFxRates: () => getCurrentFxRates
+});
+async function fetchLiveFxRates() {
+  if (cachedRates && Date.now() < cacheExpiry) {
+    console.log("[FX] Using cached rates");
+    return cachedRates;
+  }
+  try {
+    const apiKey = ENV.fxApiKey;
+    if (!apiKey) {
+      console.warn("[FX] FX_API_KEY not configured, using fallback rates");
+      return FALLBACK_RATES;
+    }
+    const response = await fetch(
+      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`
+    );
+    if (!response.ok) {
+      console.warn(
+        `[FX] API error: ${response.status}, using fallback rates`
+      );
+      return FALLBACK_RATES;
+    }
+    const data = await response.json();
+    if (data.result !== "success" || !data.conversion_rates) {
+      console.warn("[FX] Invalid API response, using fallback rates");
+      return FALLBACK_RATES;
+    }
+    const eurToUsd = 1 / (data.conversion_rates.EUR || FALLBACK_RATES.EUR);
+    const gbpToUsd = 1 / (data.conversion_rates.GBP || FALLBACK_RATES.GBP);
+    const rates = {
+      USD: 1,
+      EUR: eurToUsd,
+      GBP: gbpToUsd,
+      timestamp: Date.now()
+    };
+    cachedRates = rates;
+    cacheExpiry = Date.now() + CACHE_TTL_MS;
+    console.log("[FX] Fetched live rates:", rates);
+    return rates;
+  } catch (error) {
+    console.error("[FX] Error fetching rates:", error);
+    return FALLBACK_RATES;
+  }
+}
+async function convertToUsd(amount, currency, rateOverride) {
+  if (currency === "USD") {
+    return { usdAmount: amount, rate: 1 };
+  }
+  const rates = rateOverride ? { [currency]: rateOverride } : await fetchLiveFxRates();
+  const rate = rates[currency] || FALLBACK_RATES[currency];
+  return {
+    usdAmount: Number((amount * rate).toFixed(2)),
+    rate
+  };
+}
+async function convertToGbp(usdAmount, rateOverride) {
+  const rates = rateOverride ? { GBP: rateOverride } : await fetchLiveFxRates();
+  const rate = rates.GBP || FALLBACK_RATES.GBP;
+  return {
+    gbpAmount: Number((usdAmount / rate).toFixed(2)),
+    rate
+  };
+}
+async function getCurrentFxRates() {
+  return fetchLiveFxRates();
+}
+function clearFxCache() {
+  cachedRates = null;
+  cacheExpiry = 0;
+}
+var cachedRates, cacheExpiry, CACHE_TTL_MS, FALLBACK_RATES;
+var init_fxService = __esm({
+  "server/fxService.ts"() {
+    "use strict";
+    init_env();
+    cachedRates = null;
+    cacheExpiry = 0;
+    CACHE_TTL_MS = 24 * 60 * 60 * 1e3;
+    FALLBACK_RATES = {
+      USD: 1,
+      EUR: 1.08,
+      GBP: 1.27,
+      timestamp: Date.now()
+    };
+  }
+});
+
+// server/lockedFxPayoutHelper.ts
+var lockedFxPayoutHelper_exports = {};
+__export(lockedFxPayoutHelper_exports, {
+  formatPayoutInfo: () => formatPayoutInfo,
+  recalculatePayoutsWithLockedRate: () => recalculatePayoutsWithLockedRate
+});
+function recalculatePayoutsWithLockedRate(input) {
+  const { deal, tier, activeStructure } = input;
+  const lockedFxRate = deal.fxRateLockedAtCreation || deal.fxRateAtEntry || 0.79;
+  const commResult = calculateCommission({
+    tier,
+    contractType: deal.contractType,
+    arrUsd: Number(deal.arrUsd),
+    onboardingFeePaid: deal.onboardingFeePaid,
+    isReferral: deal.isReferral,
+    fxRateUsdToGbp: Number(lockedFxRate),
+    monthlyPayoutMonths: activeStructure?.monthlyPayoutMonths,
+    onboardingDeductionGbp: activeStructure?.onboardingDeductionGbp,
+    onboardingArrReductionUsd: activeStructure?.onboardingArrReductionUsd
+  });
+  return {
+    commResult,
+    lockedFxRate: Number(lockedFxRate),
+    dealSignedDate: deal.dealSignedDate,
+    fxRateLockDate: deal.fxRateLockDate
+  };
+}
+function formatPayoutInfo(deal, lockedFxRate, currentFxRate) {
+  return {
+    dealId: deal.id,
+    customerName: deal.customerName,
+    originalCurrency: deal.originalCurrency,
+    originalAmount: Number(deal.originalAmount),
+    arrUsd: Number(deal.arrUsd),
+    conversionRate: Number(deal.conversionRate),
+    lockedFxRate: Number(deal.fxRateLockedAtCreation || deal.fxRateAtEntry),
+    dealSignedDate: deal.dealSignedDate,
+    fxRateLockDate: deal.fxRateLockDate,
+    // Show difference if current rate is provided
+    ...currentFxRate && {
+      currentFxRate,
+      rateChange: ((currentFxRate - lockedFxRate) / lockedFxRate * 100).toFixed(2) + "%"
+    }
+  };
+}
+var init_lockedFxPayoutHelper = __esm({
+  "server/lockedFxPayoutHelper.ts"() {
+    "use strict";
+    init_commission();
   }
 });
 
@@ -2026,164 +2339,9 @@ init_trpc();
 init_const();
 init_aeTokenUtils();
 init_db();
+init_commission();
 import { z as z3 } from "zod";
 import { TRPCError as TRPCError4 } from "@trpc/server";
-
-// shared/commission.ts
-var TIER_COMMISSION_RATE = {
-  bronze: 0.13,
-  silver: 0.16,
-  gold: 0.19
-};
-var STANDARD_TARGETS = {
-  silver: { arrUsd: 2e4, demosPw: 3, dialsPw: 100, retentionMin: 61 },
-  gold: { arrUsd: 25e3, demosPw: 4, dialsPw: 200, retentionMin: 71 }
-};
-var TEAM_LEADER_TARGETS = {
-  silver: { arrUsd: 1e4, demosPw: 2, dialsPw: 50, retentionMin: 61 },
-  gold: { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 }
-};
-var RETENTION_SILVER_MIN = 61;
-var RETENTION_GOLD_MIN = 71;
-var MONTHLY_CONTRACT_PAYOUT_MONTHS = 12;
-var ANNUAL_CONTRACT_PAYOUT_MONTHS = 1;
-var ONBOARDING_DEDUCTION_GBP = 500;
-var NEW_JOINER_GRACE_MONTHS = 6;
-function calculateTier(inputs) {
-  const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
-  const retentionAvailable = inputs.avgRetentionRate != null;
-  const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
-  const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
-  const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
-  const meetsRetentionGold = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_GOLD_MIN;
-  const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
-  const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
-  const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;
-  const meetsRetentionSilver = !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_SILVER_MIN;
-  const reasons = [];
-  if (meetsArrGold && meetsDemosGold && meetsDialsGold && meetsRetentionGold) {
-    return {
-      tier: "gold",
-      reasons,
-      meetsArr: meetsArrGold,
-      meetsDemos: meetsDemosGold,
-      meetsDials: meetsDialsGold,
-      meetsRetention: meetsRetentionGold,
-      targets: targets.gold
-    };
-  }
-  if (!meetsArrGold) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Gold target $${targets.gold.arrUsd.toLocaleString()}`);
-  if (!meetsDemosGold) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Gold target ${targets.gold.demosPw}/wk`);
-  if (!meetsDialsGold) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Gold target ${targets.gold.dialsPw}/wk`);
-  if (!meetsRetentionGold && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Gold target ${RETENTION_GOLD_MIN}%`);
-  if (meetsArrSilver && meetsDemosSilver && meetsDialsSilver && meetsRetentionSilver) {
-    return {
-      tier: "silver",
-      reasons,
-      meetsArr: meetsArrSilver,
-      meetsDemos: meetsDemosSilver,
-      meetsDials: meetsDialsSilver,
-      meetsRetention: meetsRetentionSilver,
-      targets: targets.silver
-    };
-  }
-  if (!meetsArrSilver) reasons.push(`ARR $${inputs.avgArrUsd.toFixed(0)} below Silver target $${targets.silver.arrUsd.toLocaleString()}`);
-  if (!meetsDemosSilver) reasons.push(`Demos ${inputs.avgDemosPw.toFixed(1)}/wk below Silver target ${targets.silver.demosPw}/wk`);
-  if (!meetsDialsSilver) reasons.push(`Dials ${inputs.avgDialsPw.toFixed(0)}/wk below Silver target ${targets.silver.dialsPw}/wk`);
-  if (!meetsRetentionSilver && retentionAvailable) reasons.push(`Retention ${(inputs.avgRetentionRate ?? 0).toFixed(1)}% below Silver target ${RETENTION_SILVER_MIN}%`);
-  return {
-    tier: "bronze",
-    reasons,
-    meetsArr: meetsArrSilver,
-    meetsDemos: meetsDemosSilver,
-    meetsDials: meetsDialsSilver,
-    meetsRetention: meetsRetentionSilver,
-    targets: targets.silver
-  };
-}
-function computeRollingAverages(last3Months) {
-  if (last3Months.length === 0) {
-    return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
-  }
-  const totalArr = last3Months.reduce((s, m) => s + m.arrUsd, 0);
-  const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
-  const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
-  const n = last3Months.length;
-  return {
-    avgArrUsd: totalArr / n,
-    avgDemosPw: totalDemos / 12,
-    // always divide by 12 weeks
-    avgDialsPw: totalDials / 12
-  };
-}
-function computeAvgRetention(last6Months) {
-  const withRetention = last6Months.filter((m) => m.retentionRate != null);
-  if (withRetention.length === 0) return null;
-  const total = withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0);
-  return total / withRetention.length;
-}
-function calculateCommission(input) {
-  const rate = TIER_COMMISSION_RATE[input.tier];
-  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5e3;
-  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
-  const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
-  const effectiveArrUsd = input.onboardingFeePaid ? input.arrUsd : Math.max(0, input.arrUsd - arrReductionUsd);
-  const numPayouts = input.contractType === "annual" ? ANNUAL_CONTRACT_PAYOUT_MONTHS : payoutMonths;
-  const payoutAmountUsd = input.contractType === "annual" ? effectiveArrUsd * rate : effectiveArrUsd / 12 * rate;
-  const payoutSchedule = [];
-  for (let i = 1; i <= numPayouts; i++) {
-    const grossCommissionUsd = payoutAmountUsd;
-    const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
-    const onboardingDeductionGbp = !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
-    const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
-    const netCommissionGbp = netCommissionUsd * input.fxRateUsdToGbp - onboardingDeductionGbp;
-    payoutSchedule.push({
-      payoutNumber: i,
-      grossCommissionUsd,
-      referralDeductionUsd,
-      onboardingDeductionGbp,
-      netCommissionUsd,
-      netCommissionGbp: Math.max(0, netCommissionGbp)
-    });
-  }
-  const totalGrossUsd = payoutSchedule.reduce((s, p) => s + p.grossCommissionUsd, 0);
-  const totalNetUsd = payoutSchedule.reduce((s, p) => s + p.netCommissionUsd, 0);
-  const totalNetGbp = payoutSchedule.reduce((s, p) => s + p.netCommissionGbp, 0);
-  return {
-    tier: input.tier,
-    rate,
-    payoutSchedule,
-    totalGrossUsd,
-    totalNetUsd,
-    totalNetGbp,
-    effectiveArrUsd
-  };
-}
-function isNewJoiner(joinDate, forDate = /* @__PURE__ */ new Date()) {
-  const diffMs = forDate.getTime() - joinDate.getTime();
-  const diffMonths = diffMs / (1e3 * 60 * 60 * 24 * 30.44);
-  return diffMonths < NEW_JOINER_GRACE_MONTHS;
-}
-function addMonths(year, month, n) {
-  const date = new Date(year, month - 1 + n, 1);
-  return { year: date.getFullYear(), month: date.getMonth() + 1 };
-}
-var MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December"
-];
-
-// server/pipedriveSync.ts
 var PIPEDRIVE_BASE2 = "https://api.pipedrive.com/v1";
 var TARGET_PIPELINE_IDS2 = [20, 12, 10];
 function getPipedriveApiKey() {
@@ -2788,6 +2946,7 @@ init_trpc();
 init_aeTokenUtils();
 init_db();
 init_schema();
+init_commission();
 import { TRPCError as TRPCError5 } from "@trpc/server";
 var validationRouter = router({
   validateAllTiers: publicProcedure.query(async ({ ctx }) => {
@@ -2988,6 +3147,7 @@ function makeAeToken(aeId) {
 
 // server/routers.ts
 init_aeTokenUtils();
+init_commission();
 import { z as z5 } from "zod";
 
 // shared/gracePeriod.ts
@@ -3524,8 +3684,7 @@ var appRouter = router({
       if (!aeId) throw new TRPCError8({ code: "UNAUTHORIZED", message: "Not logged in." });
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError8({ code: "NOT_FOUND" });
-      const EUR_TO_USD = 1.08;
-      const GBP_TO_USD = 1.27;
+      const { convertToUsd: convertToUsd2, getCurrentFxRates: getCurrentFxRates2 } = await Promise.resolve().then(() => (init_fxService(), fxService_exports));
       let arrUsd = input.arrUsd ?? 0;
       let originalAmount = input.originalAmount ?? arrUsd;
       let originalCurrency = input.originalCurrency ?? "USD";
@@ -3533,12 +3692,13 @@ var appRouter = router({
       if (input.originalAmount) {
         originalAmount = input.originalAmount;
         originalCurrency = input.originalCurrency;
-        if (originalCurrency === "EUR") {
-          conversionRate = EUR_TO_USD;
-          arrUsd = originalAmount * EUR_TO_USD;
-        } else if (originalCurrency === "GBP") {
-          conversionRate = GBP_TO_USD;
-          arrUsd = originalAmount * GBP_TO_USD;
+        if (originalCurrency !== "USD") {
+          const { usdAmount, rate } = await convertToUsd2(
+            originalAmount,
+            originalCurrency
+          );
+          arrUsd = usdAmount;
+          conversionRate = rate;
         } else {
           conversionRate = 1;
           arrUsd = originalAmount;
@@ -3611,6 +3771,9 @@ var appRouter = router({
         onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : void 0,
         onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : void 0
       });
+      const liveRates = await getCurrentFxRates2();
+      const fxRateLockedAtCreation = liveRates.GBP;
+      const now = /* @__PURE__ */ new Date();
       const dealId = await createDeal({
         aeId,
         customerName: input.customerName,
@@ -3627,6 +3790,9 @@ var appRouter = router({
         tierAtStart: tier,
         fxRateAtEntry: String(fxRate),
         fxRateAtWon: String(fxRate),
+        fxRateLockedAtCreation: String(fxRateLockedAtCreation),
+        dealSignedDate: now,
+        fxRateLockDate: now,
         billingFrequency: input.billingFrequency,
         commissionStructureId: activeStructure?.id ?? null,
         notes: null
@@ -4065,6 +4231,31 @@ var appRouter = router({
       if (!structure) throw new TRPCError8({ code: "NOT_FOUND", message: "Commission structure not found." });
       await activateCommissionStructure(input.id);
       return { success: true, activatedId: input.id };
+    }),
+    // Get current live FX rates
+    getCurrentFxRates: publicProcedure.query(async () => {
+      const { getCurrentFxRates: getCurrentFxRates2 } = await Promise.resolve().then(() => (init_fxService(), fxService_exports));
+      const rates = await getCurrentFxRates2();
+      return {
+        usd: rates.USD,
+        eur: Number(rates.EUR.toFixed(6)),
+        gbp: Number(rates.GBP.toFixed(6)),
+        timestamp: rates.timestamp
+      };
+    }),
+    // Get FX rate for a specific deal (locked rate + current rate for comparison)
+    dealFxInfo: publicProcedure.input(z5.object({ dealId: z5.number() })).query(async ({ input, ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError8({ code: "UNAUTHORIZED" });
+      const deal = await getDealById(input.dealId);
+      if (!deal) throw new TRPCError8({ code: "NOT_FOUND" });
+      if (deal.aeId !== aeId) throw new TRPCError8({ code: "FORBIDDEN" });
+      const { getCurrentFxRates: getCurrentFxRates2 } = await Promise.resolve().then(() => (init_fxService(), fxService_exports));
+      const currentRates = await getCurrentFxRates2();
+      const { formatPayoutInfo: formatPayoutInfo2 } = await Promise.resolve().then(() => (init_lockedFxPayoutHelper(), lockedFxPayoutHelper_exports));
+      const lockedRate = Number(deal.fxRateLockedAtCreation || deal.fxRateAtEntry);
+      const formatted = formatPayoutInfo2(deal, lockedRate, currentRates.GBP);
+      return formatted;
     })
   }),
   // ─── Admin Utilities ─────────────────────────────────────────────────────

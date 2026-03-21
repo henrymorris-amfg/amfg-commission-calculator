@@ -85,6 +85,13 @@
       "when": 1772113728355,
       "tag": "0011_fearless_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1774111957830,
+      "tag": "0012_chilly_eddie_brock",
+      "breakpoints": true
     }
   ]
 }

@@ -572,9 +572,10 @@ export const appRouter = router({
         const profile = await getAeProfileById(aeId);
         if (!profile) throw new TRPCError({ code: "NOT_FOUND" });
 
-        // Convert currency to USD if needed
-        const EUR_TO_USD = 1.08;
-        const GBP_TO_USD = 1.27;
+        // Import FX service for live rates
+        const { convertToUsd, getCurrentFxRates } = await import("./fxService");
+
+        // Convert currency to USD using live FX rates
         let arrUsd = input.arrUsd ?? 0;
         let originalAmount = input.originalAmount ?? arrUsd;
         let originalCurrency = input.originalCurrency ?? "USD";
@@ -583,12 +584,15 @@ export const appRouter = router({
         if (input.originalAmount) {
           originalAmount = input.originalAmount;
           originalCurrency = input.originalCurrency;
-          if (originalCurrency === "EUR") {
-            conversionRate = EUR_TO_USD;
-            arrUsd = originalAmount * EUR_TO_USD;
-          } else if (originalCurrency === "GBP") {
-            conversionRate = GBP_TO_USD;
-            arrUsd = originalAmount * GBP_TO_USD;
+          
+          if (originalCurrency !== "USD") {
+            // Fetch live FX rates
+            const { usdAmount, rate } = await convertToUsd(
+              originalAmount,
+              originalCurrency
+            );
+            arrUsd = usdAmount;
+            conversionRate = rate;
           } else {
             conversionRate = 1.0;
             arrUsd = originalAmount;
@@ -681,6 +685,11 @@ export const appRouter = router({
           onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
         });
 
+        // Get live FX rates and lock GBP rate at deal creation
+        const liveRates = await getCurrentFxRates();
+        const fxRateLockedAtCreation = liveRates.GBP; // Lock GBP rate for payouts
+        const now = new Date();
+
         // Save deal (with reference to the active commission structure)
         const dealId = await createDeal({
           aeId,
@@ -698,6 +707,9 @@ export const appRouter = router({
           tierAtStart: tier,
           fxRateAtEntry: String(fxRate),
           fxRateAtWon: String(fxRate),
+          fxRateLockedAtCreation: String(fxRateLockedAtCreation),
+          dealSignedDate: now,
+          fxRateLockDate: now,
           billingFrequency: input.billingFrequency,
           commissionStructureId: activeStructure?.id ?? null,
           notes: null,
@@ -1241,7 +1253,39 @@ export const appRouter = router({
         await activateCommissionStructure(input.id);
         return { success: true, activatedId: input.id };
       }),
-   }),
+    // Get current live FX rates
+    getCurrentFxRates: publicProcedure.query(async () => {
+      const { getCurrentFxRates } = await import("./fxService");
+      const rates = await getCurrentFxRates();
+      return {
+        usd: rates.USD,
+        eur: Number(rates.EUR.toFixed(6)),
+        gbp: Number(rates.GBP.toFixed(6)),
+        timestamp: rates.timestamp,
+      };
+    }),
+
+    // Get FX rate for a specific deal (locked rate + current rate for comparison)
+    dealFxInfo: publicProcedure
+      .input(z.object({ dealId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+        const deal = await getDealById(input.dealId);
+        if (!deal) throw new TRPCError({ code: "NOT_FOUND" });
+        if (deal.aeId !== aeId) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const { getCurrentFxRates } = await import("./fxService");
+        const currentRates = await getCurrentFxRates();
+        const { formatPayoutInfo } = await import("./lockedFxPayoutHelper");
+
+        const lockedRate = Number(deal.fxRateLockedAtCreation || deal.fxRateAtEntry);
+        const formatted = formatPayoutInfo(deal, lockedRate, currentRates.GBP);
+
+        return formatted;
+      }),
+  }),
 
   // ─── Admin Utilities ─────────────────────────────────────────────────────
   validation: validationRouter,

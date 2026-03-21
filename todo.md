@@ -418,3 +418,22 @@
 - [ ] Remove onboarding deductions from Apollo deal
 - [ ] DEBUG: Fix Payout Calendar display - payouts exist in DB but not showing in UI
 - [ ] Re-run payout resync with corrected deal start dates
+
+
+## Live FX Mechanism Implementation (Feb 27 2026) - COMPLETED
+- [x] Set up exchangerate-api.com integration with 24-hour caching
+- [x] Create FX rate service with fallback rates
+- [x] Add FX_API_KEY to environment variables
+- [x] Add fxRateLockedAtCreation (GBP rate locked at deal creation) to deals schema
+- [x] Add dealSignedDate to deals schema (when deal was actually signed)
+- [x] Update deals.create to fetch live FX rates and lock GBP rate
+- [x] Create function to get current FX rates on-demand for floating USD
+- [x] Update 3-month average calculation to use current USD rates
+- [x] Update payout calculation to use locked GBP rates from deal creation
+- [x] Add FX rate display to deals list UI (via tRPC procedures)
+- [x] Add FX rate history view for team leaders (via dealFxInfo procedure)
+- [x] Test EUR deal creation with live rates (8 tests passing)
+- [x] Test GBP deal creation with live rates (8 tests passing)
+- [x] Verify locked rates don't change over time (tested in lockedFxPayoutHelper.test.ts)
+- [x] Verify USD amounts recalculate with market rates (tested in floatingUsdHelper.test.ts)
+- [x] Verify payout calendar uses correct locked rates (via recalculatePayoutsWithLockedRate)

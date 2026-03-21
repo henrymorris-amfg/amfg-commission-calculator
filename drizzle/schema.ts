@@ -128,6 +128,12 @@ export const deals = mysqlTable("deals", {
   fxRateAtWon: decimal("fxRateAtWon", { precision: 10, scale: 6 }),
   // Snapshot of FX rate at time of deal entry (USD→GBP) — legacy
   fxRateAtEntry: decimal("fxRateAtEntry", { precision: 10, scale: 6 }).notNull(),
+  // Locked GBP conversion rate at deal creation (for deterministic payouts)
+  fxRateLockedAtCreation: decimal("fxRateLockedAtCreation", { precision: 10, scale: 6 }),
+  // When the deal was signed (for FX rate locking)
+  dealSignedDate: timestamp("dealSignedDate"),
+  // When the locked GBP rate was captured
+  fxRateLockDate: timestamp("fxRateLockDate"),
   // Reference to the commission structure version active when the deal was created
   commissionStructureId: int("commissionStructureId"),
   // Pipedrive deal ID — set when imported from Pipedrive, null for manually entered deals
