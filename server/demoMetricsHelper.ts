@@ -34,8 +34,8 @@ export async function getFlaggedDemoActivityIds(aeId: number): Promise<Set<strin
       .where(eq(crmHygieneIssues.aeId, aeId));
 
     const flaggedIds = new Set<string>();
-    duplicateFlags.forEach((f: any) => flaggedIds.add(f.pipedriveActivityId));
-    hygieneFlags.forEach((f: any) => flaggedIds.add(f.pipedriveActivityId));
+    duplicateFlags.forEach((f) => flaggedIds.add(f.pipedriveActivityId));
+    hygieneFlags.forEach((f) => flaggedIds.add(f.pipedriveActivityId));
 
     return flaggedIds;
   } catch (error) {
@@ -58,7 +58,7 @@ export async function calculateDemoRollingAverage(
     if (!db) return 0;
 
     // Get the 3 months of data (current month and 2 months back)
-    const months = [];
+    const months: Array<{ month: number; year: number }> = [];
     let month = currentMonth;
     let year = currentYear;
 
@@ -84,7 +84,7 @@ export async function calculateDemoRollingAverage(
       );
 
     // Filter to the 3 months we want
-    const relevantMetrics = metrics.filter((m: any) => {
+    const relevantMetrics = metrics.filter((m) => {
       return months.some((mon) => mon.month === m.month && mon.year === m.year);
     });
 

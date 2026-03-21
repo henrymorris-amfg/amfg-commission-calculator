@@ -841,6 +841,7 @@ export const pipedriveSyncRouter = router({
               startYear,
               startMonth,
               startDay,
+              originalAmount: String(Math.round(arrUsd)),
               arrUsd: String(Math.round(arrUsd)),
               onboardingFeePaid: true,
               isReferral: false,

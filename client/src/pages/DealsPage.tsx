@@ -455,7 +455,7 @@ export default function DealsPage() {
                           </p>
                           {deal.originalCurrency && deal.originalCurrency !== "USD" && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              ({deal.originalCurrency} {deal.originalAmount?.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                              ({deal.originalCurrency} {deal.originalAmount != null ? Number(deal.originalAmount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : ''})
                             </p>
                           )}
                         </div>

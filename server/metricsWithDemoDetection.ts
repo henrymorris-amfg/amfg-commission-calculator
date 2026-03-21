@@ -1,112 +1,102 @@
-import { db } from "./db";
-import { duplicate_demo_flags, crm_hygiene_issues } from "../drizzle/schema";
+import { getDb } from "./db";
+import { duplicateDemoFlags, crmHygieneIssues } from "../drizzle/schema";
+import type { DuplicateDemoFlag, CrmHygieneIssue } from "../drizzle/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 
 /**
  * Get valid demo count for 3-month rolling average (excluding duplicates)
- * @param aeId - AE ID
- * @param month - Month (1-12)
- * @param year - Year
- * @returns Valid demo count for the month
  */
 export async function getValidDemoCount(
   aeId: number,
   month: number,
   year: number
 ): Promise<number> {
-  // Get all flagged demos for this AE
+  const db = await getDb();
+  if (!db) return 0;
+
   const flaggedDemos = await db
     .select()
-    .from(duplicate_demo_flags)
-    .where(eq(duplicate_demo_flags.bookedByAeId, aeId));
+    .from(duplicateDemoFlags)
+    .where(eq(duplicateDemoFlags.aeId, aeId));
 
-  // Get all hygiene issues for this AE
   const hygieneIssues = await db
     .select()
-    .from(crm_hygiene_issues)
-    .where(eq(crm_hygiene_issues.aeId, aeId));
+    .from(crmHygieneIssues)
+    .where(eq(crmHygieneIssues.aeId, aeId));
 
-  // Combine flagged demo IDs and hygiene issue IDs
   const flaggedActivityIds = new Set([
-    ...flaggedDemos.map((f) => f.activityId),
-    ...hygieneIssues.map((h) => h.activityId),
+    ...flaggedDemos.map((f: DuplicateDemoFlag) => f.pipedriveActivityId),
+    ...hygieneIssues.map((h: CrmHygieneIssue) => h.pipedriveActivityId),
   ]);
 
-  // Get total demos for the month from monthly_metrics
-  // This would need to be fetched from your metrics source
-  // For now, return a placeholder that indicates flagged demos should be excluded
   return flaggedActivityIds.size;
 }
 
 /**
  * Get demo metrics breakdown for an AE in a month
- * @param aeId - AE ID
- * @param month - Month (1-12)
- * @param year - Year
- * @returns { totalDemos, validDemos, flaggedDemos, hygieneIssues }
  */
 export async function getDemoMetricsBreakdown(
   aeId: number,
   month: number,
   year: number
 ) {
+  const db = await getDb();
+  if (!db) {
+    return {
+      flaggedDemos: 0,
+      hygieneIssues: 0,
+      totalExcluded: 0,
+      breakdown: { duplicates: [], hygiene: [] },
+    };
+  }
+
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0);
 
-  // Get flagged demos for this month
   const flaggedDemos = await db
     .select()
-    .from(duplicate_demo_flags)
+    .from(duplicateDemoFlags)
     .where(
       and(
-        eq(duplicate_demo_flags.bookedByAeId, aeId),
-        gte(duplicate_demo_flags.bookedDate, startDate),
-        lte(duplicate_demo_flags.bookedDate, endDate)
+        eq(duplicateDemoFlags.aeId, aeId),
+        gte(duplicateDemoFlags.demoDate, startDate),
+        lte(duplicateDemoFlags.demoDate, endDate)
       )
     );
 
-  // Get hygiene issues for this month
   const hygieneIssues = await db
     .select()
-    .from(crm_hygiene_issues)
+    .from(crmHygieneIssues)
     .where(
       and(
-        eq(crm_hygiene_issues.aeId, aeId),
-        gte(crm_hygiene_issues.bookedDate, startDate),
-        lte(crm_hygiene_issues.bookedDate, endDate)
+        eq(crmHygieneIssues.aeId, aeId),
+        gte(crmHygieneIssues.demoDate, startDate),
+        lte(crmHygieneIssues.demoDate, endDate)
       )
     );
 
-  // Get total demos from metrics (would need to fetch from actual source)
-  // For now, return the breakdown
   return {
     flaggedDemos: flaggedDemos.length,
     hygieneIssues: hygieneIssues.length,
     totalExcluded: flaggedDemos.length + hygieneIssues.length,
     breakdown: {
-      duplicates: flaggedDemos.map((f) => ({
+      duplicates: flaggedDemos.map((f: DuplicateDemoFlag) => ({
         id: f.id,
         organization: f.organizationName,
-        bookedDate: f.bookedDate,
+        demoDate: f.demoDate,
       })),
-      hygiene: hygieneIssues.map((h) => ({
+      hygiene: hygieneIssues.map((h: CrmHygieneIssue) => ({
         id: h.id,
-        ae: h.aeName,
-        organization: h.organizationName,
+        organization: h.organizationName ?? "",
         issueType: h.issueType,
-        bookedDate: h.bookedDate,
+        demoDate: h.demoDate,
       })),
     },
   };
 }
 
 /**
- * Calculate 3-month rolling average with demo detection
- * @param aeId - AE ID
- * @param currentMonth - Current month (1-12)
- * @param currentYear - Current year
- * @param totalDemosInMonth - Total demos booked in the month
- * @returns { totalDemos, validDemos, excludedDemos, percentage }
+ * Calculate valid demo average for a month with demo detection
  */
 export async function calculateValidDemoAverage(
   aeId: number,
@@ -120,7 +110,7 @@ export async function calculateValidDemoAverage(
     currentYear
   );
 
-  const validDemos = totalDemosInMonth - metrics.totalExcluded;
+  const validDemos = Math.max(0, totalDemosInMonth - metrics.totalExcluded);
   const percentage =
     totalDemosInMonth > 0
       ? Math.round((validDemos / totalDemosInMonth) * 100)

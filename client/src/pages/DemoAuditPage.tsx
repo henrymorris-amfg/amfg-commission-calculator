@@ -19,51 +19,48 @@ export function DemoAuditPage() {
   );
   const [selectedAe, setSelectedAe] = useState<string>("all");
 
-  // Fetch all AEs for filter dropdown
-  const { data: allAes } = trpc.ae.list.useQuery();
+  // Fetch all AE names for filter dropdown
+  const { data: allAes } = trpc.ae.listNames.useQuery();
 
-  // Fetch flagged demos for the selected period
-  const { data: allFlags, isLoading: loadingFlags } =
+  // Fetch all flags (admin view)
+  const { data: allFlagsData, isLoading: loadingFlags } =
     trpc.demo.getAllFlags.useQuery(undefined, {
       retry: false,
-      throwOnError: false,
     });
 
-  // Fetch hygiene issues
-  const { data: allHygieneIssues, isLoading: loadingHygiene } =
-    trpc.demo.getAllHygieneIssues.useQuery(undefined, {
-      retry: false,
-      throwOnError: false,
-    });
+  const utils = trpc.useUtils();
 
   const bulkAcknowledge = trpc.demo.bulkAcknowledgeFlags.useMutation({
     onSuccess: () => {
-      trpc.useUtils().demo.getAllFlags.invalidate();
+      utils.demo.getAllFlags.invalidate();
     },
   });
 
   const bulkDelete = trpc.demo.bulkDeleteFlags.useMutation({
     onSuccess: () => {
-      trpc.useUtils().demo.getAllFlags.invalidate();
+      utils.demo.getAllFlags.invalidate();
     },
   });
 
+  const allDuplicates = allFlagsData?.duplicateDemos ?? [];
+  const allHygiene = allFlagsData?.hygieneIssues ?? [];
+
   // Filter flags by selected AE and month
-  const filteredDuplicates = (allFlags || []).filter((f) => {
-    const flagMonth = new Date(f.bookedDate).toISOString().slice(0, 7);
+  const filteredDuplicates = allDuplicates.filter((f) => {
+    const flagMonth = new Date(f.demoDate).toISOString().slice(0, 7);
     const monthMatch = flagMonth === selectedMonth;
-    const aeMatch = selectedAe === "all" || f.bookedByAeId.toString() === selectedAe;
+    const aeMatch = selectedAe === "all" || f.aeId.toString() === selectedAe;
     return monthMatch && aeMatch;
   });
 
-  const filteredHygiene = (allHygieneIssues || []).filter((h) => {
-    const flagMonth = new Date(h.bookedDate).toISOString().slice(0, 7);
+  const filteredHygiene = allHygiene.filter((h) => {
+    const flagMonth = new Date(h.demoDate).toISOString().slice(0, 7);
     const monthMatch = flagMonth === selectedMonth;
     const aeMatch = selectedAe === "all" || h.aeId.toString() === selectedAe;
     return monthMatch && aeMatch;
   });
 
-  const isLoading = loadingFlags || loadingHygiene;
+  const isLoading = loadingFlags;
 
   return (
     <AppLayout>
@@ -153,11 +150,17 @@ export function DemoAuditPage() {
                   >
                     <div>
                       <p className="font-medium">{flag.organizationName}</p>
+                      <p className="text-xs text-gray-500">{flag.aeName}</p>
                       <p className="text-sm text-gray-600">
-                        Booked: {new Date(flag.bookedDate).toLocaleDateString()}
+                        Demo date: {new Date(flag.demoDate).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant="secondary">Duplicate</Badge>
+                    <div className="flex items-center gap-2">
+                      {flag.isAcknowledged && (
+                        <Badge variant="outline" className="text-green-600">Acknowledged</Badge>
+                      )}
+                      <Badge variant="secondary">Duplicate</Badge>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -213,7 +216,7 @@ export function DemoAuditPage() {
                         {issue.organizationName} • {issue.issueType}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Booked: {new Date(issue.bookedDate).toLocaleDateString()}
+                        Demo date: {new Date(issue.demoDate).toLocaleDateString()}
                       </p>
                     </div>
                     <Badge variant="destructive">{issue.issueType}</Badge>

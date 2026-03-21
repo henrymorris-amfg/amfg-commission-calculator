@@ -6,9 +6,9 @@ import { trpc } from "@/lib/trpc";
 
 interface DemoFlag {
   id: number;
-  organizationName: string;
+  organizationName: string | null;
   demoDate: Date;
-  notes?: string;
+  notes?: string | null;
   type: "duplicate" | "hygiene";
 }
 

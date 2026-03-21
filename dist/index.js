@@ -1708,7 +1708,7 @@ __export(tierChangeNotifier_exports, {
   getAllRecentNotifications: () => getAllRecentNotifications,
   getNotificationHistory: () => getNotificationHistory
 });
-import { eq as eq4, and as and2, desc as desc2 } from "drizzle-orm";
+import { eq as eq5, and as and2, desc as desc2 } from "drizzle-orm";
 function formatTierLabel(tier) {
   const rate = (TIER_COMMISSION_RATE[tier] * 100).toFixed(0);
   const emoji = tier === "gold" ? "\u{1F947}" : tier === "silver" ? "\u{1F948}" : "\u{1F949}";
@@ -1843,11 +1843,11 @@ function buildNotificationContent(event) {
   return { title, content: lines.join("\n") };
 }
 async function computeAeTierForMonth(aeId, year, month, db) {
-  const profile = await db.select().from(aeProfiles).where(eq4(aeProfiles.id, aeId)).limit(1).then((r) => r[0]);
+  const profile = await db.select().from(aeProfiles).where(eq5(aeProfiles.id, aeId)).limit(1).then((r) => r[0]);
   if (!profile || !profile.isActive) return null;
   const targetDate = new Date(year, month - 1, 1);
   const joinDate = new Date(profile.joinDate);
-  const allMetrics = await db.select().from(monthlyMetrics).where(eq4(monthlyMetrics.aeId, aeId)).orderBy(desc2(monthlyMetrics.year), desc2(monthlyMetrics.month));
+  const allMetrics = await db.select().from(monthlyMetrics).where(eq5(monthlyMetrics.aeId, aeId)).orderBy(desc2(monthlyMetrics.year), desc2(monthlyMetrics.month));
   let last3 = allMetrics.filter((m) => {
     const d = new Date(m.year, m.month - 1, 1);
     return d < targetDate && d >= joinDate;
@@ -1913,11 +1913,11 @@ async function computeAeTierForMonth(aeId, year, month, db) {
 async function hasNotificationBeenSent(aeId, year, month, previousTier, newTier, db) {
   const existing = await db.select({ id: tierChangeNotifications.id }).from(tierChangeNotifications).where(
     and2(
-      eq4(tierChangeNotifications.aeId, aeId),
-      eq4(tierChangeNotifications.notificationYear, year),
-      eq4(tierChangeNotifications.notificationMonth, month),
-      eq4(tierChangeNotifications.previousTier, previousTier),
-      eq4(tierChangeNotifications.newTier, newTier)
+      eq5(tierChangeNotifications.aeId, aeId),
+      eq5(tierChangeNotifications.notificationYear, year),
+      eq5(tierChangeNotifications.notificationMonth, month),
+      eq5(tierChangeNotifications.previousTier, previousTier),
+      eq5(tierChangeNotifications.newTier, newTier)
     )
   ).limit(1);
   return existing.length > 0;
@@ -1955,7 +1955,7 @@ async function checkAndNotifyTierChanges(forceMonth, forceYear) {
   console.log(
     `[TierChangeNotifier] Checking tier changes for ${MONTH_NAMES[currentMonth - 1]} ${currentYear} vs ${MONTH_NAMES[prevMonth - 1]} ${prevYear}`
   );
-  const activeAes = await db.select().from(aeProfiles).where(eq4(aeProfiles.isActive, true));
+  const activeAes = await db.select().from(aeProfiles).where(eq5(aeProfiles.isActive, true));
   const results = [];
   for (const ae of activeAes) {
     try {
@@ -2109,7 +2109,7 @@ async function checkAndNotifyTierChanges(forceMonth, forceYear) {
 async function getNotificationHistory(aeId, limit = 12) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(tierChangeNotifications).where(eq4(tierChangeNotifications.aeId, aeId)).orderBy(desc2(tierChangeNotifications.sentAt)).limit(limit);
+  return db.select().from(tierChangeNotifications).where(eq5(tierChangeNotifications.aeId, aeId)).orderBy(desc2(tierChangeNotifications.sentAt)).limit(limit);
 }
 async function getAllRecentNotifications(limit = 50) {
   const db = await getDb();
@@ -3814,6 +3814,7 @@ var pipedriveSyncRouter = router({
             startYear,
             startMonth,
             startDay,
+            originalAmount: String(Math.round(arrUsd)),
             arrUsd: String(Math.round(arrUsd)),
             onboardingFeePaid: true,
             isReferral: false,
@@ -3952,13 +3953,12 @@ init_trpc();
 import { z as z4 } from "zod";
 
 // server/demoDuplicateDetection.ts
-init_env();
 init_db();
 init_schema();
 import { eq as eq2 } from "drizzle-orm";
 async function fetchDoneActivities() {
   try {
-    const apiKey = ENV.PIPEDRIVE_API_KEY;
+    const apiKey = process.env.PIPEDRIVE_API_KEY;
     if (!apiKey) {
       console.error("[DemoDetection] PIPEDRIVE_API_KEY not configured");
       return [];
@@ -3983,7 +3983,7 @@ async function fetchDoneActivities() {
 }
 async function getOrganizationName(orgId) {
   try {
-    const apiKey = ENV.PIPEDRIVE_API_KEY;
+    const apiKey = process.env.PIPEDRIVE_API_KEY;
     if (!apiKey) return `Organization ${orgId}`;
     const response = await fetch(
       `https://api.pipedrive.com/v1/organizations/${orgId}?api_token=${apiKey}`,
@@ -4033,7 +4033,7 @@ async function detectDuplicateDemos() {
     }
     const sixMonthsAgo = /* @__PURE__ */ new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    for (const [orgId, orgActivities] of activitiesByOrg.entries()) {
+    for (const [orgId, orgActivities] of Array.from(activitiesByOrg.entries())) {
       const recentActivities = orgActivities.filter((a) => {
         const demoDate = new Date(a.due_date);
         return demoDate >= sixMonthsAgo;
@@ -4052,7 +4052,7 @@ async function detectDuplicateDemos() {
             console.warn(`[DemoDetection] Could not map AE for activity ${activity.id}`);
             continue;
           }
-          const orgName = activity.org_name || await getOrganizationName(activity.org_id);
+          const orgName = activity.org_name || (activity.org_id ? await getOrganizationName(activity.org_id) : `Organization ${orgId}`);
           const existing = await db.select().from(duplicateDemoFlags).where(eq2(duplicateDemoFlags.pipedriveActivityId, activity.id));
           if (existing.length === 0) {
             await db.insert(duplicateDemoFlags).values({
@@ -4203,7 +4203,9 @@ async function triggerDemoDetectionManually() {
 // server/demoProcedures.ts
 init_aeTokenUtils();
 init_db();
+init_schema();
 import { TRPCError as TRPCError6 } from "@trpc/server";
+import { eq as eq3 } from "drizzle-orm";
 var demoRouter = router({
   /**
    * Get unacknowledged demo flags for current AE
@@ -4236,59 +4238,157 @@ var demoRouter = router({
     }
   }),
   /**
+   * Get ALL demo flags across all AEs (admin only)
+   */
+  getAllFlags: protectedProcedure.query(async ({ ctx }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const ae = await getAeProfileById(aeId);
+    if (!ae?.isTeamLeader) {
+      throw new TRPCError6({
+        code: "FORBIDDEN",
+        message: "Only team leaders can view all flags"
+      });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+    const allProfiles = await getAllAeProfiles();
+    const aeMap = new Map(allProfiles.map((p) => [p.id, p.name]));
+    const allDuplicates = await db.select().from(duplicateDemoFlags);
+    const allHygiene = await db.select().from(crmHygieneIssues);
+    return {
+      duplicateDemos: allDuplicates.map((flag) => ({
+        id: flag.id,
+        aeId: flag.aeId,
+        aeName: aeMap.get(flag.aeId) ?? "Unknown",
+        organizationName: flag.organizationName,
+        demoDate: flag.demoDate,
+        isDuplicate: flag.isDuplicate,
+        isAcknowledged: flag.isAcknowledged,
+        notes: flag.notes,
+        type: "duplicate"
+      })),
+      hygieneIssues: allHygiene.map((issue) => ({
+        id: issue.id,
+        aeId: issue.aeId,
+        aeName: aeMap.get(issue.aeId) ?? "Unknown",
+        organizationName: issue.organizationName || issue.personName || issue.leadTitle,
+        demoDate: issue.demoDate,
+        issueType: issue.issueType,
+        isAcknowledged: issue.isAcknowledged,
+        explanation: issue.explanation,
+        type: "hygiene"
+      }))
+    };
+  }),
+  /**
+   * Get all hygiene issues (admin only) — alias for getAllFlags.hygieneIssues
+   */
+  getAllHygieneIssues: protectedProcedure.query(async ({ ctx }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const ae = await getAeProfileById(aeId);
+    if (!ae?.isTeamLeader) {
+      throw new TRPCError6({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+    const allProfiles = await getAllAeProfiles();
+    const aeMap = new Map(allProfiles.map((p) => [p.id, p.name]));
+    const allHygiene = await db.select().from(crmHygieneIssues);
+    return allHygiene.map((issue) => ({
+      id: issue.id,
+      aeId: issue.aeId,
+      aeName: aeMap.get(issue.aeId) ?? "Unknown",
+      organizationName: issue.organizationName || issue.personName || issue.leadTitle,
+      demoDate: issue.demoDate,
+      issueType: issue.issueType,
+      isAcknowledged: issue.isAcknowledged,
+      explanation: issue.explanation
+    }));
+  }),
+  /**
+   * Bulk acknowledge duplicate demo flags (admin only)
+   */
+  bulkAcknowledgeFlags: protectedProcedure.input(z4.object({ flagIds: z4.array(z4.number()) })).mutation(async ({ ctx, input }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const ae = await getAeProfileById(aeId);
+    if (!ae?.isTeamLeader) {
+      throw new TRPCError6({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+    for (const flagId of input.flagIds) {
+      await acknowledgeDuplicateDemoFlag(flagId);
+    }
+    return { success: true, acknowledged: input.flagIds.length };
+  }),
+  /**
+   * Bulk delete / resolve hygiene issues (admin only)
+   */
+  bulkDeleteFlags: protectedProcedure.input(z4.object({ issueIds: z4.array(z4.number()) })).mutation(async ({ ctx, input }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const ae = await getAeProfileById(aeId);
+    if (!ae?.isTeamLeader) {
+      throw new TRPCError6({ code: "FORBIDDEN" });
+    }
+    const db = await getDb();
+    if (!db) throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR" });
+    for (const issueId of input.issueIds) {
+      await db.delete(crmHygieneIssues).where(eq3(crmHygieneIssues.id, issueId));
+    }
+    return { success: true, deleted: input.issueIds.length };
+  }),
+  /**
    * Acknowledge a duplicate demo flag
    */
   acknowledgeDuplicateFlag: protectedProcedure.input(z4.object({ flagId: z4.number() })).mutation(async ({ ctx, input }) => {
-    try {
-      const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
-      const success = await acknowledgeDuplicateDemoFlag(input.flagId);
-      if (!success) {
-        throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR", message: "Failed to acknowledge flag" });
-      }
-      return { success: true };
-    } catch (error) {
-      console.error("[DemoProcedures] Error acknowledging flag:", error);
-      throw error;
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const success = await acknowledgeDuplicateDemoFlag(input.flagId);
+    if (!success) {
+      throw new TRPCError6({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to acknowledge flag"
+      });
     }
+    return { success: true };
   }),
   /**
    * Acknowledge a CRM hygiene issue
    */
   acknowledgeHygieneIssue: protectedProcedure.input(z4.object({ issueId: z4.number() })).mutation(async ({ ctx, input }) => {
-    try {
-      const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
-      const success = await acknowledgeCrmHygieneIssue(input.issueId);
-      if (!success) {
-        throw new TRPCError6({ code: "INTERNAL_SERVER_ERROR", message: "Failed to acknowledge issue" });
-      }
-      return { success: true };
-    } catch (error) {
-      console.error("[DemoProcedures] Error acknowledging issue:", error);
-      throw error;
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const success = await acknowledgeCrmHygieneIssue(input.issueId);
+    if (!success) {
+      throw new TRPCError6({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to acknowledge issue"
+      });
     }
+    return { success: true };
   }),
   /**
    * Manual trigger for demo detection (admin only)
    */
   triggerDetection: protectedProcedure.mutation(async ({ ctx }) => {
-    try {
-      const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
-      const ae = await getAeProfileById(aeId);
-      if (!ae?.isTeamLeader) {
-        throw new TRPCError6({ code: "FORBIDDEN", message: "Only team leaders can trigger detection" });
-      }
-      await triggerDemoDetectionManually();
-      return {
-        success: true,
-        message: "Demo detection triggered successfully"
-      };
-    } catch (error) {
-      console.error("[DemoProcedures] Error triggering detection:", error);
-      throw error;
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const ae = await getAeProfileById(aeId);
+    if (!ae?.isTeamLeader) {
+      throw new TRPCError6({
+        code: "FORBIDDEN",
+        message: "Only team leaders can trigger detection"
+      });
     }
+    await triggerDemoDetectionManually();
+    return {
+      success: true,
+      message: "Demo detection triggered successfully"
+    };
   })
 });
 
@@ -4296,7 +4396,7 @@ var demoRouter = router({
 init_db();
 init_schema();
 import { TRPCError as TRPCError7 } from "@trpc/server";
-import { eq as eq3 } from "drizzle-orm";
+import { eq as eq4 } from "drizzle-orm";
 async function resyncAllPayouts(aeId) {
   if (!aeId || aeId !== 1) {
     throw new TRPCError7({
@@ -4324,7 +4424,7 @@ async function resyncAllPayouts(aeId) {
       silverRate: commissionStructures.silverRate,
       goldRate: commissionStructures.goldRate,
       onboardingDeductionGbp: commissionStructures.onboardingDeductionGbp
-    }).from(deals).leftJoin(commissionStructures, eq3(deals.commissionStructureId, commissionStructures.id));
+    }).from(deals).leftJoin(commissionStructures, eq4(deals.commissionStructureId, commissionStructures.id));
     let payoutsCreated = 0;
     let totalCommissionGbp = 0;
     for (const deal of allDeals) {
@@ -4495,7 +4595,7 @@ var systemRouter = router({
 init_trpc();
 init_db();
 init_schema();
-import { eq as eq5, like, and as and3, inArray } from "drizzle-orm";
+import { eq as eq6, like, and as and3, inArray } from "drizzle-orm";
 seedInitialCommissionStructure().catch(console.error);
 var _fxCache = null;
 var FX_CACHE_TTL_MS = 5 * 60 * 1e3;
@@ -5094,7 +5194,7 @@ var appRouter = router({
       if (input.contractType && input.contractType !== deal.contractType) {
         const db = await getDb();
         if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-        await db.update(deals).set({ contractType: input.contractType }).where(eq5(deals.id, input.dealId));
+        await db.update(deals).set({ contractType: input.contractType }).where(eq6(deals.id, input.dealId));
         const activeStructure = await getActiveCommissionStructure();
         const commResult = calculateCommission({
           contractType: input.contractType,
@@ -5159,13 +5259,13 @@ var appRouter = router({
         churnMonth: input.churnMonth,
         churnYear: input.churnYear,
         churnReason: input.churnReason || null
-      }).where(eq5(deals.id, input.dealId));
+      }).where(eq6(deals.id, input.dealId));
       const payouts = await getPayoutsForDeal(input.dealId);
       const payoutsToDelete = payouts.filter(
         (p) => p.payoutYear > input.churnYear || p.payoutYear === input.churnYear && p.payoutMonth > input.churnMonth
       );
       for (const payout of payoutsToDelete) {
-        await db.delete(commissionPayouts).where(eq5(commissionPayouts.id, payout.id));
+        await db.delete(commissionPayouts).where(eq6(commissionPayouts.id, payout.id));
       }
       return { success: true, payoutsDeleted: payoutsToDelete.length };
     })
@@ -5503,8 +5603,8 @@ var appRouter = router({
       const payouts = await db.select().from(commissionPayouts).where(
         and3(
           inArray(commissionPayouts.aeId, teamMemberIds),
-          eq5(commissionPayouts.payoutYear, input.year),
-          eq5(commissionPayouts.payoutMonth, input.month)
+          eq6(commissionPayouts.payoutYear, input.year),
+          eq6(commissionPayouts.payoutMonth, input.month)
         )
       );
       const allDeals = await db.select().from(deals);
@@ -5720,7 +5820,7 @@ var appRouter = router({
       if (cAxisDeal.length === 0) return { success: false, message: "C-Axis deal not found" };
       const deal = cAxisDeal[0];
       if (deal.startMonth !== 2) {
-        await db.update(deals).set({ startMonth: 2 }).where(eq5(deals.id, deal.id));
+        await db.update(deals).set({ startMonth: 2 }).where(eq6(deals.id, deal.id));
         return { success: true, message: `Updated C-Axis from month ${deal.startMonth} to February (2)` };
       }
       return { success: true, message: "C-Axis already in February" };
@@ -5755,7 +5855,7 @@ var appRouter = router({
             isTeamLeader: profile?.isTeamLeader || false
           });
           if (tier.tier !== deal.tierAtStart) {
-            await db.update(deals).set({ tierAtStart: tier.tier }).where(eq5(deals.id, deal.id));
+            await db.update(deals).set({ tierAtStart: tier.tier }).where(eq6(deals.id, deal.id));
             updated++;
           }
         }
@@ -6039,10 +6139,10 @@ async function sendMonthlyTierReportJob() {
     }
     for (const ae of aeCommissions) {
       const currentMonthPayouts = await db.query.commissionPayouts.findMany({
-        where: (payouts, { eq: eq6, and: and4 }) => and4(
-          eq6(payouts.aeId, ae.id),
-          eq6(payouts.payoutMonth, previousMonth),
-          eq6(payouts.payoutYear, previousYear)
+        where: (payouts, { eq: eq7, and: and4 }) => and4(
+          eq7(payouts.aeId, ae.id),
+          eq7(payouts.payoutMonth, previousMonth),
+          eq7(payouts.payoutYear, previousYear)
         )
       });
       const currentCommission = currentMonthPayouts.reduce(
@@ -6050,10 +6150,10 @@ async function sendMonthlyTierReportJob() {
         0
       );
       const previousMonthPayouts = await db.query.commissionPayouts.findMany({
-        where: (payouts, { eq: eq6, and: and4 }) => and4(
-          eq6(payouts.aeId, ae.id),
-          eq6(payouts.payoutMonth, comparisonMonth),
-          eq6(payouts.payoutYear, comparisonYear)
+        where: (payouts, { eq: eq7, and: and4 }) => and4(
+          eq7(payouts.aeId, ae.id),
+          eq7(payouts.payoutMonth, comparisonMonth),
+          eq7(payouts.payoutYear, comparisonYear)
         )
       });
       const previousCommission = previousMonthPayouts.reduce(

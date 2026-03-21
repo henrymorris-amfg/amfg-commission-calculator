@@ -115,7 +115,7 @@ export function FlaggedDemosAlert() {
                 } else {
                   acknowledgeHygiene.mutate({ issueId: flag.id });
                 }
-                setDismissed((prev) => new Set([...prev, flag.id]));
+                setDismissed((prev) => new Set(Array.from(prev).concat(flag.id)));
               }}
               disabled={acknowledgeFlag.isPending || acknowledgeHygiene.isPending}
               className="gap-1"
@@ -126,7 +126,7 @@ export function FlaggedDemosAlert() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setDismissed((prev) => new Set([...prev, flag.id]))}
+              onClick={() => setDismissed((prev) => new Set(Array.from(prev).concat(flag.id)))}
               className="gap-1"
             >
               <X className="h-4 w-4" />

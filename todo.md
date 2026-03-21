@@ -579,3 +579,17 @@
 - [x] Add tier badges with medal icons to Team Commissions admin view — backend now returns currentTier per AE; UI shows Bronze/Silver/Gold badge with Medal icon and tier colour
 - [x] Email delivery: keeping Resend (already fully wired); Gmail SMTP not needed
 - [x] 109 tests passing
+
+## Full Bug Fix Pass (Mar 21 2026) - COMPLETED
+- [x] Fix metricsWithDemoDetection.ts — rewrote with correct column names (aeId, pipedriveActivityId, demoDate, organizationName)
+- [x] Fix pipedriveSync.ts — added originalAmount to createDeal call
+- [x] Fix demoDuplicateDetection.ts — fixed ENV.PIPEDRIVE_API_KEY → process.env, MapIterator → Array.from, org_id undefined guard
+- [x] Fix demoMetricsHelper.ts — added explicit types to filter/map callbacks
+- [x] Fix DataValidationPanel.tsx — corrected useAuth import path to @/_core/hooks/useAuth
+- [x] Fix DemoFlagsNotification.tsx — changed notes/organizationName types to accept null
+- [x] Fix FlaggedDemosAlert.tsx — replaced Set spread [...prev] with Array.from(prev).concat()
+- [x] Fix CommissionForecastPage.tsx — totalNetGbp → totalGbp, deals → payouts, removed ae.tier
+- [x] Fix DemoAuditPage.tsx — rewrote to use correct procedures and field names; added getAllFlags, bulkAcknowledgeFlags, bulkDeleteFlags to demoProcedures.ts
+- [x] Fix DealsPage.tsx — wrapped originalAmount in Number() before toLocaleString
+- [x] ZERO TypeScript errors across entire project
+- [x] 109 tests passing (12 test files)

@@ -36,7 +36,7 @@ interface PipedriveOrganization {
  */
 async function fetchDoneActivities(): Promise<PipedriveActivity[]> {
   try {
-    const apiKey = ENV.PIPEDRIVE_API_KEY;
+    const apiKey = process.env.PIPEDRIVE_API_KEY;
     if (!apiKey) {
       console.error("[DemoDetection] PIPEDRIVE_API_KEY not configured");
       return [];
@@ -69,7 +69,7 @@ async function fetchDoneActivities(): Promise<PipedriveActivity[]> {
  */
 async function getOrganizationName(orgId: number): Promise<string> {
   try {
-    const apiKey = ENV.PIPEDRIVE_API_KEY;
+    const apiKey = process.env.PIPEDRIVE_API_KEY;
     if (!apiKey) return `Organization ${orgId}`;
 
     const response = await fetch(
@@ -143,9 +143,9 @@ export async function detectDuplicateDemos(): Promise<void> {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    for (const [orgId, orgActivities] of activitiesByOrg.entries()) {
+    for (const [orgId, orgActivities] of Array.from(activitiesByOrg.entries())) {
       // Filter activities within last 6 months
-      const recentActivities = orgActivities.filter((a) => {
+      const recentActivities = orgActivities.filter((a: PipedriveActivity) => {
         const demoDate = new Date(a.due_date);
         return demoDate >= sixMonthsAgo;
       });
@@ -153,7 +153,7 @@ export async function detectDuplicateDemos(): Promise<void> {
       if (recentActivities.length > 1) {
         // Sort by date to identify duplicates
         recentActivities.sort(
-          (a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
+          (a: PipedriveActivity, b: PipedriveActivity) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
         );
 
         console.log(
@@ -170,7 +170,7 @@ export async function detectDuplicateDemos(): Promise<void> {
             continue;
           }
 
-          const orgName = activity.org_name || (await getOrganizationName(activity.org_id));
+          const orgName = activity.org_name || (activity.org_id ? await getOrganizationName(activity.org_id) : `Organization ${orgId}`);
 
           // Check if flag already exists
           const existing = await db

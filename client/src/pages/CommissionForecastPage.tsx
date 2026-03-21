@@ -80,9 +80,9 @@ export default function CommissionForecastPage() {
           month,
           year,
           monthName: MONTH_NAMES[month - 1],
-          projectedCommission: monthData.totalNetGbp,
+          projectedCommission: monthData.totalGbp,
           projectedTier: monthData.status === "current" ? "current" : monthData.status === "future" ? "projected" : "past",
-          dealCount: monthData.deals.length,
+          dealCount: monthData.payouts.length,
         });
       }
     }
@@ -97,7 +97,7 @@ export default function CommissionForecastPage() {
   if (avgCommission > 3000) projectedTier = "gold";
   else if (avgCommission > 2000) projectedTier = "silver";
 
-  const currentTier = ae.tier || "bronze";
+  const currentTier = "bronze"; // tier is computed server-side from rolling averages
   const tierProgression = currentTier === "bronze" ? 1 : currentTier === "silver" ? 2 : 3;
   const projectedTierLevel = projectedTier === "bronze" ? 1 : projectedTier === "silver" ? 2 : 3;
 
