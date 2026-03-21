@@ -4,6 +4,7 @@ import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
 import { validationRouter } from "./validationRouter";
+import { demoRouter } from "./demoProcedures";
 import { resyncAllPayouts } from "./resyncPayouts";
 import * as bcrypt from "bcryptjs";
 import { makeAeToken } from "./aeAuth";
@@ -1479,6 +1480,7 @@ export const appRouter = router({
 
   // ─── Admin Utilities ─────────────────────────────────────────────────────
   validation: validationRouter,
+  demo: demoRouter,
   admin: router({
     fixCAxisMonth: publicProcedure.mutation(async ({ ctx }) => {
       const callerId = getAeIdFromCtx(ctx);

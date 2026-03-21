@@ -180,3 +180,44 @@ export const commissionPayouts = mysqlTable("commission_payouts", {
 
 export type CommissionPayout = typeof commissionPayouts.$inferSelect;
 export type InsertCommissionPayout = typeof commissionPayouts.$inferInsert;
+
+// ─── Duplicate Demo Flags ──────────────────────────────────────────────────────
+// Tracks demos that are duplicates within 6 months of the same organization
+export const duplicateDemoFlags = mysqlTable("duplicate_demo_flags", {
+  id: int("id").autoincrement().primaryKey(),
+  aeId: int("aeId").notNull(),
+  pipedriveActivityId: varchar("pipedriveActivityId", { length: 128 }).notNull().unique(),
+  organizationId: int("organizationId"), // Pipedrive organization ID
+  organizationName: varchar("organizationName", { length: 256 }).notNull(),
+  demoDate: timestamp("demoDate").notNull(), // When the demo was marked done
+  isDuplicate: boolean("isDuplicate").default(false).notNull(), // true if duplicate within 6 months
+  isAcknowledged: boolean("isAcknowledged").default(false).notNull(), // AE has seen the flag
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  notes: text("notes"), // Explanation of why it's flagged
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DuplicateDemoFlag = typeof duplicateDemoFlags.$inferSelect;
+export type InsertDuplicateDemoFlag = typeof duplicateDemoFlags.$inferInsert;
+
+// ─── CRM Hygiene Issues ────────────────────────────────────────────────────────
+// Tracks demos that are not properly linked to deals (bad CRM hygiene)
+export const crmHygieneIssues = mysqlTable("crm_hygiene_issues", {
+  id: int("id").autoincrement().primaryKey(),
+  aeId: int("aeId").notNull(),
+  pipedriveActivityId: varchar("pipedriveActivityId", { length: 128 }).notNull().unique(),
+  issueType: mysqlEnum("issueType", ["no_deal_link", "org_only", "person_only", "lead_only"]).notNull(),
+  organizationName: varchar("organizationName", { length: 256 }),
+  personName: varchar("personName", { length: 256 }),
+  leadTitle: varchar("leadTitle", { length: 256 }),
+  demoDate: timestamp("demoDate").notNull(),
+  isAcknowledged: boolean("isAcknowledged").default(false).notNull(),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  explanation: text("explanation"), // Why this is a hygiene issue
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CrmHygieneIssue = typeof crmHygieneIssues.$inferSelect;
+export type InsertCrmHygieneIssue = typeof crmHygieneIssues.$inferInsert;

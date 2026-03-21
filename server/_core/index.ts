@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startWeeklySyncScheduler } from "../weeklySync";
 import { initializeTierReportScheduler } from "../tierReportScheduler";
+import { initializeDemoDetectionScheduler } from "../demoDetectionScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -68,6 +69,9 @@ async function startServer() {
 
   // Start the monthly tier report scheduler (10th of month at 9 AM GMT)
   initializeTierReportScheduler();
+
+  // Start the weekly demo detection scheduler (Monday at 9 AM GMT)
+  initializeDemoDetectionScheduler();
 }
 
 startServer().catch(console.error);
