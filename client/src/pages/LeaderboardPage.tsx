@@ -4,7 +4,7 @@ import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { Trophy, Medal, Phone, Video, TrendingUp, Crown } from "lucide-react";
+import { Trophy, Medal, Phone, Video, Crown, RefreshCw } from "lucide-react";
 import { MONTH_NAMES } from "../../../shared/commission";
 
 type Period = "current_quarter" | "last_quarter" | "ytd" | "all_time";
@@ -75,12 +75,21 @@ export default function LeaderboardPage() {
   // Period label
   const now = new Date();
   const currentQuarter = Math.ceil((now.getMonth() + 1) / 3);
+  const currentYear = now.getFullYear();
   let periodSubLabel = "";
   if (data) {
     const from = `${MONTH_NAMES[data.fromMonth - 1].slice(0, 3)} ${data.fromYear}`;
     const to = `${MONTH_NAMES[data.toMonth - 1].slice(0, 3)} ${data.toYear}`;
     periodSubLabel = from === to ? from : `${from} – ${to}`;
   }
+  // Quarter label for the header badge
+  const quarterLabel = period === "current_quarter"
+    ? `Q${currentQuarter} ${currentYear}`
+    : period === "last_quarter"
+    ? `Q${currentQuarter === 1 ? 4 : currentQuarter - 1} ${currentQuarter === 1 ? currentYear - 1 : currentYear}`
+    : period === "ytd"
+    ? `YTD ${currentYear}`
+    : "All Time";
 
   return (
     <AppLayout>
@@ -91,10 +100,26 @@ export default function LeaderboardPage() {
             <div className="flex items-center gap-2 mb-1">
               <Trophy className="w-5 h-5" style={{ color: "oklch(0.88 0.14 75)" }} />
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Leaderboard</h1>
+              {/* Quarter badge */}
+              <span
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                style={{ background: "oklch(0.82 0.14 75 / 0.12)", border: "1px solid oklch(0.82 0.14 75 / 0.35)", color: "oklch(0.88 0.14 75)" }}
+              >
+                {quarterLabel}
+              </span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Ranked by ARR signed · {periodSubLabel}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                Ranked by ARR signed{periodSubLabel ? ` · ${periodSubLabel}` : ""}
+              </p>
+              {/* Updated daily badge */}
+              <span
+                className="flex items-center gap-1 text-xs text-muted-foreground/60"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Updated daily
+              </span>
+            </div>
           </div>
 
           {/* Period selector */}

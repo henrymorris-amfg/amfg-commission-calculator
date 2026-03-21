@@ -645,3 +645,10 @@
 - [x] Add commission rate progress bar (Bronze 13% → Silver 16% → Gold 19%) to TierStatusCard with current position indicator
 - [x] Move FX rate badges from dashboard header to subtle footer below Pipedrive deals widget
 - [x] 109 tests passing (12 test files)
+
+## Leaderboard UX Improvements (Mar 21 2026)
+- [x] Default leaderboard period to "This Quarter" on load (useState initialised to current_quarter)
+- [x] Show current quarter label (e.g. "Q1 2026") as gold badge next to the Leaderboard title
+- [x] Add "Updated daily" badge with refresh icon next to the period sub-label
+- [x] Quarter label updates reactively when switching periods (Last Quarter, YTD, All Time)
+- [x] 109 tests passing (12 test files)
