@@ -449,3 +449,13 @@
 - [x] Test payout calendar with multiple deals per AE (100 payouts for Joe Payne)
 - [x] Test refresh button with new deal creation
 - [x] Verify churned deals are excluded from payouts
+
+
+## Admin Navigation & Export Features (Mar 21 2026) - COMPLETED
+- [x] Add Team Commissions link to admin dashboard navigation
+- [x] Implement CSV export for team commissions by month
+- [x] Add commission forecast chart with 3-6 month projection
+- [x] Show tier progression visualization in forecast
+- [x] Test CSV export with multiple team members
+- [x] Test forecast chart with historical data
+- [x] Verify admin-only access controls

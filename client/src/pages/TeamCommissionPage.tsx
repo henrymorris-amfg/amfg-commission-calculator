@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Wallet,
   BarChart3,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { exportTeamCommissionsToCSV } from "@/lib/csvExport";
 
 const TIER_CONFIG = {
   bronze: { label: "Bronze", color: "oklch(0.65 0.12 55)", bg: "oklch(0.65 0.12 55 / 0.12)" },
@@ -107,8 +109,8 @@ export default function TeamCommissionPage() {
           </div>
         </div>
 
-        {/* Month Selector */}
-        <div className="flex gap-4">
+        {/* Month Selector and Export */}
+        <div className="flex gap-4 items-center">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select month" />
@@ -121,6 +123,21 @@ export default function TeamCommissionPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            onClick={() => {
+              if (commissionsData && selectedMonth) {
+                const [year, month] = selectedMonth.split("-");
+                exportTeamCommissionsToCSV(commissionsData, parseInt(month), parseInt(year));
+              }
+            }}
+            disabled={!commissionsData || commissionsLoading}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
         </div>
 
         {/* Team Summary */}
