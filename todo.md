@@ -652,3 +652,10 @@
 - [x] Add "Updated daily" badge with refresh icon next to the period sub-label
 - [x] Quarter label updates reactively when switching periods (Last Quarter, YTD, All Time)
 - [x] 109 tests passing (12 test files)
+
+## Bug: Joe Payne showing Bronze for Feb/Mar 2026 on Team Commission tab
+- [x] Pulled raw monthly_metrics for Joe Payne: Feb/Mar 2026 rolling averages are well above Silver thresholds
+- [x] Root cause: teamCommissions used getMetricsForAe(3) = always latest 3 months, not the 3 months before the viewed month
+- [x] Fix: added getMetricsForAeBefore() to db.ts; teamCommissions now passes input.year/month to get the correct historical window
+- [x] Also fixed: arrUsd decimal strings now converted with Number() in the rolling average call
+- [x] 109 tests passing (12 test files)

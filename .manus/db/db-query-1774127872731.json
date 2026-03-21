@@ -1,0 +1,100 @@
+{
+  "query": "\nSELECT ap.id as ae_id, ap.name, mm.year, mm.month, mm.arrUsd, mm.demosTotal, mm.dialsTotal\nFROM ae_profiles ap\nJOIN monthly_metrics mm ON mm.aeId = ap.id\nWHERE ap.name LIKE '%Joe%' OR ap.name LIKE '%Payne%'\nORDER BY mm.year DESC, mm.month DESC\nLIMIT 12;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT ap.id as ae_id, ap.name, mm.year, mm.month, mm.arrUsd, mm.demosTotal, mm.dialsTotal\nFROM ae_profiles ap\nJOIN monthly_metrics mm ON mm.aeId = ap.id\nWHERE ap.name LIKE '%Joe%' OR ap.name LIKE '%Payne%'\nORDER BY mm.year DESC, mm.month DESC\nLIMIT 12;\n",
+  "rows": [
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "3",
+      "arrUsd": "6708.00",
+      "demosTotal": "16",
+      "dialsTotal": "0"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "25231.00",
+      "demosTotal": "17",
+      "dialsTotal": "629"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "28921.00",
+      "demosTotal": "17",
+      "dialsTotal": "655"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "42166.00",
+      "demosTotal": "7",
+      "dialsTotal": "385"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "6928.00",
+      "demosTotal": "16",
+      "dialsTotal": "963"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "27950.00",
+      "demosTotal": "26",
+      "dialsTotal": "779"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "17200.00",
+      "demosTotal": "20",
+      "dialsTotal": "575"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "8100.00",
+      "demosTotal": "18",
+      "dialsTotal": "1220"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "13000.00",
+      "demosTotal": "11",
+      "dialsTotal": "1308"
+    },
+    {
+      "ae_id": "30002",
+      "name": "Joe Payne",
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "0.00",
+      "demosTotal": "7",
+      "dialsTotal": "455"
+    }
+  ],
+  "messages": [],
+  "stdout": "ae_id\tname\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n30002\tJoe Payne\t2026\t3\t6708.00\t16\t0\n30002\tJoe Payne\t2026\t2\t25231.00\t17\t629\n30002\tJoe Payne\t2026\t1\t28921.00\t17\t655\n30002\tJoe Payne\t2025\t12\t42166.00\t7\t385\n30002\tJoe Payne\t2025\t11\t6928.00\t16\t963\n30002\tJoe Payne\t2025\t10\t27950.00\t26\t779\n30002\tJoe Payne\t2025\t9\t17200.00\t20\t575\n30002\tJoe Payne\t2025\t8\t8100.00\t18\t1220\n30002\tJoe Payne\t2025\t7\t13000.00\t11\t1308\n30002\tJoe Payne\t2025\t6\t0.00\t7\t455\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

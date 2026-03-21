@@ -321,6 +321,7 @@ __export(db_exports, {
   getDealsForAe: () => getDealsForAe,
   getDemoActivitiesForAe: () => getDemoActivitiesForAe,
   getMetricsForAe: () => getMetricsForAe,
+  getMetricsForAeBefore: () => getMetricsForAeBefore,
   getMetricsForMonth: () => getMetricsForMonth,
   getPayoutsForAe: () => getPayoutsForAe,
   getPayoutsForDeal: () => getPayoutsForDeal,
@@ -446,6 +447,13 @@ async function getMetricsForAe(aeId, limit = 6) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(monthlyMetrics).where(eq(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit);
+}
+async function getMetricsForAeBefore(aeId, beforeYear, beforeMonth, limit = 3) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(monthlyMetrics).where(eq(monthlyMetrics.aeId, aeId)).orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month)).limit(limit + 6);
+  const targetTs = beforeYear * 100 + beforeMonth;
+  return rows.filter((m) => m.year * 100 + m.month < targetTs).slice(0, limit);
 }
 async function getMetricsForMonth(aeId, year, month) {
   const db = await getDb();
@@ -5899,9 +5907,21 @@ var appRouter = router({
           let currentTier = "bronze";
           try {
             if (aeProfile) {
-              const last3Months = await getMetricsForAe(c.aeId, 3);
+              const last3Months = await getMetricsForAeBefore(
+                c.aeId,
+                input.year,
+                input.month,
+                3
+              );
               const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
-                last3Months,
+                last3Months.map((m) => ({
+                  year: m.year,
+                  month: m.month,
+                  arrUsd: Number(m.arrUsd),
+                  demosTotal: m.demosTotal,
+                  dialsTotal: m.dialsTotal,
+                  retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+                })),
                 new Date(aeProfile.joinDate)
               );
               const tierResult = calculateTier({

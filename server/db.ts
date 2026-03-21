@@ -192,6 +192,32 @@ export async function getMetricsForAe(
     .limit(limit);
 }
 
+/**
+ * Fetch the N most recent monthly metrics for an AE that are strictly before
+ * the given year/month (exclusive). Used by teamCommissions to get the correct
+ * rolling-average window for a historical month rather than always using today.
+ */
+export async function getMetricsForAeBefore(
+  aeId: number,
+  beforeYear: number,
+  beforeMonth: number,
+  limit = 3
+): Promise<MonthlyMetric[]> {
+  const db = await getDb();
+  if (!db) return [];
+  // Fetch a wider window then filter in JS to avoid complex SQL date arithmetic
+  const rows = await db
+    .select()
+    .from(monthlyMetrics)
+    .where(eq(monthlyMetrics.aeId, aeId))
+    .orderBy(desc(monthlyMetrics.year), desc(monthlyMetrics.month))
+    .limit(limit + 6);
+  const targetTs = beforeYear * 100 + beforeMonth;
+  return rows
+    .filter((m) => m.year * 100 + m.month < targetTs)
+    .slice(0, limit);
+}
+
 export async function getMetricsForMonth(
   aeId: number,
   year: number,

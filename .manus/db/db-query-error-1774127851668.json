@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT ap.id as ae_id, ap.name, mm.year, mm.month, mm.arr_usd, mm.demos_total, mm.dials_pw, mm.demos_pw\nFROM ae_profiles ap\nJOIN monthly_metrics mm ON mm.ae_id = ap.id\nWHERE ap.name LIKE '%Joe%' OR ap.name LIKE '%Payne%'\nORDER BY mm.year DESC, mm.month DESC\nLIMIT 12;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT ap.id as ae_id, ap.name, mm.year, mm.month, mm.arr_usd, mm.demos_total, mm.dials_pw, mm.demos_pw\nFROM ae_profiles ap\nJOIN monthly_metrics mm ON mm.ae_id = ap.id\nWHERE ap.name LIKE '%Joe%' OR ap.name LIKE '%Payne%'\nORDER BY mm.year DESC, mm.month DESC\nLIMIT 12;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'mm.ae_id' in 'on clause'"
+  ]
+}

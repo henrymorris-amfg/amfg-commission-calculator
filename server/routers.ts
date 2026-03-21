@@ -44,6 +44,7 @@ import {
   getDealById,
   getDealsForAe,
   getMetricsForAe,
+  getMetricsForAeBefore,
   getMetricsForMonth,
   getPayoutsForAe,
   getPayoutsForDeal,
@@ -1539,16 +1540,31 @@ export const appRouter = router({
           });
         }
 
-        // Add current tier for each AE
+        // Add tier for each AE — calculated using the 3 months BEFORE the selected month
+        // (same rolling-average window as tier.calculate uses) so historical months show
+        // the correct tier rather than always reflecting today's metrics.
         const commissionsWithTier = await Promise.all(
           Array.from(commissionsByAe.values()).map(async (c: any) => {
             const aeProfile = allAes.find((m) => m.id === c.aeId);
             let currentTier: string = "bronze";
             try {
               if (aeProfile) {
-                const last3Months = await getMetricsForAe(c.aeId, 3);
+                // Fetch metrics strictly before the viewed month
+                const last3Months = await getMetricsForAeBefore(
+                  c.aeId,
+                  input.year,
+                  input.month,
+                  3
+                );
                 const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
-                  last3Months as any,
+                  last3Months.map((m) => ({
+                    year: m.year,
+                    month: m.month,
+                    arrUsd: Number(m.arrUsd),
+                    demosTotal: m.demosTotal,
+                    dialsTotal: m.dialsTotal,
+                    retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+                  })),
                   new Date(aeProfile.joinDate)
                 );
                 const tierResult = calculateTier({
