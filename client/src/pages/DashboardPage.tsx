@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
+import { FlaggedDemosAlert } from "@/components/FlaggedDemosAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
@@ -199,6 +200,9 @@ export default function DashboardPage() {
    return (
     <AppLayout>
       <div className="p-4 sm:p-8 pb-24 md:pb-8 space-y-6 max-w-6xl">
+        {/* Flagged Demos Alert */}
+        <FlaggedDemosAlert />
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>

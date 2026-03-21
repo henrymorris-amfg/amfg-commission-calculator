@@ -56,8 +56,8 @@ import {
   resetPinAttempts,
   getDb,
 } from "./db";
-import { deals } from "../drizzle/schema";
-import { eq, like } from "drizzle-orm";
+import { deals, commissionPayouts } from "../drizzle/schema";
+import { eq, like, and, inArray } from "drizzle-orm";
 
 // Seed the initial commission structure on first startup
 seedInitialCommissionStructure().catch(console.error);
@@ -1298,9 +1298,9 @@ export const appRouter = router({
         const caller = await getAeProfileById(callerId);
         if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
 
-        // Get all team members
-        const teamMembers = await getTeamMembers(callerId);
-        const teamMemberIds = teamMembers.map((m) => m.id);
+        // Get all team members (all AEs)
+        const allAes = await getAllAeProfiles();
+        const teamMemberIds = allAes.map((ae) => ae.id);
 
         if (teamMemberIds.length === 0) {
           return { commissions: [] };
@@ -1323,7 +1323,7 @@ export const appRouter = router({
 
         // Get deals for context
         const allDeals = await db.select().from(deals);
-        const dealMap = new Map(allDeals.map((d: any) => [d.id, d]));
+        const dealMap = new Map(allDeals.map((d) => [d.id, d]));
 
         // Group payouts by AE
         const commissionsByAe = new Map<
@@ -1346,7 +1346,7 @@ export const appRouter = router({
         >();
 
         for (const payout of payouts) {
-          const ae = teamMembers.find((m: any) => m.id === payout.aeId);
+          const ae = allAes.find((m) => m.id === payout.aeId);
           if (!ae) continue;
 
           if (!commissionsByAe.has(payout.aeId)) {

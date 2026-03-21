@@ -47,6 +47,7 @@ const navItems = [
   { path: "/pipedrive-sync", label: "Pipedrive Sync", icon: Zap, adminOnly: true },
   { path: "/voip-sync", label: "VOIP Studio", icon: Phone, adminOnly: true },
   { path: "/data-audit", label: "Data Audit", icon: ShieldAlert, adminOnly: true },
+  { path: "/demo-audit", label: "Demo Audit", icon: ShieldAlert, adminOnly: true },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

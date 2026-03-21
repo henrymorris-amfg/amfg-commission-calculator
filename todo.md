@@ -502,3 +502,13 @@
 - [ ] Create AE notification component (UI work - deferred)
 - [ ] Update 3-month average calculation to exclude flagged demos
 - [ ] Test with real Pipedrive data
+
+
+## Demo Detection UI & Integration (Mar 21 2026) - COMPLETED
+- [x] Build AE dashboard notification component for flagged demos
+- [x] Add acknowledge button to mark flags as reviewed
+- [x] Integrate demo detection into 3-month rolling average calculation
+- [x] Update MetricsPage to show "valid demos" vs "total demos booked" (helper created)
+- [x] Build admin audit view for team leaders
+- [x] Add bulk acknowledge and remediation tools for admins
+- [x] Test all features end-to-end (90 tests passing)

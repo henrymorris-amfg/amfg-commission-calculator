@@ -40,7 +40,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts2, duplicateDemoFlags, crmHygieneIssues;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, duplicateDemoFlags, crmHygieneIssues;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -173,7 +173,7 @@ var init_schema = __esm({
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
     });
-    commissionPayouts2 = mysqlTable("commission_payouts", {
+    commissionPayouts = mysqlTable("commission_payouts", {
       id: int("id").autoincrement().primaryKey(),
       dealId: int("dealId").notNull(),
       aeId: int("aeId").notNull(),
@@ -284,7 +284,7 @@ __export(db_exports, {
   upsertMonthlyMetric: () => upsertMonthlyMetric,
   upsertUser: () => upsertUser
 });
-import { and as and2, desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -400,7 +400,7 @@ async function getMetricsForMonth(aeId, year, month) {
   const db = await getDb();
   if (!db) return void 0;
   const result = await db.select().from(monthlyMetrics).where(
-    and2(
+    and(
       eq(monthlyMetrics.aeId, aeId),
       eq(monthlyMetrics.year, year),
       eq(monthlyMetrics.month, month)
@@ -428,49 +428,49 @@ async function getDealById(id) {
 async function getDealByPipedriveId(aeId, pipedriveId) {
   const db = await getDb();
   if (!db) return void 0;
-  const result = await db.select().from(deals).where(and2(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
+  const result = await db.select().from(deals).where(and(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
   return result[0];
 }
 async function deleteDeal(id, aeId) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(deals).where(and2(eq(deals.id, id), eq(deals.aeId, aeId)));
+  await db.delete(deals).where(and(eq(deals.id, id), eq(deals.aeId, aeId)));
 }
 async function createPayoutsForDeal(payouts) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (payouts.length === 0) return;
-  await db.insert(commissionPayouts2).values(payouts);
+  await db.insert(commissionPayouts).values(payouts);
 }
 async function deletePayoutsForDeal(dealId) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(commissionPayouts2).where(eq(commissionPayouts2.dealId, dealId));
+  await db.delete(commissionPayouts).where(eq(commissionPayouts.dealId, dealId));
 }
 async function getPayoutsForAe(aeId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts2).where(eq(commissionPayouts2.aeId, aeId)).orderBy(
-    desc(commissionPayouts2.payoutYear),
-    desc(commissionPayouts2.payoutMonth),
-    commissionPayouts2.dealId
+  return db.select().from(commissionPayouts).where(eq(commissionPayouts.aeId, aeId)).orderBy(
+    desc(commissionPayouts.payoutYear),
+    desc(commissionPayouts.payoutMonth),
+    commissionPayouts.dealId
   );
 }
 async function getPayoutsForMonth(aeId, year, month) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts2).where(
-    and2(
-      eq(commissionPayouts2.aeId, aeId),
-      eq(commissionPayouts2.payoutYear, year),
-      eq(commissionPayouts2.payoutMonth, month)
+  return db.select().from(commissionPayouts).where(
+    and(
+      eq(commissionPayouts.aeId, aeId),
+      eq(commissionPayouts.payoutYear, year),
+      eq(commissionPayouts.payoutMonth, month)
     )
   );
 }
 async function getPayoutsForDeal(dealId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(commissionPayouts2).where(eq(commissionPayouts2.dealId, dealId)).orderBy(commissionPayouts2.payoutNumber);
+  return db.select().from(commissionPayouts).where(eq(commissionPayouts.dealId, dealId)).orderBy(commissionPayouts.payoutNumber);
 }
 async function getActiveCommissionStructure() {
   const db = await getDb();
@@ -3596,7 +3596,7 @@ async function resyncAllPayouts(aeId) {
   const db = await getDb();
   if (!db) throw new TRPCError7({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
   try {
-    const deleteResult = await db.delete(commissionPayouts2);
+    const deleteResult = await db.delete(commissionPayouts);
     const payoutsDeleted = deleteResult.rowCount || 0;
     const allDeals = await db.select({
       id: deals.id,
@@ -3617,7 +3617,7 @@ async function resyncAllPayouts(aeId) {
     for (const deal of allDeals) {
       const payouts = calculatePayouts(deal);
       for (const payout of payouts) {
-        await db.insert(commissionPayouts2).values({
+        await db.insert(commissionPayouts).values({
           aeId: deal.aeId,
           dealId: deal.id,
           payoutMonth: payout.month,
@@ -3777,7 +3777,7 @@ var systemRouter = router({
 init_trpc();
 init_db();
 init_schema();
-import { eq as eq4, like } from "drizzle-orm";
+import { eq as eq4, like, and as and2, inArray } from "drizzle-orm";
 seedInitialCommissionStructure().catch(console.error);
 var _fxCache = null;
 var FX_CACHE_TTL_MS = 5 * 60 * 1e3;
@@ -4754,15 +4754,15 @@ var appRouter = router({
       if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED" });
       const caller = await getAeProfileById(callerId);
       if (!caller?.isTeamLeader) throw new TRPCError9({ code: "FORBIDDEN" });
-      const teamMembers = await getTeamMembers(callerId);
-      const teamMemberIds = teamMembers.map((m) => m.id);
+      const allAes = await getAllAeProfiles();
+      const teamMemberIds = allAes.map((ae) => ae.id);
       if (teamMemberIds.length === 0) {
         return { commissions: [] };
       }
       const db = await getDb();
       if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR" });
       const payouts = await db.select().from(commissionPayouts).where(
-        and(
+        and2(
           inArray(commissionPayouts.aeId, teamMemberIds),
           eq4(commissionPayouts.payoutYear, input.year),
           eq4(commissionPayouts.payoutMonth, input.month)
@@ -4772,7 +4772,7 @@ var appRouter = router({
       const dealMap = new Map(allDeals.map((d) => [d.id, d]));
       const commissionsByAe = /* @__PURE__ */ new Map();
       for (const payout of payouts) {
-        const ae = teamMembers.find((m) => m.id === payout.aeId);
+        const ae = allAes.find((m) => m.id === payout.aeId);
         if (!ae) continue;
         if (!commissionsByAe.has(payout.aeId)) {
           commissionsByAe.set(payout.aeId, {
