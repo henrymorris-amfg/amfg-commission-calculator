@@ -249,7 +249,7 @@ __export(db_exports, {
   upsertMonthlyMetric: () => upsertMonthlyMetric,
   upsertUser: () => upsertUser
 });
-import { and, desc, eq } from "drizzle-orm";
+import { and as and2, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -365,7 +365,7 @@ async function getMetricsForMonth(aeId, year, month) {
   const db = await getDb();
   if (!db) return void 0;
   const result = await db.select().from(monthlyMetrics).where(
-    and(
+    and2(
       eq(monthlyMetrics.aeId, aeId),
       eq(monthlyMetrics.year, year),
       eq(monthlyMetrics.month, month)
@@ -393,13 +393,13 @@ async function getDealById(id) {
 async function getDealByPipedriveId(aeId, pipedriveId) {
   const db = await getDb();
   if (!db) return void 0;
-  const result = await db.select().from(deals).where(and(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
+  const result = await db.select().from(deals).where(and2(eq(deals.aeId, aeId), eq(deals.pipedriveId, pipedriveId))).limit(1);
   return result[0];
 }
 async function deleteDeal(id, aeId) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(deals).where(and(eq(deals.id, id), eq(deals.aeId, aeId)));
+  await db.delete(deals).where(and2(eq(deals.id, id), eq(deals.aeId, aeId)));
 }
 async function createPayoutsForDeal(payouts) {
   const db = await getDb();
@@ -425,7 +425,7 @@ async function getPayoutsForMonth(aeId, year, month) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(commissionPayouts2).where(
-    and(
+    and2(
       eq(commissionPayouts2.aeId, aeId),
       eq(commissionPayouts2.payoutYear, year),
       eq(commissionPayouts2.payoutMonth, month)
@@ -4256,6 +4256,67 @@ var appRouter = router({
       const lockedRate = Number(deal.fxRateLockedAtCreation || deal.fxRateAtEntry);
       const formatted = formatPayoutInfo2(deal, lockedRate, currentRates.GBP);
       return formatted;
+    }),
+    // Get team commissions for a specific month (admin only)
+    teamCommissions: publicProcedure.input(z5.object({ month: z5.number().min(1).max(12), year: z5.number().min(2020).max(2100) })).query(async ({ input, ctx }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError8({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError8({ code: "FORBIDDEN" });
+      const teamMembers = await getTeamMembers(callerId);
+      const teamMemberIds = teamMembers.map((m) => m.id);
+      if (teamMemberIds.length === 0) {
+        return { commissions: [] };
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError8({ code: "INTERNAL_SERVER_ERROR" });
+      const payouts = await db.select().from(commissionPayouts).where(
+        and(
+          inArray(commissionPayouts.aeId, teamMemberIds),
+          eq3(commissionPayouts.payoutYear, input.year),
+          eq3(commissionPayouts.payoutMonth, input.month)
+        )
+      );
+      const allDeals = await db.select().from(deals);
+      const dealMap = new Map(allDeals.map((d) => [d.id, d]));
+      const commissionsByAe = /* @__PURE__ */ new Map();
+      for (const payout of payouts) {
+        const ae = teamMembers.find((m) => m.id === payout.aeId);
+        if (!ae) continue;
+        if (!commissionsByAe.has(payout.aeId)) {
+          commissionsByAe.set(payout.aeId, {
+            aeId: payout.aeId,
+            aeName: ae.name,
+            dealCount: 0,
+            payoutCount: 0,
+            totalNetGbp: 0,
+            totalNetUsd: 0,
+            payouts: []
+          });
+        }
+        const entry = commissionsByAe.get(payout.aeId);
+        const deal = dealMap.get(payout.dealId);
+        const netGbp = Number(payout.netCommissionGbp);
+        const netUsd = Number(payout.netCommissionUsd);
+        entry.totalNetGbp += netGbp;
+        entry.totalNetUsd += netUsd;
+        entry.payoutCount += 1;
+        entry.payouts.push({
+          customerName: deal?.customerName ?? "Unknown",
+          payoutNumber: payout.payoutNumber,
+          tier: deal?.tierAtStart ?? "unknown",
+          netCommissionGbp: netGbp,
+          netCommissionUsd: netUsd
+        });
+      }
+      return {
+        commissions: Array.from(commissionsByAe.values()).map((c) => ({
+          ...c,
+          dealCount: new Set(c.payouts.map((p) => p.customerName)).size,
+          totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
+          totalNetUsd: Number(c.totalNetUsd.toFixed(2))
+        }))
+      };
     })
   }),
   // ─── Admin Utilities ─────────────────────────────────────────────────────

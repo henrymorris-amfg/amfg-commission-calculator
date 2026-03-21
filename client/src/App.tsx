@@ -11,6 +11,7 @@ import DealsPage from "./pages/DealsPage";
 import SummaryPage from "./pages/SummaryPage";
 import CommissionStructurePage from "./pages/CommissionStructurePage";
 import PayoutCalendarPage from "./pages/PayoutCalendarPage";
+import TeamCommissionPage from "./pages/TeamCommissionPage";
 import SpreadsheetSyncPage from "./pages/SpreadsheetSyncPage";
 import PipedriveSyncPage from "./pages/PipedriveSyncPage";
 import VoipSyncPage from "./pages/VoipSyncPage";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/voip-sync" component={VoipSyncPage} />
       <Route path="/data-audit" component={DataAuditPage} />
       <Route path="/payout-calendar" component={PayoutCalendarPage} />
+      <Route path="/team-commissions" component={TeamCommissionPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

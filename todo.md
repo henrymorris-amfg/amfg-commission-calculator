@@ -437,3 +437,15 @@
 - [x] Verify locked rates don't change over time (tested in lockedFxPayoutHelper.test.ts)
 - [x] Verify USD amounts recalculate with market rates (tested in floatingUsdHelper.test.ts)
 - [x] Verify payout calendar uses correct locked rates (via recalculatePayoutsWithLockedRate)
+
+
+## Payout Calendar & Admin View Fixes (Feb 27 2026) - COMPLETED
+- [x] Debug payout calendar logic - AMERICAN VALMARK correctly excluded (churned)
+- [x] Fix missing payouts for Joe Payne - regenerated all 158 payouts
+- [x] Verify churn logic in payout calculation - working correctly
+- [x] Fix refresh button functionality on payout calendar page
+- [x] Add team commission view for admin/team leader (monthly breakdown by AE)
+- [x] Add team commission view to admin dashboard (/team-commissions route)
+- [x] Test payout calendar with multiple deals per AE (100 payouts for Joe Payne)
+- [x] Test refresh button with new deal creation
+- [x] Verify churned deals are excluded from payouts

@@ -1,0 +1,37 @@
+{
+  "query": "SELECT COUNT(*) as total_payouts FROM commission_payouts;\nSELECT COUNT(*) as joe_payouts FROM commission_payouts WHERE aeId = (SELECT id FROM ae_profiles WHERE name = 'Joe Payne');\nSELECT * FROM commission_payouts LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT COUNT(*) as total_payouts FROM commission_payouts;\nSELECT COUNT(*) as joe_payouts FROM commission_payouts WHERE aeId = (SELECT id FROM ae_profiles WHERE name = 'Joe Payne');\nSELECT * FROM commission_payouts LIMIT 5;",
+  "rows": [
+    {
+      "total_payouts": "13"
+    },
+    {
+      "total_payouts": "joe_payouts"
+    },
+    {
+      "total_payouts": "13"
+    },
+    {
+      "total_payouts": "id\tdealId\taeId\tpayoutYear\tpayoutMonth\tpayoutNumber\tgrossCommissionUsd\treferralDeductionUsd\tonboardingDeductionGbp\tnetCommissionUsd\tfxRateUsed\tnetCommissionGbp\tcreatedAt"
+    },
+    {
+      "total_payouts": "240002\t90053\t30002\t2025\t8\t1\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38"
+    },
+    {
+      "total_payouts": "240003\t90053\t30002\t2025\t9\t2\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38"
+    },
+    {
+      "total_payouts": "240004\t90053\t30002\t2025\t10\t3\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38"
+    },
+    {
+      "total_payouts": "240005\t90053\t30002\t2025\t11\t4\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38"
+    },
+    {
+      "total_payouts": "240006\t90053\t30002\t2025\t12\t5\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_payouts\n13\njoe_payouts\n13\nid\tdealId\taeId\tpayoutYear\tpayoutMonth\tpayoutNumber\tgrossCommissionUsd\treferralDeductionUsd\tonboardingDeductionGbp\tnetCommissionUsd\tfxRateUsed\tnetCommissionGbp\tcreatedAt\n240002\t90053\t30002\t2025\t8\t1\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38\n240003\t90053\t30002\t2025\t9\t2\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38\n240004\t90053\t30002\t2025\t10\t3\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38\n240005\t90053\t30002\t2025\t11\t4\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38\n240006\t90053\t30002\t2025\t12\t5\t87.75\t0.00\t0.00\t87.75\t0.785000\t68.88\t2026-03-12 20:42:38\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

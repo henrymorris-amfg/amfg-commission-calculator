@@ -34,10 +34,16 @@ export default function PayoutCalendarPage() {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<"all" | "future" | "past">("all");
 
+  const utils = trpc.useUtils();
   const { data, isLoading: calLoading, refetch: refetchCalendar } = trpc.commission.payoutCalendar.useQuery(
     undefined,
     { enabled: !!ae }
   );
+
+  const handleRefresh = async () => {
+    await utils.commission.payoutCalendar.invalidate();
+    await refetchCalendar();
+  };
 
   useEffect(() => {
     if (!isLoading && !ae) navigate("/");
@@ -92,7 +98,7 @@ export default function PayoutCalendarPage() {
             </p>
           </div>
           <Button
-            onClick={() => refetchCalendar()}
+            onClick={handleRefresh}
             disabled={calLoading}
             variant="outline"
             size="sm"

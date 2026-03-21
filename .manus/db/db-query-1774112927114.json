@@ -1,0 +1,25 @@
+{
+  "query": "SELECT COUNT(*) as total_payouts FROM commission_payouts;\nSELECT aeId, COUNT(*) as payout_count FROM commission_payouts GROUP BY aeId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT COUNT(*) as total_payouts FROM commission_payouts;\nSELECT aeId, COUNT(*) as payout_count FROM commission_payouts GROUP BY aeId;",
+  "rows": [
+    {
+      "total_payouts": "158"
+    },
+    {
+      "total_payouts": "aeId\tpayout_count"
+    },
+    {
+      "total_payouts": "1\t100"
+    },
+    {
+      "total_payouts": "30002\t53"
+    },
+    {
+      "total_payouts": "30004\t5"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_payouts\n158\naeId\tpayout_count\n1\t100\n30002\t53\n30004\t5\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

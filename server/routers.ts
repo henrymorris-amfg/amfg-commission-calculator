@@ -1285,6 +1285,107 @@ export const appRouter = router({
 
         return formatted;
       }),
+
+    // Get team commissions for a specific month (admin only)
+    teamCommissions: publicProcedure
+      .input(z.object({ month: z.number().min(1).max(12), year: z.number().min(2020).max(2100) }))
+      .query(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+        // Get all team members
+        const teamMembers = await getTeamMembers(callerId);
+        const teamMemberIds = teamMembers.map((m) => m.id);
+
+        if (teamMemberIds.length === 0) {
+          return { commissions: [] };
+        }
+
+        // Get payouts for team members for the specified month
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const payouts = await db
+          .select()
+          .from(commissionPayouts)
+          .where(
+            and(
+              inArray(commissionPayouts.aeId, teamMemberIds),
+              eq(commissionPayouts.payoutYear, input.year),
+              eq(commissionPayouts.payoutMonth, input.month)
+            )
+          );
+
+        // Get deals for context
+        const allDeals = await db.select().from(deals);
+        const dealMap = new Map(allDeals.map((d: any) => [d.id, d]));
+
+        // Group payouts by AE
+        const commissionsByAe = new Map<
+          number,
+          {
+            aeId: number;
+            aeName: string;
+            dealCount: number;
+            payoutCount: number;
+            totalNetGbp: number;
+            totalNetUsd: number;
+            payouts: Array<{
+              customerName: string;
+              payoutNumber: number;
+              tier: string;
+              netCommissionGbp: number;
+              netCommissionUsd: number;
+            }>;
+          }
+        >();
+
+        for (const payout of payouts) {
+          const ae = teamMembers.find((m: any) => m.id === payout.aeId);
+          if (!ae) continue;
+
+          if (!commissionsByAe.has(payout.aeId)) {
+            commissionsByAe.set(payout.aeId, {
+              aeId: payout.aeId,
+              aeName: ae.name,
+              dealCount: 0,
+              payoutCount: 0,
+              totalNetGbp: 0,
+              totalNetUsd: 0,
+              payouts: [],
+            });
+          }
+
+          const entry = commissionsByAe.get(payout.aeId)!;
+          const deal = dealMap.get(payout.dealId) as any;
+          const netGbp = Number(payout.netCommissionGbp);
+          const netUsd = Number(payout.netCommissionUsd);
+
+          entry.totalNetGbp += netGbp;
+          entry.totalNetUsd += netUsd;
+          entry.payoutCount += 1;
+
+          entry.payouts.push({
+            customerName: deal?.customerName ?? "Unknown",
+            payoutNumber: payout.payoutNumber,
+            tier: deal?.tierAtStart ?? "unknown",
+            netCommissionGbp: netGbp,
+            netCommissionUsd: netUsd,
+          });
+        }
+
+        return {
+          commissions: Array.from(commissionsByAe.values()).map((c: any) => ({
+            ...c,
+            dealCount: new Set(c.payouts.map((p) => p.customerName)).size,
+            totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
+            totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
+          })),
+        };
+      }),
   }),
 
   // ─── Admin Utilities ─────────────────────────────────────────────────────
