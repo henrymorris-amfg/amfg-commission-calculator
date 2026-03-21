@@ -540,3 +540,14 @@
 - [x] Add tier forecast to dashboard
 - [x] Add automated daily dials recalculation at 8 AM GMT
 - [x] Test all features (90 tests passing)
+
+## Tier Change Email Notifications (Mar 21 2026) - COMPLETED
+- [x] Create tier change detection logic (compare current vs previous tier)
+- [x] Build notification content for tier advance and demotion alerts (rich HTML via notifyOwner)
+- [x] Create tierChangeNotifier.ts with notification sending logic
+- [x] Add tRPC procedures: checkTierChanges (manual trigger), myNotificationHistory, allNotificationHistory
+- [x] Integrate tier change detection into daily scheduler (8:05 AM GMT via tierChangeScheduler.ts)
+- [x] Add email field to ae_profiles schema and populate all AE emails
+- [x] Add tier_change_notifications table (aeId, previousTier, newTier, month/year, sentAt, deliveryStatus)
+- [x] Add Tier Change Notifications panel to TeamCommissionPage (manual trigger + history)
+- [x] Write 11 unit tests for tier change notifier (all passing, 101 total tests)

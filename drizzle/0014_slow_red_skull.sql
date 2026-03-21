@@ -1,0 +1,1 @@
+ALTER TABLE `ae_profiles` ADD `email` varchar(320);

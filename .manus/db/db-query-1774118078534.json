@@ -1,0 +1,46 @@
+{
+  "query": "UPDATE ae_profiles SET email = 'henry.morris@amfg.ai' WHERE name = 'Henry Morris';\nUPDATE ae_profiles SET email = 'joe.payne@amfg.ai' WHERE name = 'Joe Payne';\nUPDATE ae_profiles SET email = 'tad.tamulevicius@amfg.ai' WHERE name = 'Tad Tamulevicius';\nUPDATE ae_profiles SET email = 'janos.rosenberg@amfg.ai' WHERE name = 'Janos Rosenberg';\nUPDATE ae_profiles SET email = 'julian.earl@amfg.ai' WHERE name = 'Julian Earl';\nUPDATE ae_profiles SET email = 'toby.greer@amfg.ai' WHERE name = 'Toby Greer';\nSELECT id, name, email, isTeamLeader FROM ae_profiles ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute UPDATE ae_profiles SET email = 'henry.morris@amfg.ai' WHERE name = 'Henry Morris';\nUPDATE ae_profiles SET email = 'joe.payne@amfg.ai' WHERE name = 'Joe Payne';\nUPDATE ae_profiles SET email = 'tad.tamulevicius@amfg.ai' WHERE name = 'Tad Tamulevicius';\nUPDATE ae_profiles SET email = 'janos.rosenberg@amfg.ai' WHERE name = 'Janos Rosenberg';\nUPDATE ae_profiles SET email = 'julian.earl@amfg.ai' WHERE name = 'Julian Earl';\nUPDATE ae_profiles SET email = 'toby.greer@amfg.ai' WHERE name = 'Toby Greer';\nSELECT id, name, email, isTeamLeader FROM ae_profiles ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Henry Morris",
+      "email": "henry.morris@amfg.ai",
+      "isTeamLeader": "1"
+    },
+    {
+      "id": "30001",
+      "name": "Janos Rosenberg",
+      "email": "janos.rosenberg@amfg.ai",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30002",
+      "name": "Joe Payne",
+      "email": "joe.payne@amfg.ai",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30003",
+      "name": "Julian Earl",
+      "email": "julian.earl@amfg.ai",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30004",
+      "name": "Toby Greer",
+      "email": "toby.greer@amfg.ai",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "60001",
+      "name": "Tad Tamulevicius",
+      "email": "tad.tamulevicius@amfg.ai",
+      "isTeamLeader": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tisTeamLeader\n1\tHenry Morris\thenry.morris@amfg.ai\t1\n30001\tJanos Rosenberg\tjanos.rosenberg@amfg.ai\t0\n30002\tJoe Payne\tjoe.payne@amfg.ai\t0\n30003\tJulian Earl\tjulian.earl@amfg.ai\t0\n30004\tToby Greer\ttoby.greer@amfg.ai\t0\n60001\tTad Tamulevicius\ttad.tamulevicius@amfg.ai\t0\n",
+  "stderr": "",
+  "execution_time_ms": 128
+}

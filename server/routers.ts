@@ -1397,7 +1397,7 @@ export const appRouter = router({
         return {
           commissions: Array.from(commissionsByAe.values()).map((c: any) => ({
             ...c,
-            dealCount: new Set(c.payouts.map((p) => p.customerName)).size,
+            dealCount: new Set(c.payouts.map((p: any) => p.customerName)).size,
             totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
             totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
           })),
@@ -1490,6 +1490,55 @@ export const appRouter = router({
           message: `Tier report sent for ${reportMonth}/${reportYear}`,
           aeCount: tierData.length,
         };
+      }),
+
+    // ─── Tier Change Notifications ─────────────────────────────────────────
+    // Manual trigger for tier change check (team leaders only)
+    checkTierChanges: protectedProcedure
+      .input(
+        z.object({
+          month: z.number().min(1).max(12).optional(),
+          year: z.number().min(2020).max(2100).optional(),
+        }).optional()
+      )
+      .mutation(async ({ ctx, input }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Only team leaders can trigger tier change checks" });
+
+        const { checkAndNotifyTierChanges } = await import("./tierChangeNotifier");
+        const results = await checkAndNotifyTierChanges(input?.month, input?.year);
+
+        return {
+          success: true,
+          results,
+          notificationsSent: results.filter((r) => r.notificationSent).length,
+          changesDetected: results.filter((r) => !r.skipped).length,
+          totalChecked: results.length,
+        };
+      }),
+
+    // Get notification history for the current AE
+    myNotificationHistory: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).default(10) }).optional())
+      .query(async ({ ctx, input }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const { getNotificationHistory } = await import("./tierChangeNotifier");
+        return getNotificationHistory(aeId, input?.limit ?? 10);
+      }),
+
+    // Get all recent notifications (team leaders only)
+    allNotificationHistory: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).default(50) }).optional())
+      .query(async ({ ctx, input }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+        const { getAllRecentNotifications } = await import("./tierChangeNotifier");
+        return getAllRecentNotifications(input?.limit ?? 50);
       }),
 
     // Tier forecast: 3-month projection with actionable targets

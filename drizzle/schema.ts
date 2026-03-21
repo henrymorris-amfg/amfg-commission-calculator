@@ -61,6 +61,7 @@ export type InsertCommissionStructure = typeof commissionStructures.$inferInsert
 export const aeProfiles = mysqlTable("ae_profiles", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),
+  email: varchar("email", { length: 320 }),
   pinHash: varchar("pinHash", { length: 256 }).notNull(),
   joinDate: timestamp("joinDate").notNull(),
   isTeamLeader: boolean("isTeamLeader").default(false).notNull(),
@@ -221,3 +222,28 @@ export const crmHygieneIssues = mysqlTable("crm_hygiene_issues", {
 
 export type CrmHygieneIssue = typeof crmHygieneIssues.$inferSelect;
 export type InsertCrmHygieneIssue = typeof crmHygieneIssues.$inferInsert;
+
+// ─── Tier Change Notifications ────────────────────────────────────────────────
+// Tracks when tier change notifications have been sent to AEs to avoid duplicates
+export const tierChangeNotifications = mysqlTable("tier_change_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  aeId: int("aeId").notNull(),
+  // The month/year this notification is for
+  notificationYear: int("notificationYear").notNull(),
+  notificationMonth: int("notificationMonth").notNull(), // 1–12
+  // Tier transition
+  previousTier: mysqlEnum("previousTier", ["bronze", "silver", "gold"]).notNull(),
+  newTier: mysqlEnum("newTier", ["bronze", "silver", "gold"]).notNull(),
+  // Metrics snapshot at time of notification
+  avgArrUsd: decimal("avgArrUsd", { precision: 12, scale: 2 }),
+  avgDemosPw: decimal("avgDemosPw", { precision: 6, scale: 2 }),
+  avgDialsPw: decimal("avgDialsPw", { precision: 8, scale: 2 }),
+  // Notification status
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  deliveryStatus: mysqlEnum("deliveryStatus", ["sent", "failed", "skipped"]).default("sent").notNull(),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TierChangeNotification = typeof tierChangeNotifications.$inferSelect;
+export type InsertTierChangeNotification = typeof tierChangeNotifications.$inferInsert;

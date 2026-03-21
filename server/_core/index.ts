@@ -10,6 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import { startWeeklySyncScheduler } from "../weeklySync";
 import { initializeTierReportScheduler } from "../tierReportScheduler";
 import { initializeDemoDetectionScheduler } from "../demoDetectionScheduler";
+import { initializeTierChangeScheduler } from "../tierChangeScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -72,6 +73,9 @@ async function startServer() {
 
   // Start the weekly demo detection scheduler (Monday at 9 AM GMT)
   initializeDemoDetectionScheduler();
+
+  // Start the daily tier change notification scheduler (8:05 AM GMT)
+  initializeTierChangeScheduler();
 }
 
 startServer().catch(console.error);

@@ -1,0 +1,46 @@
+{
+  "query": "UPDATE ae_profiles SET email = 'joe.payne@amfg.ai' WHERE id = 1;\nUPDATE ae_profiles SET email = 'henry.morris@amfg.ai' WHERE id = 30002;\nUPDATE ae_profiles SET email = 'tad.tamulevicius@amfg.ai' WHERE id = 60001;\nSELECT id, name, email, isTeamLeader FROM ae_profiles ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute UPDATE ae_profiles SET email = 'joe.payne@amfg.ai' WHERE id = 1;\nUPDATE ae_profiles SET email = 'henry.morris@amfg.ai' WHERE id = 30002;\nUPDATE ae_profiles SET email = 'tad.tamulevicius@amfg.ai' WHERE id = 60001;\nSELECT id, name, email, isTeamLeader FROM ae_profiles ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Henry Morris",
+      "email": "joe.payne@amfg.ai",
+      "isTeamLeader": "1"
+    },
+    {
+      "id": "30001",
+      "name": "Janos Rosenberg",
+      "email": "NULL",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30002",
+      "name": "Joe Payne",
+      "email": "henry.morris@amfg.ai",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30003",
+      "name": "Julian Earl",
+      "email": "NULL",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "30004",
+      "name": "Toby Greer",
+      "email": "NULL",
+      "isTeamLeader": "0"
+    },
+    {
+      "id": "60001",
+      "name": "Tad Tamulevicius",
+      "email": "tad.tamulevicius@amfg.ai",
+      "isTeamLeader": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tisTeamLeader\n1\tHenry Morris\tjoe.payne@amfg.ai\t1\n30001\tJanos Rosenberg\tNULL\t0\n30002\tJoe Payne\thenry.morris@amfg.ai\t0\n30003\tJulian Earl\tNULL\t0\n30004\tToby Greer\tNULL\t0\n60001\tTad Tamulevicius\ttad.tamulevicius@amfg.ai\t0\n",
+  "stderr": "",
+  "execution_time_ms": 114
+}

@@ -40,7 +40,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, duplicateDemoFlags, crmHygieneIssues;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, duplicateDemoFlags, crmHygieneIssues, tierChangeNotifications;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -83,6 +83,7 @@ var init_schema = __esm({
     aeProfiles = mysqlTable("ae_profiles", {
       id: int("id").autoincrement().primaryKey(),
       name: varchar("name", { length: 128 }).notNull(),
+      email: varchar("email", { length: 320 }),
       pinHash: varchar("pinHash", { length: 256 }).notNull(),
       joinDate: timestamp("joinDate").notNull(),
       isTeamLeader: boolean("isTeamLeader").default(false).notNull(),
@@ -227,6 +228,26 @@ var init_schema = __esm({
       // Why this is a hygiene issue
       createdAt: timestamp("createdAt").defaultNow().notNull(),
       updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    });
+    tierChangeNotifications = mysqlTable("tier_change_notifications", {
+      id: int("id").autoincrement().primaryKey(),
+      aeId: int("aeId").notNull(),
+      // The month/year this notification is for
+      notificationYear: int("notificationYear").notNull(),
+      notificationMonth: int("notificationMonth").notNull(),
+      // 1–12
+      // Tier transition
+      previousTier: mysqlEnum("previousTier", ["bronze", "silver", "gold"]).notNull(),
+      newTier: mysqlEnum("newTier", ["bronze", "silver", "gold"]).notNull(),
+      // Metrics snapshot at time of notification
+      avgArrUsd: decimal("avgArrUsd", { precision: 12, scale: 2 }),
+      avgDemosPw: decimal("avgDemosPw", { precision: 6, scale: 2 }),
+      avgDialsPw: decimal("avgDialsPw", { precision: 8, scale: 2 }),
+      // Notification status
+      sentAt: timestamp("sentAt").defaultNow().notNull(),
+      deliveryStatus: mysqlEnum("deliveryStatus", ["sent", "failed", "skipped"]).default("sent").notNull(),
+      errorMessage: text("errorMessage"),
+      createdAt: timestamp("createdAt").defaultNow().notNull()
     });
   }
 });
@@ -1508,6 +1529,404 @@ var init_tierReportEmailService = __esm({
     "use strict";
     init_notification();
     init_tierReportEmail();
+    init_commission();
+  }
+});
+
+// server/tierChangeNotifier.ts
+var tierChangeNotifier_exports = {};
+__export(tierChangeNotifier_exports, {
+  checkAndNotifyTierChanges: () => checkAndNotifyTierChanges,
+  getAllRecentNotifications: () => getAllRecentNotifications,
+  getNotificationHistory: () => getNotificationHistory
+});
+import { eq as eq4, and as and2, desc as desc2 } from "drizzle-orm";
+function formatTierLabel(tier) {
+  const rate = (TIER_COMMISSION_RATE[tier] * 100).toFixed(0);
+  const emoji = tier === "gold" ? "\u{1F947}" : tier === "silver" ? "\u{1F948}" : "\u{1F949}";
+  return `${emoji} ${tier.charAt(0).toUpperCase() + tier.slice(1)} (${rate}% commission)`;
+}
+function tierDirection(prev, next) {
+  const order = { bronze: 0, silver: 1, gold: 2 };
+  if (order[next] > order[prev]) return "promoted";
+  if (order[next] < order[prev]) return "demoted";
+  return "same";
+}
+function buildNotificationContent(event) {
+  const { ae, previousTier, newTier, month, year } = event;
+  const direction = tierDirection(previousTier, newTier);
+  const monthName = MONTH_NAMES[month - 1];
+  const targets = ae.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+  const prevRate = (TIER_COMMISSION_RATE[previousTier] * 100).toFixed(0);
+  const newRate = (TIER_COMMISSION_RATE[newTier] * 100).toFixed(0);
+  const directionEmoji = direction === "promoted" ? "\u{1F389}" : "\u26A0\uFE0F";
+  const directionWord = direction === "promoted" ? "PROMOTED" : "DEMOTED";
+  const title = `${directionEmoji} Tier Change: ${ae.aeName} ${directionWord} to ${newTier.toUpperCase()} \u2014 ${monthName} ${year}`;
+  const lines = [];
+  lines.push(`TIER CHANGE NOTIFICATION \u2014 ${monthName} ${year}`);
+  lines.push(`${"=".repeat(60)}`);
+  lines.push(``);
+  lines.push(`AE: ${ae.aeName}`);
+  if (ae.aeEmail) lines.push(`Email: ${ae.aeEmail}`);
+  lines.push(``);
+  lines.push(`TIER CHANGE:`);
+  lines.push(`  Previous: ${formatTierLabel(previousTier)} (${prevRate}% commission rate)`);
+  lines.push(`  New:      ${formatTierLabel(newTier)} (${newRate}% commission rate)`);
+  lines.push(``);
+  const rateChange = Number(newRate) - Number(prevRate);
+  if (rateChange > 0) {
+    lines.push(`COMMISSION RATE IMPACT:`);
+    lines.push(`  Rate increased by +${rateChange}pp \u2014 every \xA31,000 deal now earns \xA3${rateChange * 10} more`);
+  } else {
+    lines.push(`COMMISSION RATE IMPACT:`);
+    lines.push(`  Rate decreased by ${rateChange}pp \u2014 every \xA31,000 deal now earns \xA3${Math.abs(rateChange) * 10} less`);
+  }
+  lines.push(``);
+  lines.push(`CURRENT 3-MONTH ROLLING AVERAGES:`);
+  lines.push(`  ARR:        $${ae.avgArrUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })} / month`);
+  lines.push(`  Demos:      ${ae.avgDemosPw.toFixed(1)} / week`);
+  lines.push(`  Dials:      ${ae.avgDialsPw.toFixed(0)} / week`);
+  if (ae.avgRetentionRate != null) {
+    lines.push(`  Retention:  ${ae.avgRetentionRate.toFixed(1)}%`);
+  }
+  lines.push(``);
+  if (direction === "promoted") {
+    const maintainTargets = targets[newTier] ?? targets.silver;
+    lines.push(`WHAT TO MAINTAIN (${newTier.toUpperCase()} TIER REQUIREMENTS):`);
+    lines.push(`  ARR:    \u2265 $${maintainTargets.arrUsd.toLocaleString()} / month`);
+    lines.push(`  Demos:  \u2265 ${maintainTargets.demosPw} / week`);
+    lines.push(`  Dials:  \u2265 ${maintainTargets.dialsPw} / week`);
+    lines.push(`  Retention: \u2265 ${maintainTargets.retentionMin}%`);
+    lines.push(``);
+    const arrHeadroom = ae.avgArrUsd - maintainTargets.arrUsd;
+    const demosHeadroom = ae.avgDemosPw - maintainTargets.demosPw;
+    const dialsHeadroom = ae.avgDialsPw - maintainTargets.dialsPw;
+    lines.push(`CURRENT HEADROOM ABOVE ${newTier.toUpperCase()} THRESHOLD:`);
+    lines.push(`  ARR:    +$${Math.max(0, arrHeadroom).toLocaleString("en-US", { maximumFractionDigits: 0 })} above target`);
+    lines.push(`  Demos:  +${Math.max(0, demosHeadroom).toFixed(1)} / week above target`);
+    lines.push(`  Dials:  +${Math.max(0, dialsHeadroom).toFixed(0)} / week above target`);
+    lines.push(``);
+    if (newTier !== "gold") {
+      const nextTier = newTier === "bronze" ? "silver" : "gold";
+      const nextTargets = targets[nextTier];
+      lines.push(`NEXT GOAL \u2014 ${nextTier.toUpperCase()} TIER:`);
+      const arrGap = Math.max(0, nextTargets.arrUsd - ae.avgArrUsd);
+      const demosGap = Math.max(0, nextTargets.demosPw - ae.avgDemosPw);
+      const dialsGap = Math.max(0, nextTargets.dialsPw - ae.avgDialsPw);
+      if (arrGap > 0) lines.push(`  Need +$${arrGap.toLocaleString("en-US", { maximumFractionDigits: 0 })} more ARR / month`);
+      if (demosGap > 0) lines.push(`  Need +${demosGap.toFixed(1)} more demos / week`);
+      if (dialsGap > 0) lines.push(`  Need +${dialsGap.toFixed(0)} more dials / week`);
+      if (arrGap === 0 && demosGap === 0 && dialsGap === 0) {
+        lines.push(`  Already meeting ${nextTier} targets on all metrics!`);
+      }
+      lines.push(``);
+    }
+    lines.push(`MESSAGE FOR ${ae.aeName.toUpperCase()}:`);
+    lines.push(`  Congratulations on reaching ${newTier.toUpperCase()} tier! Your commission rate has`);
+    lines.push(`  increased to ${newRate}%. Keep up the strong performance to maintain this tier.`);
+    if (ae.isNewJoiner) {
+      lines.push(`  Note: You are still within your new joiner grace period \u2014 ARR targets are`);
+      lines.push(`  automatically met to help you get established.`);
+    }
+  } else {
+    const recoverTargets = targets[previousTier] ?? targets.silver;
+    lines.push(`WHAT NEEDS TO IMPROVE (TO RETURN TO ${previousTier.toUpperCase()}):`);
+    const arrGap = Math.max(0, recoverTargets.arrUsd - ae.avgArrUsd);
+    const demosGap = Math.max(0, recoverTargets.demosPw - ae.avgDemosPw);
+    const dialsGap = Math.max(0, recoverTargets.dialsPw - ae.avgDialsPw);
+    if (arrGap > 0) {
+      lines.push(`  ARR:    Need +$${arrGap.toLocaleString("en-US", { maximumFractionDigits: 0 })} more / month (currently $${ae.avgArrUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}, target $${recoverTargets.arrUsd.toLocaleString()})`);
+    } else {
+      lines.push(`  ARR:    \u2713 Meeting target ($${ae.avgArrUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })} \u2265 $${recoverTargets.arrUsd.toLocaleString()})`);
+    }
+    if (demosGap > 0) {
+      lines.push(`  Demos:  Need +${demosGap.toFixed(1)} more / week (currently ${ae.avgDemosPw.toFixed(1)}, target ${recoverTargets.demosPw})`);
+    } else {
+      lines.push(`  Demos:  \u2713 Meeting target (${ae.avgDemosPw.toFixed(1)} \u2265 ${recoverTargets.demosPw})`);
+    }
+    if (dialsGap > 0) {
+      lines.push(`  Dials:  Need +${dialsGap.toFixed(0)} more / week (currently ${ae.avgDialsPw.toFixed(0)}, target ${recoverTargets.dialsPw})`);
+    } else {
+      lines.push(`  Dials:  \u2713 Meeting target (${ae.avgDialsPw.toFixed(0)} \u2265 ${recoverTargets.dialsPw})`);
+    }
+    lines.push(``);
+    lines.push(`ACTIONABLE WEEKLY TARGETS TO RECOVER:`);
+    if (arrGap > 0) {
+      const monthlyArrNeeded = recoverTargets.arrUsd;
+      lines.push(`  \u2022 Close at least $${monthlyArrNeeded.toLocaleString()} ARR per month over the next 3 months`);
+    }
+    if (demosGap > 0) {
+      lines.push(`  \u2022 Book ${recoverTargets.demosPw}+ demos per week (currently averaging ${ae.avgDemosPw.toFixed(1)})`);
+    }
+    if (dialsGap > 0) {
+      lines.push(`  \u2022 Make ${recoverTargets.dialsPw}+ dials per week (currently averaging ${ae.avgDialsPw.toFixed(0)})`);
+    }
+    lines.push(``);
+    lines.push(`MESSAGE FOR ${ae.aeName.toUpperCase()}:`);
+    lines.push(`  Your tier has moved from ${previousTier.toUpperCase()} to ${newTier.toUpperCase()} this month.`);
+    lines.push(`  Your commission rate is now ${newRate}%. The good news: tier is based on a`);
+    lines.push(`  3-month rolling average, so strong performance over the next 3 months`);
+    lines.push(`  will bring you back to ${previousTier.toUpperCase()}.`);
+  }
+  lines.push(``);
+  lines.push(`\u2500`.repeat(60));
+  lines.push(`Generated: ${(/* @__PURE__ */ new Date()).toISOString()}`);
+  lines.push(`This notification was generated automatically by the AMFG Commission Calculator.`);
+  return { title, content: lines.join("\n") };
+}
+async function computeAeTierForMonth(aeId, year, month, db) {
+  const profile = await db.select().from(aeProfiles).where(eq4(aeProfiles.id, aeId)).limit(1).then((r) => r[0]);
+  if (!profile || !profile.isActive) return null;
+  const targetDate = new Date(year, month - 1, 1);
+  const joinDate = new Date(profile.joinDate);
+  const allMetrics = await db.select().from(monthlyMetrics).where(eq4(monthlyMetrics.aeId, aeId)).orderBy(desc2(monthlyMetrics.year), desc2(monthlyMetrics.month));
+  let last3 = allMetrics.filter((m) => {
+    const d = new Date(m.year, m.month - 1, 1);
+    return d < targetDate && d >= joinDate;
+  }).slice(0, 3).map((m) => {
+    const monthDate = new Date(m.year, m.month - 1, 1);
+    const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+    const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+    return {
+      year: m.year,
+      month: m.month,
+      arrUsd,
+      demosTotal: m.demosTotal,
+      dialsTotal: m.dialsTotal,
+      retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+    };
+  });
+  if (last3.length === 0 && isNewJoiner(profile.joinDate, targetDate)) {
+    last3 = allMetrics.filter((m) => m.year === year && m.month === month).slice(0, 1).map((m) => ({
+      year: m.year,
+      month: m.month,
+      arrUsd: 25e3,
+      // grace period
+      demosTotal: m.demosTotal,
+      dialsTotal: m.dialsTotal,
+      retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+    }));
+  }
+  const last6 = allMetrics.filter((m) => {
+    const d = new Date(m.year, m.month - 1, 1);
+    return d < targetDate && d >= joinDate;
+  }).slice(0, 6).map((m) => ({
+    year: m.year,
+    month: m.month,
+    arrUsd: Number(m.arrUsd),
+    demosTotal: m.demosTotal,
+    dialsTotal: m.dialsTotal,
+    retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+  }));
+  const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+  const avgRetentionRate = computeAvgRetention(last6);
+  const newJoiner = isNewJoiner(profile.joinDate, targetDate);
+  const result = calculateTier({
+    avgArrUsd,
+    avgDemosPw,
+    avgDialsPw,
+    avgRetentionRate,
+    isNewJoiner: newJoiner,
+    isTeamLeader: profile.isTeamLeader
+  });
+  return {
+    aeId,
+    aeName: profile.name,
+    aeEmail: profile.email ?? null,
+    tier: result.tier,
+    avgArrUsd,
+    avgDemosPw,
+    avgDialsPw,
+    avgRetentionRate,
+    isNewJoiner: newJoiner,
+    isTeamLeader: profile.isTeamLeader
+  };
+}
+async function hasNotificationBeenSent(aeId, year, month, previousTier, newTier, db) {
+  const existing = await db.select({ id: tierChangeNotifications.id }).from(tierChangeNotifications).where(
+    and2(
+      eq4(tierChangeNotifications.aeId, aeId),
+      eq4(tierChangeNotifications.notificationYear, year),
+      eq4(tierChangeNotifications.notificationMonth, month),
+      eq4(tierChangeNotifications.previousTier, previousTier),
+      eq4(tierChangeNotifications.newTier, newTier)
+    )
+  ).limit(1);
+  return existing.length > 0;
+}
+async function recordNotification(aeId, year, month, previousTier, newTier, snapshot, status, errorMessage, db) {
+  if (!db) return;
+  await db.insert(tierChangeNotifications).values({
+    aeId,
+    notificationYear: year,
+    notificationMonth: month,
+    previousTier,
+    newTier,
+    avgArrUsd: snapshot.avgArrUsd.toFixed(2),
+    avgDemosPw: snapshot.avgDemosPw.toFixed(2),
+    avgDialsPw: snapshot.avgDialsPw.toFixed(2),
+    deliveryStatus: status,
+    errorMessage: errorMessage ?? null
+  });
+}
+async function checkAndNotifyTierChanges(forceMonth, forceYear) {
+  const db = await getDb();
+  if (!db) {
+    console.error("[TierChangeNotifier] Database connection failed");
+    return [];
+  }
+  const now = /* @__PURE__ */ new Date();
+  const currentMonth = forceMonth ?? now.getMonth() + 1;
+  const currentYear = forceYear ?? now.getFullYear();
+  let prevMonth = currentMonth - 1;
+  let prevYear = currentYear;
+  if (prevMonth < 1) {
+    prevMonth = 12;
+    prevYear -= 1;
+  }
+  console.log(
+    `[TierChangeNotifier] Checking tier changes for ${MONTH_NAMES[currentMonth - 1]} ${currentYear} vs ${MONTH_NAMES[prevMonth - 1]} ${prevYear}`
+  );
+  const activeAes = await db.select().from(aeProfiles).where(eq4(aeProfiles.isActive, true));
+  const results = [];
+  for (const ae of activeAes) {
+    try {
+      const currentSnapshot = await computeAeTierForMonth(ae.id, currentYear, currentMonth, db);
+      if (!currentSnapshot) {
+        results.push({
+          aeId: ae.id,
+          aeName: ae.name,
+          currentTier: "bronze",
+          previousTier: null,
+          notificationSent: false,
+          skipped: true,
+          reason: "AE not active or no data"
+        });
+        continue;
+      }
+      const prevSnapshot = await computeAeTierForMonth(ae.id, prevYear, prevMonth, db);
+      if (!prevSnapshot) {
+        results.push({
+          aeId: ae.id,
+          aeName: ae.name,
+          currentTier: currentSnapshot.tier,
+          previousTier: null,
+          notificationSent: false,
+          skipped: true,
+          reason: "No previous month data \u2014 first month for this AE"
+        });
+        continue;
+      }
+      const previousTier = prevSnapshot.tier;
+      const newTier = currentSnapshot.tier;
+      if (previousTier === newTier) {
+        results.push({
+          aeId: ae.id,
+          aeName: ae.name,
+          currentTier: newTier,
+          previousTier,
+          notificationSent: false,
+          skipped: true,
+          reason: `Tier unchanged (${newTier})`
+        });
+        continue;
+      }
+      const alreadySent = await hasNotificationBeenSent(
+        ae.id,
+        currentYear,
+        currentMonth,
+        previousTier,
+        newTier,
+        db
+      );
+      if (alreadySent) {
+        results.push({
+          aeId: ae.id,
+          aeName: ae.name,
+          currentTier: newTier,
+          previousTier,
+          notificationSent: false,
+          skipped: true,
+          reason: "Notification already sent for this transition"
+        });
+        continue;
+      }
+      const event = {
+        ae: currentSnapshot,
+        previousTier,
+        newTier,
+        month: currentMonth,
+        year: currentYear
+      };
+      const { title, content } = buildNotificationContent(event);
+      let sent2 = false;
+      let errorMsg;
+      try {
+        sent2 = await notifyOwner({ title, content });
+      } catch (err) {
+        errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[TierChangeNotifier] Failed to send notification for ${ae.name}:`, err);
+      }
+      await recordNotification(
+        ae.id,
+        currentYear,
+        currentMonth,
+        previousTier,
+        newTier,
+        currentSnapshot,
+        sent2 ? "sent" : "failed",
+        errorMsg,
+        db
+      );
+      const direction = tierDirection(previousTier, newTier);
+      console.log(
+        `[TierChangeNotifier] ${ae.name}: ${previousTier} \u2192 ${newTier} (${direction}) \u2014 notification ${sent2 ? "sent" : "FAILED"}`
+      );
+      results.push({
+        aeId: ae.id,
+        aeName: ae.name,
+        currentTier: newTier,
+        previousTier,
+        notificationSent: sent2,
+        skipped: false,
+        reason: sent2 ? void 0 : `Delivery failed: ${errorMsg}`
+      });
+    } catch (err) {
+      console.error(`[TierChangeNotifier] Error processing AE ${ae.name}:`, err);
+      results.push({
+        aeId: ae.id,
+        aeName: ae.name,
+        currentTier: "bronze",
+        previousTier: null,
+        notificationSent: false,
+        skipped: true,
+        reason: `Error: ${err instanceof Error ? err.message : String(err)}`
+      });
+    }
+  }
+  const sent = results.filter((r) => r.notificationSent).length;
+  const skipped = results.filter((r) => r.skipped).length;
+  console.log(
+    `[TierChangeNotifier] Complete \u2014 ${sent} notifications sent, ${skipped} skipped, ${results.length} AEs checked`
+  );
+  return results;
+}
+async function getNotificationHistory(aeId, limit = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tierChangeNotifications).where(eq4(tierChangeNotifications.aeId, aeId)).orderBy(desc2(tierChangeNotifications.sentAt)).limit(limit);
+}
+async function getAllRecentNotifications(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tierChangeNotifications).orderBy(desc2(tierChangeNotifications.sentAt)).limit(limit);
+}
+var init_tierChangeNotifier = __esm({
+  "server/tierChangeNotifier.ts"() {
+    "use strict";
+    init_notification();
+    init_db();
+    init_schema();
     init_commission();
   }
 });
@@ -3873,7 +4292,7 @@ var systemRouter = router({
 init_trpc();
 init_db();
 init_schema();
-import { eq as eq4, like, and as and2, inArray } from "drizzle-orm";
+import { eq as eq5, like, and as and3, inArray } from "drizzle-orm";
 seedInitialCommissionStructure().catch(console.error);
 var _fxCache = null;
 var FX_CACHE_TTL_MS = 5 * 60 * 1e3;
@@ -4465,7 +4884,7 @@ var appRouter = router({
       if (input.contractType && input.contractType !== deal.contractType) {
         const db = await getDb();
         if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-        await db.update(deals).set({ contractType: input.contractType }).where(eq4(deals.id, input.dealId));
+        await db.update(deals).set({ contractType: input.contractType }).where(eq5(deals.id, input.dealId));
         const activeStructure = await getActiveCommissionStructure();
         const commResult = calculateCommission({
           contractType: input.contractType,
@@ -4530,13 +4949,13 @@ var appRouter = router({
         churnMonth: input.churnMonth,
         churnYear: input.churnYear,
         churnReason: input.churnReason || null
-      }).where(eq4(deals.id, input.dealId));
+      }).where(eq5(deals.id, input.dealId));
       const payouts = await getPayoutsForDeal(input.dealId);
       const payoutsToDelete = payouts.filter(
         (p) => p.payoutYear > input.churnYear || p.payoutYear === input.churnYear && p.payoutMonth > input.churnMonth
       );
       for (const payout of payoutsToDelete) {
-        await db.delete(commissionPayouts).where(eq4(commissionPayouts.id, payout.id));
+        await db.delete(commissionPayouts).where(eq5(commissionPayouts.id, payout.id));
       }
       return { success: true, payoutsDeleted: payoutsToDelete.length };
     })
@@ -4872,10 +5291,10 @@ var appRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR" });
       const payouts = await db.select().from(commissionPayouts).where(
-        and2(
+        and3(
           inArray(commissionPayouts.aeId, teamMemberIds),
-          eq4(commissionPayouts.payoutYear, input.year),
-          eq4(commissionPayouts.payoutMonth, input.month)
+          eq5(commissionPayouts.payoutYear, input.year),
+          eq5(commissionPayouts.payoutMonth, input.month)
         )
       );
       const allDeals = await db.select().from(deals);
@@ -4983,6 +5402,44 @@ var appRouter = router({
         aeCount: tierData.length
       };
     }),
+    // ─── Tier Change Notifications ─────────────────────────────────────────
+    // Manual trigger for tier change check (team leaders only)
+    checkTierChanges: protectedProcedure.input(
+      z6.object({
+        month: z6.number().min(1).max(12).optional(),
+        year: z6.number().min(2020).max(2100).optional()
+      }).optional()
+    ).mutation(async ({ ctx, input }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError9({ code: "FORBIDDEN", message: "Only team leaders can trigger tier change checks" });
+      const { checkAndNotifyTierChanges: checkAndNotifyTierChanges2 } = await Promise.resolve().then(() => (init_tierChangeNotifier(), tierChangeNotifier_exports));
+      const results = await checkAndNotifyTierChanges2(input?.month, input?.year);
+      return {
+        success: true,
+        results,
+        notificationsSent: results.filter((r) => r.notificationSent).length,
+        changesDetected: results.filter((r) => !r.skipped).length,
+        totalChecked: results.length
+      };
+    }),
+    // Get notification history for the current AE
+    myNotificationHistory: protectedProcedure.input(z6.object({ limit: z6.number().min(1).max(50).default(10) }).optional()).query(async ({ ctx, input }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const { getNotificationHistory: getNotificationHistory2 } = await Promise.resolve().then(() => (init_tierChangeNotifier(), tierChangeNotifier_exports));
+      return getNotificationHistory2(aeId, input?.limit ?? 10);
+    }),
+    // Get all recent notifications (team leaders only)
+    allNotificationHistory: protectedProcedure.input(z6.object({ limit: z6.number().min(1).max(100).default(50) }).optional()).query(async ({ ctx, input }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError9({ code: "FORBIDDEN" });
+      const { getAllRecentNotifications: getAllRecentNotifications2 } = await Promise.resolve().then(() => (init_tierChangeNotifier(), tierChangeNotifier_exports));
+      return getAllRecentNotifications2(input?.limit ?? 50);
+    }),
     // Tier forecast: 3-month projection with actionable targets
     tierForecast: protectedProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
@@ -5028,7 +5485,7 @@ var appRouter = router({
       if (cAxisDeal.length === 0) return { success: false, message: "C-Axis deal not found" };
       const deal = cAxisDeal[0];
       if (deal.startMonth !== 2) {
-        await db.update(deals).set({ startMonth: 2 }).where(eq4(deals.id, deal.id));
+        await db.update(deals).set({ startMonth: 2 }).where(eq5(deals.id, deal.id));
         return { success: true, message: `Updated C-Axis from month ${deal.startMonth} to February (2)` };
       }
       return { success: true, message: "C-Axis already in February" };
@@ -5063,7 +5520,7 @@ var appRouter = router({
             isTeamLeader: profile?.isTeamLeader || false
           });
           if (tier.tier !== deal.tierAtStart) {
-            await db.update(deals).set({ tierAtStart: tier.tier }).where(eq4(deals.id, deal.id));
+            await db.update(deals).set({ tierAtStart: tier.tier }).where(eq5(deals.id, deal.id));
             updated++;
           }
         }
@@ -5347,10 +5804,10 @@ async function sendMonthlyTierReportJob() {
     }
     for (const ae of aeCommissions) {
       const currentMonthPayouts = await db.query.commissionPayouts.findMany({
-        where: (payouts, { eq: eq5, and: and3 }) => and3(
-          eq5(payouts.aeId, ae.id),
-          eq5(payouts.payoutMonth, previousMonth),
-          eq5(payouts.payoutYear, previousYear)
+        where: (payouts, { eq: eq6, and: and4 }) => and4(
+          eq6(payouts.aeId, ae.id),
+          eq6(payouts.payoutMonth, previousMonth),
+          eq6(payouts.payoutYear, previousYear)
         )
       });
       const currentCommission = currentMonthPayouts.reduce(
@@ -5358,10 +5815,10 @@ async function sendMonthlyTierReportJob() {
         0
       );
       const previousMonthPayouts = await db.query.commissionPayouts.findMany({
-        where: (payouts, { eq: eq5, and: and3 }) => and3(
-          eq5(payouts.aeId, ae.id),
-          eq5(payouts.payoutMonth, comparisonMonth),
-          eq5(payouts.payoutYear, comparisonYear)
+        where: (payouts, { eq: eq6, and: and4 }) => and4(
+          eq6(payouts.aeId, ae.id),
+          eq6(payouts.payoutMonth, comparisonMonth),
+          eq6(payouts.payoutYear, comparisonYear)
         )
       });
       const previousCommission = previousMonthPayouts.reduce(
@@ -5399,6 +5856,44 @@ async function sendMonthlyTierReportJob() {
     }
   } catch (error) {
     console.error("[TierReportScheduler] Error in sendMonthlyTierReportJob:", error);
+  }
+}
+
+// server/tierChangeScheduler.ts
+init_tierChangeNotifier();
+import * as cron4 from "node-cron";
+var scheduledJob3 = null;
+function initializeTierChangeScheduler() {
+  if (scheduledJob3) {
+    console.log("[TierChangeScheduler] Scheduler already initialized");
+    return;
+  }
+  const cronExpression = "5 8 * * *";
+  scheduledJob3 = cron4.schedule(cronExpression, async () => {
+    console.log("[TierChangeScheduler] Running tier change check at", (/* @__PURE__ */ new Date()).toISOString());
+    await runTierChangeCheck();
+  });
+  console.log("[TierChangeScheduler] Initialized \u2014 will run at 08:05 AM GMT every day");
+}
+async function runTierChangeCheck() {
+  try {
+    console.log("[TierChangeScheduler] Starting daily tier change check");
+    const results = await checkAndNotifyTierChanges();
+    const sent = results.filter((r) => r.notificationSent).length;
+    const changes = results.filter((r) => !r.skipped).length;
+    if (sent > 0) {
+      console.log(
+        `[TierChangeScheduler] Sent ${sent} tier change notification(s) out of ${changes} change(s) detected`
+      );
+    } else if (changes > 0) {
+      console.log(
+        `[TierChangeScheduler] ${changes} tier change(s) detected but notifications already sent or delivery failed`
+      );
+    } else {
+      console.log("[TierChangeScheduler] No tier changes detected today");
+    }
+  } catch (error) {
+    console.error("[TierChangeScheduler] Error during tier change check:", error);
   }
 }
 
@@ -5449,5 +5944,6 @@ async function startServer() {
   startWeeklySyncScheduler();
   initializeTierReportScheduler();
   initializeDemoDetectionScheduler();
+  initializeTierChangeScheduler();
 }
 startServer().catch(console.error);

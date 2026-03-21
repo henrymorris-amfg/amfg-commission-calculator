@@ -12,7 +12,13 @@ import {
   Wallet,
   BarChart3,
   Download,
+  Bell,
+  BellRing,
+  RefreshCw,
+  ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -40,13 +46,15 @@ export default function TeamCommissionPage() {
   const [expandedAes, setExpandedAes] = useState<Set<number>>(new Set());
 
   // Get team members (only for team leaders)
-  const { data: teamData, isLoading: teamLoading } = trpc.ae.getTeamMembers.useQuery(undefined, {
+  const { data: teamData, isLoading: teamLoading } = trpc.ae.listNames.useQuery(undefined, {
     enabled: !!ae && ae.isTeamLeader,
   });
 
   // Get team commissions for selected month
-  const { data: commissionsData, isLoading: commissionsLoading } = trpc.commission.teamCommissions.useQuery(
-    selectedMonth ? { month: parseInt(selectedMonth.split("-")[1]), year: parseInt(selectedMonth.split("-")[0]) } : undefined,
+  const parsedMonth = selectedMonth ? parseInt(selectedMonth.split("-")[1]) : undefined;
+  const parsedYear = selectedMonth ? parseInt(selectedMonth.split("-")[0]) : undefined;
+  const { data: commissionsData, isLoading: commissionsLoading } = trpc.commissionStructure.teamCommissions.useQuery(
+    { month: parsedMonth ?? 1, year: parsedYear ?? new Date().getFullYear() },
     { enabled: !!ae && ae.isTeamLeader && !!selectedMonth }
   );
 
@@ -63,6 +71,31 @@ export default function TeamCommissionPage() {
     const month = String(now.getMonth() + 1).padStart(2, "0");
     setSelectedMonth(`${year}-${month}`);
   }, []);
+
+  // Tier change notification state
+  const [showNotifHistory, setShowNotifHistory] = useState(false);
+  const utils = trpc.useUtils();
+
+  const { data: notifHistory, isLoading: notifLoading, refetch: refetchNotifs } = trpc.commissionStructure.allNotificationHistory.useQuery(
+    { limit: 20 },
+    { enabled: !!ae && ae.isTeamLeader && showNotifHistory }
+  );
+
+  const checkTierChanges = trpc.commissionStructure.checkTierChanges.useMutation({
+    onSuccess: (data) => {
+      if (data.notificationsSent > 0) {
+        toast.success(`${data.notificationsSent} tier change notification${data.notificationsSent === 1 ? '' : 's'} sent`);
+      } else if (data.changesDetected > 0) {
+        toast.info(`${data.changesDetected} tier change${data.changesDetected === 1 ? '' : 's'} detected — notifications already sent or delivery failed`);
+      } else {
+        toast.info('No tier changes detected this month');
+      }
+      refetchNotifs();
+    },
+    onError: (err) => {
+      toast.error(`Failed to check tier changes: ${err.message}`);
+    },
+  });
 
   if (isLoading || !ae || !ae.isTeamLeader) return null;
 
@@ -220,7 +253,7 @@ export default function TeamCommissionPage() {
                       {/* Expanded Details */}
                       {isExpanded && (
                         <div className="border-t border-border bg-muted/30 p-4 space-y-3">
-                          {commission.payouts.map((payout, idx) => (
+                          {commission.payouts.map((payout: any, idx: number) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
                               <div>
                                 <p className="text-foreground font-medium">{payout.customerName}</p>
@@ -245,6 +278,99 @@ export default function TeamCommissionPage() {
             </div>
           </>
         )}
+
+        {/* ─── Tier Change Notifications ─────────────────────────────── */}
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="p-4 flex items-center justify-between bg-card">
+            <div className="flex items-center gap-3">
+              <BellRing className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Tier Change Notifications</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Automatically checks daily at 8:05 AM GMT. Sends a notification when any AE's tier changes month-over-month.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  setShowNotifHistory((v) => !v);
+                }}
+              >
+                <Bell className="w-4 h-4" />
+                {showNotifHistory ? 'Hide History' : 'View History'}
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => checkTierChanges.mutate({})}
+                disabled={checkTierChanges.isPending}
+              >
+                <RefreshCw className={`w-4 h-4 ${checkTierChanges.isPending ? 'animate-spin' : ''}`} />
+                {checkTierChanges.isPending ? 'Checking...' : 'Check Now'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Notification History */}
+          {showNotifHistory && (
+            <div className="border-t border-border">
+              {notifLoading ? (
+                <div className="p-4 text-center text-muted-foreground text-sm">Loading history...</div>
+              ) : !notifHistory || notifHistory.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground text-sm">
+                  <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  No tier change notifications sent yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {notifHistory.map((notif) => {
+                    const isPromotion =
+                      ['bronze', 'silver', 'gold'].indexOf(notif.newTier) >
+                      ['bronze', 'silver', 'gold'].indexOf(notif.previousTier);
+                    const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][notif.notificationMonth - 1];
+                    return (
+                      <div key={notif.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-3">
+                          {isPromotion ? (
+                            <ArrowUpCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <ArrowDownCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              AE #{notif.aeId} — {notif.previousTier.toUpperCase()} → {notif.newTier.toUpperCase()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {monthName} {notif.notificationYear} •{' '}
+                              {new Date(notif.sentAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              notif.deliveryStatus === 'sent'
+                                ? 'bg-emerald-500/10 text-emerald-600'
+                                : notif.deliveryStatus === 'failed'
+                                ? 'bg-red-500/10 text-red-600'
+                                : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {notif.deliveryStatus}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </AppLayout>
   );
