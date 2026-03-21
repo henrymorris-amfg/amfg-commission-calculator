@@ -1,7 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import { MONTH_NAMES, TIER_COMMISSION_RATE } from "../../../shared/commission";
-import { TrendingUp, PoundSterling, Calendar, Star, Wallet } from "lucide-react";
+import { TrendingUp, PoundSterling, Calendar, Star, Wallet, Flame } from "lucide-react";
 
 function fmtGbp(val: number) {
   return `£${val.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -12,6 +12,19 @@ const TIER_CONFIG = {
   silver: { label: "Silver", color: "oklch(0.82 0.02 250)", bg: "oklch(0.75 0.02 250 / 0.15)", border: "oklch(0.75 0.02 250 / 0.4)" },
   gold:   { label: "Gold",   color: "oklch(0.88 0.14 75)",  bg: "oklch(0.82 0.14 75 / 0.15)",  border: "oklch(0.82 0.14 75 / 0.45)" },
 };
+
+function streakLabel(months: number): string {
+  if (months === 0) return "No Silver+ streak yet";
+  if (months === 1) return "1 month at Silver or above";
+  return `${months} months at Silver or above`;
+}
+
+function streakColor(months: number) {
+  if (months >= 6) return "oklch(0.88 0.14 75)";   // gold — on fire
+  if (months >= 3) return "oklch(0.72 0.04 250)";   // silver
+  if (months >= 1) return "oklch(0.65 0.12 55)";    // bronze
+  return "oklch(0.45 0.02 250)";                     // muted
+}
 
 export function EarningsHeroCard() {
   const { ae } = useAeAuth();
@@ -33,6 +46,8 @@ export function EarningsHeroCard() {
   const tier = (tierData?.tier ?? "bronze") as "bronze" | "silver" | "gold";
   const tierCfg = TIER_CONFIG[tier];
   const commRate = TIER_COMMISSION_RATE[tier] ?? 0.13;
+  const streak = summary?.streakMonths ?? 0;
+  const sColor = streakColor(streak);
 
   const stats = [
     {
@@ -108,6 +123,43 @@ export function EarningsHeroCard() {
           </div>
         ))}
       </div>
+
+      {/* Streak footer */}
+      {!isLoading && (
+        <div
+          className="mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl"
+          style={{
+            background: streak > 0 ? `${sColor.replace(")", " / 0.08)")}` : "oklch(0.20 0.01 250 / 0.5)",
+            border: `1px solid ${streak > 0 ? sColor.replace(")", " / 0.3)") : "oklch(0.28 0.02 250)"}`,
+          }}
+        >
+          <Flame
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: streak > 0 ? sColor : "oklch(0.45 0.02 250)" }}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold" style={{ color: streak > 0 ? sColor : "oklch(0.50 0.02 250)" }}>
+              {streakLabel(streak)}
+            </p>
+            {streak >= 3 && (
+              <p className="text-xs text-muted-foreground">
+                {streak >= 6 ? "Outstanding consistency — keep it up!" : "Great run — push for Gold to maximise your rate."}
+              </p>
+            )}
+            {streak === 0 && (
+              <p className="text-xs text-muted-foreground">Hit Silver targets for 1+ months to start your streak.</p>
+            )}
+          </div>
+          {streak >= 1 && (
+            <span
+              className="text-2xl font-black flex-shrink-0"
+              style={{ color: sColor }}
+            >
+              {streak}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

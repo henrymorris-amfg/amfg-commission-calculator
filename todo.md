@@ -638,3 +638,10 @@
 - [x] Highlight current AE's row in the table
 - [x] Add Leaderboard nav item to AppLayout (visible to all AEs, Trophy icon)
 - [x] 109 tests passing (12 test files)
+## Remaining Review Items (Mar 21 2026)
+- [x] Add "Best month" stat to dashboardSummary procedure (highest single-month GBP commission)
+- [x] Add streak counter to dashboardSummary (consecutive months at Silver or above)
+- [x] Wire best-month and streak into EarningsHeroCard UI (flame icon, streak count, motivational copy)
+- [x] Add commission rate progress bar (Bronze 13% → Silver 16% → Gold 19%) to TierStatusCard with current position indicator
+- [x] Move FX rate badges from dashboard header to subtle footer below Pipedrive deals widget
+- [x] 109 tests passing (12 test files)

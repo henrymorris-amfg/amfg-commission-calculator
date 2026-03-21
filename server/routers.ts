@@ -1180,11 +1180,53 @@ export const appRouter = router({
         .sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month))
         .slice(0, 3);
 
+      // Streak: consecutive months at Silver or above (rolling 3-month avg meets Silver targets)
+      // Walk backwards month by month from current month, check if tier was Silver or Gold
+      const allMetrics = await getMetricsForAe(aeId, 24);
+      const profile = await getAeProfileById(aeId);
+      let streakMonths = 0;
+      // Check up to 24 months back
+      for (let i = 0; i < 24; i++) {
+        const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+        const tYear = targetDate.getFullYear();
+        const tMonth = targetDate.getMonth() + 1;
+        // Get last 3 months of metrics ending at this month
+        const window = allMetrics
+          .filter((m) => {
+            const d = new Date(m.year, m.month - 1, 1);
+            return d <= targetDate;
+          })
+          .slice(0, 3);
+        if (window.length === 0) break;
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+          window.map((m) => ({
+            year: m.year, month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+          })) as any,
+          profile?.joinDate ? new Date(profile.joinDate) : null
+        );
+        const avgRetention = window.reduce((s, m) => s + (m.retentionRate != null ? Number(m.retentionRate) : 0), 0) / window.length;
+        const tierResult = calculateTier({
+          avgArrUsd, avgDemosPw, avgDialsPw,
+          avgRetentionRate: avgRetention || null,
+          isNewJoiner: isNewJoiner(profile?.joinDate || new Date(), targetDate),
+          isTeamLeader: profile?.isTeamLeader || false,
+        });
+        if (tierResult.tier === "silver" || tierResult.tier === "gold") {
+          streakMonths++;
+        } else {
+          break;
+        }
+      }
+
       return {
         mtdGbp,
         ytdGbp,
         pipelineGbp,
         bestMonthGbp,
+        streakMonths,
         next3Months,
       };
     }),

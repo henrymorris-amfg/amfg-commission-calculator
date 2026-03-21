@@ -5591,11 +5591,49 @@ var appRouter = router({
         });
       }
       const next3Months = Array.from(futureMap.values()).sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month)).slice(0, 3);
+      const allMetrics = await getMetricsForAe(aeId, 24);
+      const profile = await getAeProfileById(aeId);
+      let streakMonths = 0;
+      for (let i = 0; i < 24; i++) {
+        const targetDate = new Date(currentYear, currentMonth - 1 - i, 1);
+        const tYear = targetDate.getFullYear();
+        const tMonth = targetDate.getMonth() + 1;
+        const window = allMetrics.filter((m) => {
+          const d = new Date(m.year, m.month - 1, 1);
+          return d <= targetDate;
+        }).slice(0, 3);
+        if (window.length === 0) break;
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+          window.map((m) => ({
+            year: m.year,
+            month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal
+          })),
+          profile?.joinDate ? new Date(profile.joinDate) : null
+        );
+        const avgRetention = window.reduce((s, m) => s + (m.retentionRate != null ? Number(m.retentionRate) : 0), 0) / window.length;
+        const tierResult = calculateTier({
+          avgArrUsd,
+          avgDemosPw,
+          avgDialsPw,
+          avgRetentionRate: avgRetention || null,
+          isNewJoiner: isNewJoiner(profile?.joinDate || /* @__PURE__ */ new Date(), targetDate),
+          isTeamLeader: profile?.isTeamLeader || false
+        });
+        if (tierResult.tier === "silver" || tierResult.tier === "gold") {
+          streakMonths++;
+        } else {
+          break;
+        }
+      }
       return {
         mtdGbp,
         ytdGbp,
         pipelineGbp,
         bestMonthGbp,
+        streakMonths,
         next3Months
       };
     })

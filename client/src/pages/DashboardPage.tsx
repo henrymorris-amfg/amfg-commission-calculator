@@ -261,13 +261,7 @@ export default function DashboardPage() {
               Team Leader
             </span>
           )}
-          {fxData && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
-              <Clock className="w-3 h-3" />
-              GBP {fxData.usdToGbp?.toFixed(4)} · EUR {fxData.usdToEur?.toFixed(4)}
-            </span>
-          )}
+
         </div>
 
         {/* Weekly Activity Strip */}
@@ -400,6 +394,44 @@ export default function DashboardPage() {
                 </ul>
               </div>
             )}
+
+            {/* Commission rate progress bar: Bronze 13% → Silver 16% → Gold 19% */}
+            <div className="pt-3 border-t border-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Commission rate ladder</p>
+              <div className="relative">
+                {/* Track */}
+                <div className="h-3 rounded-full overflow-hidden flex">
+                  <div className="flex-1 rounded-l-full" style={{ background: tier === "bronze" ? "oklch(0.65 0.12 55)" : "oklch(0.65 0.12 55 / 0.9)" }} />
+                  <div className="w-px bg-background" />
+                  <div className="flex-1" style={{ background: tier === "silver" ? "oklch(0.72 0.04 250)" : tier === "gold" ? "oklch(0.72 0.04 250 / 0.9)" : "oklch(0.72 0.04 250 / 0.25)" }} />
+                  <div className="w-px bg-background" />
+                  <div className="flex-1 rounded-r-full" style={{ background: tier === "gold" ? "oklch(0.82 0.14 75)" : "oklch(0.82 0.14 75 / 0.2)" }} />
+                </div>
+                {/* Labels */}
+                <div className="flex justify-between mt-2">
+                  <div className="text-center" style={{ width: "33%" }}>
+                    <p className="text-xs font-bold" style={{ color: tier === "bronze" ? "oklch(0.65 0.12 55)" : "oklch(0.55 0.08 55)" }}>Bronze</p>
+                    <p className="text-xs" style={{ color: tier === "bronze" ? "oklch(0.65 0.12 55)" : "oklch(0.45 0.05 55)" }}>13%</p>
+                  </div>
+                  <div className="text-center" style={{ width: "33%" }}>
+                    <p className="text-xs font-bold" style={{ color: tier === "silver" ? "oklch(0.85 0.02 250)" : "oklch(0.50 0.02 250)" }}>Silver</p>
+                    <p className="text-xs" style={{ color: tier === "silver" ? "oklch(0.85 0.02 250)" : "oklch(0.45 0.02 250)" }}>16%</p>
+                  </div>
+                  <div className="text-center" style={{ width: "33%" }}>
+                    <p className="text-xs font-bold" style={{ color: tier === "gold" ? "oklch(0.88 0.14 75)" : "oklch(0.50 0.08 75)" }}>Gold</p>
+                    <p className="text-xs" style={{ color: tier === "gold" ? "oklch(0.88 0.14 75)" : "oklch(0.45 0.05 75)" }}>19%</p>
+                  </div>
+                </div>
+                {/* Current position indicator */}
+                <div className="absolute -top-1"
+                  style={{ left: tier === "bronze" ? "16.5%" : tier === "silver" ? "49.5%" : "83%", transform: "translateX(-50%)" }}>
+                  <div className="w-5 h-5 rounded-full border-2 border-background flex items-center justify-center"
+                    style={{ background: tierConfig.color as string }}>
+                    <span className="text-[8px] font-black text-background">{tier === "bronze" ? "B" : tier === "silver" ? "S" : "G"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -565,6 +597,14 @@ export default function DashboardPage() {
 
         {/* Pipedrive Won Deals */}
         <PipedriveDealsWidget />
+
+        {/* FX rate footer */}
+        {fxData && (
+          <div className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground/50">
+            <Clock className="w-3 h-3" />
+            <span>Live FX: 1 USD = {fxData.usdToGbp?.toFixed(4)} GBP · {fxData.usdToEur?.toFixed(4)} EUR</span>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
@@ -724,5 +764,6 @@ function PipedriveDealsWidget() {
         </p>
       )}
     </div>
+
   );
 }
