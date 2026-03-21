@@ -659,3 +659,17 @@
 - [x] Fix: added getMetricsForAeBefore() to db.ts; teamCommissions now passes input.year/month to get the correct historical window
 - [x] Also fixed: arrUsd decimal strings now converted with Number() in the rolling average call
 - [x] 109 tests passing (12 test files)
+
+## Commission Chart, Forecast Tab, Payout Timing & Tier Snapshots
+- [x] Add GBP hover tooltip to Monthly Commission bar chart — custom styled tooltip with gold border and exact £ figure
+- [x] Remove "Commission Forecast" tab from all AE profile nav (AppLayout navItems)
+- [x] Fix payout timing: first payout = 1 month after contract start date (not same month)
+  - [x] Fixed resyncPayouts.ts (annual: payout in startMonth+1; monthly: loop i=1..12)
+  - [x] Fixed pipedriveSync.ts (loop offset changed from i to i+1)
+  - [x] Fixed routers.ts deal create + deal edit payout date loops
+- [x] Re-run payout resync: 348 existing payouts shifted forward 1 month via direct SQL UPDATE
+- [x] Implemented tier_snapshots table in Drizzle schema + pnpm db:push
+- [x] Added tierSnapshot.snapshotMonth and tierSnapshot.backfillAll procedures
+- [x] Updated teamCommissions to prefer tier_snapshots over live calculation (falls back to live if no snapshot)
+- [x] Added Backfill Tier Snapshots card to PipedriveSyncPage (team leader only)
+- [x] 109 tests passing (12 test files)

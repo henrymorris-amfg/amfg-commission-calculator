@@ -41,7 +41,6 @@ const navItems = [
   { path: "/deals", label: "Deals", icon: DollarSign, adminOnly: false },
   { path: "/summary", label: "Commission Summary", icon: TrendingUp, adminOnly: false },
   { path: "/payout-calendar", label: "Payout Calendar", icon: Calendar, adminOnly: false },
-  { path: "/forecast", label: "Commission Forecast", icon: TrendingUp, adminOnly: false },
   { path: "/team-commissions", label: "Team Commissions", icon: Users, adminOnly: true },
   { path: "/commission-structure", label: "Commission Structure", icon: Settings2, adminOnly: true },
   { path: "/pipedrive-sync", label: "Pipedrive Sync", icon: Zap, adminOnly: true },

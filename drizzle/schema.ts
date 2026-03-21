@@ -272,3 +272,28 @@ export const tierChangeNotifications = mysqlTable("tier_change_notifications", {
 
 export type TierChangeNotification = typeof tierChangeNotifications.$inferSelect;
 export type InsertTierChangeNotification = typeof tierChangeNotifications.$inferInsert;
+
+// ─── Tier Snapshots ───────────────────────────────────────────────────────────
+// Authoritative record of each AE's tier for a given month, captured at
+// month-end. The teamCommissions view uses this table first; if no snapshot
+// exists it falls back to live calculation.
+export const tierSnapshots = mysqlTable(
+  "tier_snapshots",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    aeId: int("aeId").notNull(),
+    snapshotYear: int("snapshotYear").notNull(),   // e.g. 2026
+    snapshotMonth: int("snapshotMonth").notNull(), // 1–12
+    tier: mysqlEnum("tier", ["bronze", "silver", "gold"]).notNull(),
+    avgArrUsd: decimal("avgArrUsd", { precision: 12, scale: 2 }),
+    avgDemosPw: decimal("avgDemosPw", { precision: 6, scale: 2 }),
+    avgDialsPw: decimal("avgDialsPw", { precision: 8, scale: 2 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    uniqueAeMonth: unique("uq_tier_snapshots_ae_month").on(t.aeId, t.snapshotYear, t.snapshotMonth),
+  })
+);
+export type TierSnapshot = typeof tierSnapshots.$inferSelect;
+export type InsertTierSnapshot = typeof tierSnapshots.$inferInsert;

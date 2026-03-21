@@ -1,0 +1,13 @@
+{
+  "query": "\n-- Shift all payout months forward by 1 month to match the new rule:\n-- commission is paid 1 month AFTER contract start date.\n-- We use a safe approach: compute new year/month from the existing values.\nUPDATE commission_payouts\nSET \n  payoutYear = CASE \n    WHEN payoutMonth = 12 THEN payoutYear + 1 \n    ELSE payoutYear \n  END,\n  payoutMonth = CASE \n    WHEN payoutMonth = 12 THEN 1 \n    ELSE payoutMonth + 1 \n  END;\n\nSELECT COUNT(*) as total_payouts_updated FROM commission_payouts;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \n-- Shift all payout months forward by 1 month to match the new rule:\n-- commission is paid 1 month AFTER contract start date.\n-- We use a safe approach: compute new year/month from the existing values.\nUPDATE commission_payouts\nSET \n  payoutYear = CASE \n    WHEN payoutMonth = 12 THEN payoutYear + 1 \n    ELSE payoutYear \n  END,\n  payoutMonth = CASE \n    WHEN payoutMonth = 12 THEN 1 \n    ELSE payoutMonth + 1 \n  END;\n\nSELECT COUNT(*) as total_payouts_updated FROM commission_payouts;\n",
+  "rows": [
+    {
+      "total_payouts_updated": "348"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_payouts_updated\n348\n",
+  "stderr": "",
+  "execution_time_ms": 201
+}

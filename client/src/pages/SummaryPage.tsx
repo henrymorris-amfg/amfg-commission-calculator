@@ -134,12 +134,20 @@ export default function SummaryPage() {
                 <Tooltip
                   contentStyle={{
                     background: "oklch(0.16 0.018 250)",
-                    border: "1px solid oklch(0.25 0.02 250)",
+                    border: "1px solid oklch(0.35 0.08 75)",
                     borderRadius: "12px",
                     color: "oklch(0.96 0.005 60)",
-                    fontSize: "12px",
+                    fontSize: "13px",
+                    padding: "10px 14px",
+                    boxShadow: "0 8px 24px oklch(0 0 0 / 0.5)",
                   }}
-                  formatter={(v: number) => [`£${v.toFixed(2)}`, "Commission"]}
+                  labelStyle={{ color: "oklch(0.65 0.01 250)", fontSize: "11px", marginBottom: "4px" }}
+                  formatter={(v: number) => [
+                    <span key="gbp" style={{ color: "oklch(0.88 0.14 75)", fontWeight: 700, fontSize: "16px" }}>
+                      £{v.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>,
+                    "Commission (GBP)"
+                  ]}
                   cursor={{ fill: "oklch(0.20 0.018 250)" }}
                 />
                 <Bar dataKey="gbp" radius={[6, 6, 0, 0]}>

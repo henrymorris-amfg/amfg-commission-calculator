@@ -158,13 +158,17 @@ function calculatePayouts(deal: {
     : 0;
 
   if (deal.contractType === "annual") {
-    // Annual: single payout in start month
+    // Annual: single lump-sum payout 1 month AFTER contract start date
+    let payoutMonth = startMonth + 1;
+    let payoutYear = startYear;
+    if (payoutMonth > 12) { payoutMonth -= 12; payoutYear += 1; }
+
     const netGbp = Math.max(0, netAfterReferralGbp - onboardingDeductionGbp);
     const netUsd = netGbp / fxRate;
 
     payouts.push({
-      month: startMonth,
-      year: startYear,
+      month: payoutMonth,
+      year: payoutYear,
       grossUsd: grossCommissionUsd,
       netGbp,
       netUsd,
@@ -174,13 +178,13 @@ function calculatePayouts(deal: {
       onboardingDeductionGbp,
     });
   } else if (deal.contractType === "monthly") {
-    // Monthly: 13 payouts (current + 12 future)
+    // Monthly: 12 payouts starting 1 month AFTER contract start date
     const monthlyGrossUsd = grossCommissionUsd / 12;
     const monthlyReferralDeductionUsd = referralDeductionUsd / 12;
     const monthlyNetUsd = netAfterReferralUsd / 12;
     const monthlyNetGbp = netAfterReferralGbp / 12;
 
-    for (let i = 0; i < 13; i++) {
+    for (let i = 1; i <= 12; i++) {
       let payoutMonth = startMonth + i;
       let payoutYear = startYear;
 
@@ -201,7 +205,7 @@ function calculatePayouts(deal: {
         grossUsd: monthlyGrossUsd,
         netGbp,
         netUsd,
-        payoutNumber: i + 1,
+        payoutNumber: i,
         fxRate,
         referralDeductionUsd: monthlyReferralDeductionUsd,
         onboardingDeductionGbp: thisOnboardingDeduction,

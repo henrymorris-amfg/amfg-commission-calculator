@@ -41,7 +41,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, pipedriveDemoActivities, duplicateDemoFlags, crmHygieneIssues, tierChangeNotifications;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, pipedriveDemoActivities, duplicateDemoFlags, crmHygieneIssues, tierChangeNotifications, tierSnapshots;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -275,6 +275,26 @@ var init_schema = __esm({
       errorMessage: text("errorMessage"),
       createdAt: timestamp("createdAt").defaultNow().notNull()
     });
+    tierSnapshots = mysqlTable(
+      "tier_snapshots",
+      {
+        id: int("id").autoincrement().primaryKey(),
+        aeId: int("aeId").notNull(),
+        snapshotYear: int("snapshotYear").notNull(),
+        // e.g. 2026
+        snapshotMonth: int("snapshotMonth").notNull(),
+        // 1–12
+        tier: mysqlEnum("tier", ["bronze", "silver", "gold"]).notNull(),
+        avgArrUsd: decimal("avgArrUsd", { precision: 12, scale: 2 }),
+        avgDemosPw: decimal("avgDemosPw", { precision: 6, scale: 2 }),
+        avgDialsPw: decimal("avgDialsPw", { precision: 8, scale: 2 }),
+        createdAt: timestamp("createdAt").defaultNow().notNull(),
+        updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+      },
+      (t2) => ({
+        uniqueAeMonth: unique("uq_tier_snapshots_ae_month").on(t2.aeId, t2.snapshotYear, t2.snapshotMonth)
+      })
+    );
   }
 });
 
@@ -3959,7 +3979,7 @@ var pipedriveSyncRouter = router({
             notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`
           });
           const payouts = commResult.payoutSchedule.map((p, i) => {
-            const payoutDate = addMonths(startYear, startMonth, i);
+            const payoutDate = addMonths(startYear, startMonth, i + 1);
             return {
               dealId,
               aeId: ae.id,
@@ -4647,11 +4667,17 @@ function calculatePayouts(deal) {
   const netAfterReferralGbp = netAfterReferralUsd * fxRate;
   const onboardingDeductionGbp = deal.onboardingFeePaid ? parseFloat(deal.onboardingDeductionGbp ?? "500") : 0;
   if (deal.contractType === "annual") {
+    let payoutMonth = startMonth + 1;
+    let payoutYear = startYear;
+    if (payoutMonth > 12) {
+      payoutMonth -= 12;
+      payoutYear += 1;
+    }
     const netGbp = Math.max(0, netAfterReferralGbp - onboardingDeductionGbp);
     const netUsd = netGbp / fxRate;
     payouts.push({
-      month: startMonth,
-      year: startYear,
+      month: payoutMonth,
+      year: payoutYear,
       grossUsd: grossCommissionUsd,
       netGbp,
       netUsd,
@@ -4665,7 +4691,7 @@ function calculatePayouts(deal) {
     const monthlyReferralDeductionUsd = referralDeductionUsd / 12;
     const monthlyNetUsd = netAfterReferralUsd / 12;
     const monthlyNetGbp = netAfterReferralGbp / 12;
-    for (let i = 0; i < 13; i++) {
+    for (let i = 1; i <= 12; i++) {
       let payoutMonth = startMonth + i;
       let payoutYear = startYear;
       while (payoutMonth > 12) {
@@ -4681,7 +4707,7 @@ function calculatePayouts(deal) {
         grossUsd: monthlyGrossUsd,
         netGbp,
         netUsd,
-        payoutNumber: i + 1,
+        payoutNumber: i,
         fxRate,
         referralDeductionUsd: monthlyReferralDeductionUsd,
         onboardingDeductionGbp: thisOnboardingDeduction
@@ -5295,7 +5321,7 @@ var appRouter = router({
         notes: null
       });
       const payouts = commResult.payoutSchedule.map((p, i) => {
-        const payoutDate = addMonths(input.startYear, input.startMonth, i);
+        const payoutDate = addMonths(input.startYear, input.startMonth, i + 1);
         return {
           dealId,
           aeId,
@@ -5378,7 +5404,7 @@ var appRouter = router({
         });
         await deletePayoutsForDeal(input.dealId);
         const payouts = commResult.payoutSchedule.map((p, i) => {
-          const payoutDate = addMonths(deal.startYear, deal.startMonth, i);
+          const payoutDate = addMonths(deal.startYear, deal.startMonth, i + 1);
           return {
             dealId: input.dealId,
             aeId,
@@ -5901,12 +5927,21 @@ var appRouter = router({
           netCommissionUsd: netUsd
         });
       }
+      const db2 = await getDb();
+      const allSnapshots = db2 ? await db2.select().from(tierSnapshots).where(and3(
+        eq6(tierSnapshots.snapshotYear, input.year),
+        eq6(tierSnapshots.snapshotMonth, input.month)
+      )) : [];
+      const snapshotMap = new Map(allSnapshots.map((s) => [s.aeId, s.tier]));
       const commissionsWithTier = await Promise.all(
         Array.from(commissionsByAe.values()).map(async (c) => {
           const aeProfile = allAes.find((m) => m.id === c.aeId);
           let currentTier = "bronze";
           try {
-            if (aeProfile) {
+            const snapshot = snapshotMap.get(c.aeId);
+            if (snapshot) {
+              currentTier = snapshot;
+            } else if (aeProfile) {
               const last3Months = await getMetricsForAeBefore(
                 c.aeId,
                 input.year,
@@ -6152,6 +6187,116 @@ var appRouter = router({
     })
   }),
   // ─── Leaderboard ──────────────────────────────────────────────────────────
+  tierSnapshot: router({
+    /**
+     * Capture (or overwrite) the tier snapshot for a given AE and month.
+     * Team-leader only. Useful for month-end locking.
+     */
+    snapshotMonth: protectedProcedure.input(
+      z6.object({
+        aeId: z6.number().int().positive(),
+        year: z6.number().int().min(2020),
+        month: z6.number().int().min(1).max(12)
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR" });
+      const [callerProfile] = await db2.select().from(aeProfiles).where(eq6(aeProfiles.id, callerId)).limit(1);
+      if (!callerProfile?.isTeamLeader) throw new TRPCError9({ code: "FORBIDDEN" });
+      const [aeProfile] = await db2.select().from(aeProfiles).where(eq6(aeProfiles.id, input.aeId)).limit(1);
+      if (!aeProfile) throw new TRPCError9({ code: "NOT_FOUND", message: "AE not found" });
+      const last3 = await getMetricsForAeBefore(input.aeId, input.year, input.month, 3);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+        last3.map((m) => ({
+          year: m.year,
+          month: m.month,
+          arrUsd: Number(m.arrUsd),
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+        })),
+        new Date(aeProfile.joinDate)
+      );
+      const { tier } = calculateTier({ avgArrUsd, avgDemosPw, avgDialsPw, avgRetentionRate: null, isNewJoiner: false, isTeamLeader: aeProfile.isTeamLeader });
+      await db2.insert(tierSnapshots).values({
+        aeId: input.aeId,
+        snapshotYear: input.year,
+        snapshotMonth: input.month,
+        tier,
+        avgArrUsd: String(avgArrUsd.toFixed(2)),
+        avgDemosPw: String(avgDemosPw.toFixed(2)),
+        avgDialsPw: String(avgDialsPw.toFixed(2))
+      }).onDuplicateKeyUpdate({
+        set: {
+          tier,
+          avgArrUsd: String(avgArrUsd.toFixed(2)),
+          avgDemosPw: String(avgDemosPw.toFixed(2)),
+          avgDialsPw: String(avgDialsPw.toFixed(2))
+        }
+      });
+      return { success: true, aeId: input.aeId, year: input.year, month: input.month, tier };
+    }),
+    /**
+     * Backfill tier snapshots for ALL AEs for ALL months that have monthly_metrics data.
+     * Team-leader only. Safe to run multiple times (upsert).
+     */
+    backfillAll: protectedProcedure.mutation(async ({ ctx }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR" });
+      const [callerProfile] = await db2.select().from(aeProfiles).where(eq6(aeProfiles.id, callerId)).limit(1);
+      if (!callerProfile?.isTeamLeader) throw new TRPCError9({ code: "FORBIDDEN" });
+      const allAes = await db2.select().from(aeProfiles);
+      const allMetrics = await db2.select().from(monthlyMetrics);
+      const monthSet = new Set(allMetrics.map((m) => `${m.year}-${m.month}`));
+      const months = Array.from(monthSet).map((k) => {
+        const [y, mo] = k.split("-");
+        return { year: Number(y), month: Number(mo) };
+      }).sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month));
+      let snapshotted = 0;
+      for (const ae of allAes) {
+        for (const { year, month } of months) {
+          try {
+            const last3 = await getMetricsForAeBefore(ae.id, year, month, 3);
+            const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+              last3.map((m) => ({
+                year: m.year,
+                month: m.month,
+                arrUsd: Number(m.arrUsd),
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+              })),
+              new Date(ae.joinDate)
+            );
+            const { tier } = calculateTier({ avgArrUsd, avgDemosPw, avgDialsPw, avgRetentionRate: null, isNewJoiner: false, isTeamLeader: ae.isTeamLeader });
+            await db2.insert(tierSnapshots).values({
+              aeId: ae.id,
+              snapshotYear: year,
+              snapshotMonth: month,
+              tier,
+              avgArrUsd: String(avgArrUsd.toFixed(2)),
+              avgDemosPw: String(avgDemosPw.toFixed(2)),
+              avgDialsPw: String(avgDialsPw.toFixed(2))
+            }).onDuplicateKeyUpdate({
+              set: {
+                tier,
+                avgArrUsd: String(avgArrUsd.toFixed(2)),
+                avgDemosPw: String(avgDemosPw.toFixed(2)),
+                avgDialsPw: String(avgDialsPw.toFixed(2))
+              }
+            });
+            snapshotted++;
+          } catch {
+          }
+        }
+      }
+      return { success: true, snapshotted };
+    })
+  }),
   leaderboard: router({
     get: publicProcedure.input(
       z6.object({

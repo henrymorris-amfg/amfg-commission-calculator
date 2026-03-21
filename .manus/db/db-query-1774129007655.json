@@ -1,0 +1,250 @@
+{
+  "query": "\nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal\nFROM monthly_metrics\nORDER BY aeId, year, month\nLIMIT 30;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute \nSELECT aeId, year, month, arrUsd, demosTotal, dialsTotal\nFROM monthly_metrics\nORDER BY aeId, year, month\nLIMIT 30;\n",
+  "rows": [
+    {
+      "aeId": "1",
+      "year": "2023",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "6",
+      "dialsTotal": "187"
+    },
+    {
+      "aeId": "1",
+      "year": "2023",
+      "month": "11",
+      "arrUsd": "5543.00",
+      "demosTotal": "19",
+      "dialsTotal": "292"
+    },
+    {
+      "aeId": "1",
+      "year": "2023",
+      "month": "12",
+      "arrUsd": "18028.00",
+      "demosTotal": "4",
+      "dialsTotal": "130"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "1",
+      "arrUsd": "4000.00",
+      "demosTotal": "11",
+      "dialsTotal": "212"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "2",
+      "arrUsd": "25532.00",
+      "demosTotal": "14",
+      "dialsTotal": "256"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "3",
+      "arrUsd": "11153.00",
+      "demosTotal": "17",
+      "dialsTotal": "270"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "4",
+      "arrUsd": "24600.00",
+      "demosTotal": "19",
+      "dialsTotal": "236"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "5",
+      "arrUsd": "5616.00",
+      "demosTotal": "21",
+      "dialsTotal": "262"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "6",
+      "arrUsd": "9336.00",
+      "demosTotal": "19",
+      "dialsTotal": "205"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "7",
+      "arrUsd": "14040.00",
+      "demosTotal": "20",
+      "dialsTotal": "317"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "8",
+      "arrUsd": "24719.00",
+      "demosTotal": "19",
+      "dialsTotal": "193"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "9",
+      "arrUsd": "13460.00",
+      "demosTotal": "12",
+      "dialsTotal": "211"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "9",
+      "dialsTotal": "267"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "11",
+      "arrUsd": "20720.00",
+      "demosTotal": "22",
+      "dialsTotal": "312"
+    },
+    {
+      "aeId": "1",
+      "year": "2024",
+      "month": "12",
+      "arrUsd": "0.00",
+      "demosTotal": "12",
+      "dialsTotal": "135"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "1",
+      "arrUsd": "9520.00",
+      "demosTotal": "14",
+      "dialsTotal": "128"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "2",
+      "arrUsd": "27780.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "3",
+      "arrUsd": "12720.00",
+      "demosTotal": "9",
+      "dialsTotal": "161"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "4",
+      "arrUsd": "9520.00",
+      "demosTotal": "8",
+      "dialsTotal": "155"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "5",
+      "arrUsd": "2500.00",
+      "demosTotal": "12",
+      "dialsTotal": "116"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "48067.00",
+      "demosTotal": "8",
+      "dialsTotal": "162"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "0.00",
+      "demosTotal": "11",
+      "dialsTotal": "87"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "2340.00",
+      "demosTotal": "8",
+      "dialsTotal": "208"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "64507.00",
+      "demosTotal": "7",
+      "dialsTotal": "169"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "0.00",
+      "demosTotal": "20",
+      "dialsTotal": "260"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "4000.00",
+      "demosTotal": "2",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "1",
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "38208.00",
+      "demosTotal": "2",
+      "dialsTotal": "33"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "5",
+      "dialsTotal": "65"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "22888.00",
+      "demosTotal": "4",
+      "dialsTotal": "127"
+    },
+    {
+      "aeId": "1",
+      "year": "2026",
+      "month": "3",
+      "arrUsd": "0.00",
+      "demosTotal": "7",
+      "dialsTotal": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n1\t2023\t10\t0.00\t6\t187\n1\t2023\t11\t5543.00\t19\t292\n1\t2023\t12\t18028.00\t4\t130\n1\t2024\t1\t4000.00\t11\t212\n1\t2024\t2\t25532.00\t14\t256\n1\t2024\t3\t11153.00\t17\t270\n1\t2024\t4\t24600.00\t19\t236\n1\t2024\t5\t5616.00\t21\t262\n1\t2024\t6\t9336.00\t19\t205\n1\t2024\t7\t14040.00\t20\t317\n1\t2024\t8\t24719.00\t19\t193\n1\t2024\t9\t13460.00\t12\t211\n1\t2024\t10\t0.00\t9\t267\n1\t2024\t11\t20720.00\t22\t312\n1\t2024\t12\t0.00\t12\t135\n1\t2025\t1\t9520.00\t14\t128\n1\t2025\t2\t27780.00\t15\t225\n1\t2025\t3\t12720.00\t9\t161\n1\t2025\t4\t9520.00\t8\t155\n1\t2025\t5\t2500.00\t12\t116\n1\t2025\t6\t48067.00\t8\t162\n1\t2025\t7\t0.00\t11\t87\n1\t2025\t8\t2340.00\t8\t208\n1\t2025\t9\t64507.00\t7\t169\n1\t2025\t10\t0.00\t20\t260\n1\t2025\t11\t4000.00\t2\t65\n1\t2025\t12\t38208.00\t2\t33\n1\t2026\t1\t0.00\t5\t65\n1\t2026\t2\t22888.00\t4\t127\n1\t2026\t3\t0.00\t7\t0\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

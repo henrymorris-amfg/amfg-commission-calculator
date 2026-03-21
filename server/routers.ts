@@ -57,7 +57,7 @@ import {
   resetPinAttempts,
   getDb,
 } from "./db";
-import { deals, commissionPayouts, aeProfiles, monthlyMetrics } from "../drizzle/schema";
+import { deals, commissionPayouts, aeProfiles, monthlyMetrics, tierSnapshots } from "../drizzle/schema";
 import { eq, like, and, inArray, or, gt, lt, gte, lte } from "drizzle-orm";
 
 // Seed the initial commission structure on first startup
@@ -740,9 +740,9 @@ export const appRouter = router({
           notes: null,
         });
 
-        // Generate payout schedule
+        // Generate payout schedule — payouts start 1 month AFTER contract start date
         const payouts = commResult.payoutSchedule.map((p, i) => {
-          const payoutDate = addMonths(input.startYear, input.startMonth, i);
+          const payoutDate = addMonths(input.startYear, input.startMonth, i + 1);
           return {
             dealId,
             aeId,
@@ -843,9 +843,9 @@ export const appRouter = router({
           // Delete old payouts
           await deletePayoutsForDeal(input.dealId);
 
-          // Create new payouts
+          // Create new payouts — payouts start 1 month AFTER contract start date
           const payouts = commResult.payoutSchedule.map((p, i) => {
-            const payoutDate = addMonths(deal.startYear, deal.startMonth, i);
+            const payoutDate = addMonths(deal.startYear, deal.startMonth, i + 1);
             return {
               dealId: input.dealId,
               aeId: aeId,
@@ -1540,16 +1540,29 @@ export const appRouter = router({
           });
         }
 
-        // Add tier for each AE — calculated using the 3 months BEFORE the selected month
-        // (same rolling-average window as tier.calculate uses) so historical months show
-        // the correct tier rather than always reflecting today's metrics.
+        // Add tier for each AE — prefer locked tier_snapshots (authoritative month-end records),
+        // fall back to live rolling-average calculation if no snapshot exists.
+        const db2 = await getDb();
+        const allSnapshots = db2
+          ? await db2.select().from(tierSnapshots)
+              .where(and(
+                eq(tierSnapshots.snapshotYear, input.year),
+                eq(tierSnapshots.snapshotMonth, input.month)
+              ))
+          : [];
+        const snapshotMap = new Map(allSnapshots.map((s) => [s.aeId, s.tier]));
+
         const commissionsWithTier = await Promise.all(
           Array.from(commissionsByAe.values()).map(async (c: any) => {
             const aeProfile = allAes.find((m) => m.id === c.aeId);
             let currentTier: string = "bronze";
             try {
-              if (aeProfile) {
-                // Fetch metrics strictly before the viewed month
+              // 1. Use locked snapshot if available
+              const snapshot = snapshotMap.get(c.aeId);
+              if (snapshot) {
+                currentTier = snapshot;
+              } else if (aeProfile) {
+                // 2. Fall back to live rolling-average calculation
                 const last3Months = await getMetricsForAeBefore(
                   c.aeId,
                   input.year,
@@ -1858,6 +1871,130 @@ export const appRouter = router({
   }),
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────
+  tierSnapshot: router({
+    /**
+     * Capture (or overwrite) the tier snapshot for a given AE and month.
+     * Team-leader only. Useful for month-end locking.
+     */
+    snapshotMonth: protectedProcedure
+      .input(
+        z.object({
+          aeId: z.number().int().positive(),
+          year: z.number().int().min(2020),
+          month: z.number().int().min(1).max(12),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const db2 = await getDb();
+        if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [callerProfile] = await db2.select().from(aeProfiles).where(eq(aeProfiles.id, callerId)).limit(1);
+        if (!callerProfile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const [aeProfile] = await db2.select().from(aeProfiles).where(eq(aeProfiles.id, input.aeId)).limit(1);
+        if (!aeProfile) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
+
+        const last3 = await getMetricsForAeBefore(input.aeId, input.year, input.month, 3);
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+          last3.map((m) => ({
+            year: m.year, month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal,
+            retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+          })),
+          new Date(aeProfile.joinDate)
+        );
+        const { tier } = calculateTier({ avgArrUsd, avgDemosPw, avgDialsPw, avgRetentionRate: null, isNewJoiner: false, isTeamLeader: aeProfile.isTeamLeader });
+
+        await db2
+          .insert(tierSnapshots)
+          .values({
+            aeId: input.aeId,
+            snapshotYear: input.year,
+            snapshotMonth: input.month,
+            tier: tier as "bronze" | "silver" | "gold",
+            avgArrUsd: String(avgArrUsd.toFixed(2)),
+            avgDemosPw: String(avgDemosPw.toFixed(2)),
+            avgDialsPw: String(avgDialsPw.toFixed(2)),
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              tier: tier as "bronze" | "silver" | "gold",
+              avgArrUsd: String(avgArrUsd.toFixed(2)),
+              avgDemosPw: String(avgDemosPw.toFixed(2)),
+              avgDialsPw: String(avgDialsPw.toFixed(2)),
+            },
+          });
+
+        return { success: true, aeId: input.aeId, year: input.year, month: input.month, tier };
+      }),
+
+    /**
+     * Backfill tier snapshots for ALL AEs for ALL months that have monthly_metrics data.
+     * Team-leader only. Safe to run multiple times (upsert).
+     */
+    backfillAll: protectedProcedure.mutation(async ({ ctx }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [callerProfile] = await db2.select().from(aeProfiles).where(eq(aeProfiles.id, callerId)).limit(1);
+      if (!callerProfile?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+      const allAes = await db2.select().from(aeProfiles);
+      const allMetrics = await db2.select().from(monthlyMetrics);
+
+      // Collect unique year/month combos from metrics
+      const monthSet = new Set(allMetrics.map((m) => `${m.year}-${m.month}`));
+      const months = Array.from(monthSet)
+        .map((k) => { const [y, mo] = k.split("-"); return { year: Number(y), month: Number(mo) }; })
+        .sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month));
+
+      let snapshotted = 0;
+      for (const ae of allAes) {
+        for (const { year, month } of months) {
+          try {
+            const last3 = await getMetricsForAeBefore(ae.id, year, month, 3);
+            const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+              last3.map((m) => ({
+                year: m.year, month: m.month,
+                arrUsd: Number(m.arrUsd),
+                demosTotal: m.demosTotal,
+                dialsTotal: m.dialsTotal,
+                retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+              })),
+              new Date(ae.joinDate)
+            );
+            const { tier } = calculateTier({ avgArrUsd, avgDemosPw, avgDialsPw, avgRetentionRate: null, isNewJoiner: false, isTeamLeader: ae.isTeamLeader });
+            await db2
+              .insert(tierSnapshots)
+              .values({
+                aeId: ae.id,
+                snapshotYear: year,
+                snapshotMonth: month,
+                tier: tier as "bronze" | "silver" | "gold",
+                avgArrUsd: String(avgArrUsd.toFixed(2)),
+                avgDemosPw: String(avgDemosPw.toFixed(2)),
+                avgDialsPw: String(avgDialsPw.toFixed(2)),
+              })
+              .onDuplicateKeyUpdate({
+                set: {
+                  tier: tier as "bronze" | "silver" | "gold",
+                  avgArrUsd: String(avgArrUsd.toFixed(2)),
+                  avgDemosPw: String(avgDemosPw.toFixed(2)),
+                  avgDialsPw: String(avgDialsPw.toFixed(2)),
+                },
+              });
+            snapshotted++;
+          } catch { /* skip individual failures */ }
+        }
+      }
+      return { success: true, snapshotted };
+    }),
+  }),
+
   leaderboard: router({
     get: publicProcedure
       .input(

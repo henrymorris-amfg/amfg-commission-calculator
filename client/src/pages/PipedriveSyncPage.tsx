@@ -18,7 +18,55 @@ import {
   TrendingUp,
   Users,
   Zap,
+  Database,
 } from "lucide-react";
+
+function TierSnapshotBackfillCard() {
+  const backfillMutation = trpc.tierSnapshot.backfillAll.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Tier snapshots backfilled — ${data.snapshotted} records written.`);
+    },
+    onError: (err) => {
+      toast.error(`Backfill failed: ${err.message}`);
+    },
+  });
+
+  return (
+    <div className="rounded-2xl bg-card border border-border p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex gap-3">
+          <Database className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-0.5">Tier Snapshot Backfill</p>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-lg">
+              Calculates and stores each AE's tier for every historical month using the correct 3-month rolling window.
+              Run this after a Pipedrive sync to ensure the Team Commission tab shows authoritative historical tiers
+              rather than live recalculations.
+            </p>
+            {backfillMutation.data && (
+              <p className="text-xs text-green-400 mt-1.5 font-medium">
+                ✓ {backfillMutation.data.snapshotted} tier snapshots written for all AEs
+              </p>
+            )}
+          </div>
+        </div>
+        <Button
+          onClick={() => backfillMutation.mutate()}
+          disabled={backfillMutation.isPending}
+          variant="outline"
+          size="sm"
+          className="gap-2 shrink-0"
+        >
+          {backfillMutation.isPending ? (
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Backfilling...</>
+          ) : (
+            <><Database className="w-3.5 h-3.5" /> Backfill Tier Snapshots</>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -635,6 +683,9 @@ export default function PipedriveSyncPage() {
             </Button>
           </div>
         )}
+
+        {/* Tier Snapshot Backfill */}
+        <TierSnapshotBackfillCard />
       </div>
     </AppLayout>
   );

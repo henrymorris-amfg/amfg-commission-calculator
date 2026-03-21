@@ -887,8 +887,9 @@ export const pipedriveSyncRouter = router({
             });
 
             // Create payout schedule
+            // Payouts start 1 month AFTER contract start date (i+1 offset)
             const payouts = commResult.payoutSchedule.map((p, i) => {
-              const payoutDate = addMonths(startYear, startMonth, i);
+              const payoutDate = addMonths(startYear, startMonth, i + 1);
               return {
                 dealId,
                 aeId: ae.id,
