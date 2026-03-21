@@ -29,9 +29,9 @@ export async function resyncAllPayouts(aeId: number | null): Promise<{
   try {
     // Delete all existing payouts
     const deleteResult = await db.delete(commissionPayouts);
-    const payoutsDeleted = deleteResult.rowCount || 0;
+    const payoutsDeleted = (deleteResult as any).rowCount ?? 0;
 
-    // Get all active deals with commission structure
+    // Get all deals with their commission structure (no isActive filter — all deals in DB are valid)
     const allDeals = await db
       .select({
         id: deals.id,
@@ -44,31 +44,34 @@ export async function resyncAllPayouts(aeId: number | null): Promise<{
         isReferral: deals.isReferral,
         onboardingFeePaid: deals.onboardingFeePaid,
         fxRateAtWon: deals.fxRateAtWon,
-        commissionPercentage: commissionStructures.commissionPercentage,
-        onboardingFeeGbp: commissionStructures.onboardingFeeGbp,
+        bronzeRate: commissionStructures.bronzeRate,
+        silverRate: commissionStructures.silverRate,
+        goldRate: commissionStructures.goldRate,
+        onboardingDeductionGbp: commissionStructures.onboardingDeductionGbp,
       })
       .from(deals)
-      .leftJoin(commissionStructures, eq(deals.commissionStructureId, commissionStructures.id))
-      .where(eq(deals.isActive, true));
+      .leftJoin(commissionStructures, eq(deals.commissionStructureId, commissionStructures.id));
 
     let payoutsCreated = 0;
     let totalCommissionGbp = 0;
 
     // Process each deal
     for (const deal of allDeals) {
-      const payouts = calculatePayouts(deal);
+      const payoutRecords = calculatePayouts(deal);
 
-      for (const payout of payouts) {
+      for (const payout of payoutRecords) {
         await db.insert(commissionPayouts).values({
           aeId: deal.aeId,
           dealId: deal.id,
           payoutMonth: payout.month,
           payoutYear: payout.year,
-          netCommissionGbp: payout.netGbp,
-          netCommissionUsd: payout.netUsd,
+          grossCommissionUsd: String(payout.grossUsd),
+          netCommissionGbp: String(payout.netGbp),
+          netCommissionUsd: String(payout.netUsd),
           payoutNumber: payout.payoutNumber,
-          totalPayouts: payout.totalPayouts,
-          fxRateUsed: payout.fxRate,
+          fxRateUsed: String(payout.fxRate),
+          referralDeductionUsd: String(payout.referralDeductionUsd),
+          onboardingDeductionGbp: String(payout.onboardingDeductionGbp),
         });
 
         payoutsCreated++;
@@ -96,14 +99,31 @@ export async function resyncAllPayouts(aeId: number | null): Promise<{
 interface PayoutRecord {
   month: number;
   year: number;
+  grossUsd: number;
   netGbp: number;
   netUsd: number;
   payoutNumber: number;
-  totalPayouts: number;
   fxRate: number;
+  referralDeductionUsd: number;
+  onboardingDeductionGbp: number;
 }
 
-function calculatePayouts(deal: any): PayoutRecord[] {
+function calculatePayouts(deal: {
+  id: number;
+  aeId: number;
+  customerName: string;
+  contractType: string;
+  contractStartDate: Date | null;
+  arrUsd: string;
+  tierAtStart: string;
+  isReferral: boolean;
+  onboardingFeePaid: boolean;
+  fxRateAtWon: string | null;
+  bronzeRate: string | null;
+  silverRate: string | null;
+  goldRate: string | null;
+  onboardingDeductionGbp: string | null;
+}): PayoutRecord[] {
   const payouts: PayoutRecord[] = [];
 
   if (!deal.contractStartDate || !deal.arrUsd) {
@@ -114,72 +134,77 @@ function calculatePayouts(deal: any): PayoutRecord[] {
   const startMonth = startDate.getMonth() + 1;
   const startYear = startDate.getFullYear();
 
-  // Determine commission rate based on tier
+  const arrUsd = parseFloat(deal.arrUsd);
+
+  // Determine commission rate based on tier (use versioned rates if available)
   const commissionRate =
     deal.tierAtStart === "gold"
-      ? 0.19
+      ? parseFloat(deal.goldRate ?? "0.19")
       : deal.tierAtStart === "silver"
-        ? 0.16
-        : 0.13; // bronze
+        ? parseFloat(deal.silverRate ?? "0.16")
+        : parseFloat(deal.bronzeRate ?? "0.13"); // bronze
 
-  const baseCommissionUsd = deal.arrUsd * commissionRate;
-  const fxRate = deal.fxRateAtWon || 0.738; // fallback rate
-  let baseCommissionGbp = baseCommissionUsd * fxRate;
+  const grossCommissionUsd = arrUsd * commissionRate;
+  const fxRate = deal.fxRateAtWon ? parseFloat(deal.fxRateAtWon) : 0.738; // fallback rate
 
-  // Apply referral discount (50%)
-  if (deal.isReferral) {
-    baseCommissionGbp *= 0.5;
-  }
+  // Referral deduction (50% of gross USD)
+  const referralDeductionUsd = deal.isReferral ? grossCommissionUsd * 0.5 : 0;
+  const netAfterReferralUsd = grossCommissionUsd - referralDeductionUsd;
+  const netAfterReferralGbp = netAfterReferralUsd * fxRate;
 
-  // Onboarding fee deduction
-  const onboardingDeductionGbp = deal.onboardingFeePaid ? (deal.onboardingFeeGbp || 500) : 0;
+  // Onboarding fee deduction (GBP, first payout only)
+  const onboardingDeductionGbp = deal.onboardingFeePaid
+    ? parseFloat(deal.onboardingDeductionGbp ?? "500")
+    : 0;
 
   if (deal.contractType === "annual") {
     // Annual: single payout in start month
-    const netGbp = Math.max(0, baseCommissionGbp - onboardingDeductionGbp);
+    const netGbp = Math.max(0, netAfterReferralGbp - onboardingDeductionGbp);
     const netUsd = netGbp / fxRate;
 
     payouts.push({
       month: startMonth,
       year: startYear,
+      grossUsd: grossCommissionUsd,
       netGbp,
       netUsd,
       payoutNumber: 1,
-      totalPayouts: 1,
       fxRate,
+      referralDeductionUsd,
+      onboardingDeductionGbp,
     });
   } else if (deal.contractType === "monthly") {
     // Monthly: 13 payouts (current + 12 future)
-    const monthlyCommissionGbp = baseCommissionGbp / 12;
-    const monthlyCommissionUsd = baseCommissionUsd / 12;
+    const monthlyGrossUsd = grossCommissionUsd / 12;
+    const monthlyReferralDeductionUsd = referralDeductionUsd / 12;
+    const monthlyNetUsd = netAfterReferralUsd / 12;
+    const monthlyNetGbp = netAfterReferralGbp / 12;
 
     for (let i = 0; i < 13; i++) {
       let payoutMonth = startMonth + i;
       let payoutYear = startYear;
 
       // Handle month/year overflow
-      if (payoutMonth > 12) {
+      while (payoutMonth > 12) {
         payoutMonth -= 12;
         payoutYear += 1;
       }
 
       // First payout: deduct onboarding fee
-      let netGbp = monthlyCommissionGbp;
-      let netUsd = monthlyCommissionUsd;
-
-      if (i === 0 && onboardingDeductionGbp > 0) {
-        netGbp -= onboardingDeductionGbp;
-        netUsd = netGbp / fxRate;
-      }
+      const thisOnboardingDeduction = i === 0 ? onboardingDeductionGbp : 0;
+      const netGbp = Math.max(0, monthlyNetGbp - thisOnboardingDeduction);
+      const netUsd = netGbp / fxRate;
 
       payouts.push({
         month: payoutMonth,
         year: payoutYear,
-        netGbp: Math.max(0, netGbp),
-        netUsd: Math.max(0, netUsd),
+        grossUsd: monthlyGrossUsd,
+        netGbp,
+        netUsd,
         payoutNumber: i + 1,
-        totalPayouts: 13,
         fxRate,
+        referralDeductionUsd: monthlyReferralDeductionUsd,
+        onboardingDeductionGbp: thisOnboardingDeduction,
       });
     }
   }

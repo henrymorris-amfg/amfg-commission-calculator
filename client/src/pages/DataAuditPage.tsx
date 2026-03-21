@@ -15,6 +15,7 @@ import {
   TrendingUp,
   XCircle,
 } from "lucide-react";
+import { computeActiveWeeks } from "../../../shared/commission";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,33 @@ type AeData = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * For a given target month, compute the 3 rolling months (target-2, target-1, target)
+ * and return weeks worked since joinDate across those months.
+ */
+function getWeeksWorkedForMonth(
+  joinDate: Date | string,
+  year: number,
+  month: number
+): number {
+  const join = new Date(joinDate);
+  // Build last 3 months ending at (year, month)
+  const months: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }> = [];
+  for (let i = 2; i >= 0; i--) {
+    let m = month - i;
+    let y = year;
+    if (m <= 0) { m += 12; y -= 1; }
+    months.push({ year: y, month: m, arrUsd: 0, demosTotal: 0, dialsTotal: 0 });
+  }
+  // Only include months on or after join date
+  const eligibleMonths = months.filter((m) => {
+    const monthEnd = new Date(m.year, m.month, 0);
+    return monthEnd >= join;
+  });
+  if (eligibleMonths.length === 0) return 0;
+  return computeActiveWeeks(eligibleMonths, join);
+}
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -93,7 +121,7 @@ export default function DataAuditPage() {
   const { ae, isLoading } = useAeAuth();
   const [, navigate] = useLocation();
   const [selectedAe, setSelectedAe] = useState<number | "all">("all");
-  const [view, setView] = useState<"arr" | "demos" | "dials">("demos");
+  const [view, setView] = useState<"arr" | "demos" | "dials" | "rolling">("demos");
 
   const auditQuery = trpc.dataAudit.allMetrics.useQuery(undefined, {
     retry: false,
@@ -260,7 +288,7 @@ export default function DataAuditPage() {
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground font-medium">Show:</span>
               <div className="flex rounded-lg border border-border overflow-hidden">
-                {(["demos", "dials", "arr"] as const).map((v) => (
+                {(["demos", "dials", "arr", "rolling"] as const).map((v) => (
                   <button
                     key={v}
                     onClick={() => setView(v)}
@@ -270,7 +298,7 @@ export default function DataAuditPage() {
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     }`}
                   >
-                    {v === "arr" ? "ARR" : v === "demos" ? "Demos Done" : "Dials"}
+                    {v === "arr" ? "ARR" : v === "demos" ? "Demos Done" : v === "dials" ? "Dials" : "Rolling Avg"}
                   </button>
                 ))}
               </div>
@@ -319,8 +347,10 @@ export default function DataAuditPage() {
                       total = aeRow.metrics.reduce((s, m) => s + m.arrUsd, 0);
                     } else if (view === "demos") {
                       total = aeRow.metrics.reduce((s, m) => s + m.demosTotal, 0);
-                    } else {
+                    } else if (view === "dials") {
                       total = aeRow.metrics.reduce((s, m) => s + m.dialsTotal, 0);
+                    } else {
+                      total = 0; // rolling avg: no meaningful total
                     }
 
                     return (
@@ -350,7 +380,46 @@ export default function DataAuditPage() {
                             );
                           }
 
-                          const status = getCellStatus(metric, view);
+                          if (view === "rolling") {
+                            // Show weeks worked divisor + demos/wk + dials/wk for this month's 3-month window
+                            const weeksWorked = getWeeksWorkedForMonth(aeRow.joinDate, year, month);
+                            if (weeksWorked === 0) {
+                              return (
+                                <td key={key} className="text-center px-2 py-2.5 text-muted-foreground/20">—</td>
+                              );
+                            }
+                            // Sum demos and dials over the 3-month window
+                            let totalDemos = 0;
+                            let totalDials = 0;
+                            for (let i = 2; i >= 0; i--) {
+                              let wm = month - i;
+                              let wy = year;
+                              if (wm <= 0) { wm += 12; wy -= 1; }
+                              const wMetric = metricMap.get(`${wy}-${wm}`);
+                              if (wMetric) {
+                                totalDemos += wMetric.demosTotal;
+                                totalDials += wMetric.dialsTotal;
+                              }
+                            }
+                            const demosPw = (totalDemos / weeksWorked).toFixed(1);
+                            const dialsPw = Math.round(totalDials / weeksWorked);
+                            return (
+                              <td key={key} className="text-center px-2 py-2.5">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <span
+                                    className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary min-w-[36px]"
+                                    title={`${weeksWorked.toFixed(1)} weeks worked in 3-month window ending ${monthLabel(year, month)}`}
+                                  >
+                                    {weeksWorked.toFixed(1)}w
+                                  </span>
+                                  <span className="text-[10px] text-emerald-400">{demosPw}d/w</span>
+                                  <span className="text-[10px] text-blue-400">{dialsPw}/w</span>
+                                </div>
+                              </td>
+                            );
+                          }
+
+                          const status = getCellStatus(metric, view as "arr" | "demos" | "dials");
                           let displayValue = "—";
                           if (metric) {
                             if (view === "arr") displayValue = formatK(metric.arrUsd);
@@ -374,7 +443,7 @@ export default function DataAuditPage() {
                           );
                         })}
                         <td className="text-center px-3 py-2.5 font-semibold text-foreground">
-                          {view === "arr" ? formatK(total) : total.toLocaleString()}
+                          {view === "arr" ? formatK(total) : view === "rolling" ? "—" : total.toLocaleString()}
                         </td>
                       </tr>
                     );

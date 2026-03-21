@@ -567,3 +567,8 @@
 - [x] Fixed tier forecast card on AE dashboard — was calling wrong router (commission vs commissionStructure) and wrong auth (protectedProcedure vs publicProcedure with AE token)
 - [x] Resend email service wired up — emailService.ts sends rich HTML tier change emails directly to AE inboxes; falls back gracefully if RESEND_API_KEY not set
 - [x] 8 new unit tests for email service (109 total tests passing)
+
+## TS Errors & Data Audit Improvements (Mar 21 2026) - COMPLETED
+- [x] Fix resyncPayouts.ts TypeScript errors — removed non-existent isActive filter, fixed insert columns to match schema (grossCommissionUsd, referralDeductionUsd, onboardingDeductionGbp), used correct commissionStructures column names (bronzeRate/silverRate/goldRate)
+- [x] Add "Rolling Avg" view to Data Audit page — new toggle shows weeks worked divisor (e.g. 3.5w), demos/week, and dials/week per month per AE, using the same join-date-bounded computeActiveWeeks logic as the tier engine
+- [x] All 109 tests passing
