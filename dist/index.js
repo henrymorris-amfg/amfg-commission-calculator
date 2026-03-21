@@ -1512,6 +1512,104 @@ var init_tierReportEmailService = __esm({
   }
 });
 
+// server/tierForecastHelper.ts
+var tierForecastHelper_exports = {};
+__export(tierForecastHelper_exports, {
+  calculateTierForecast: () => calculateTierForecast,
+  formatTierForecast: () => formatTierForecast
+});
+function calculateTierForecast(currentTier, currentMetrics, isTeamLeader = false, historicalGrowthRate = 0.05) {
+  const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+  const tierOrder = ["bronze", "silver", "gold"];
+  const currentTierIndex = tierOrder.indexOf(currentTier);
+  const forecastMonths = [];
+  let projectedArrUsd = currentMetrics.arrUsd;
+  let projectedDemosPw = currentMetrics.demosPw;
+  let projectedDialsPw = currentMetrics.dialsPw;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const now = /* @__PURE__ */ new Date();
+  for (let i = 1; i <= 3; i++) {
+    projectedArrUsd *= 1 + historicalGrowthRate;
+    projectedDemosPw *= 1 + historicalGrowthRate;
+    projectedDialsPw *= 1 + historicalGrowthRate;
+    const forecastMonth = new Date(now);
+    forecastMonth.setMonth(forecastMonth.getMonth() + i);
+    const monthName = monthNames[forecastMonth.getMonth()];
+    let projectedTier = "bronze";
+    if (projectedArrUsd >= targets.gold.arrUsd && projectedDemosPw >= targets.gold.demosPw && projectedDialsPw >= targets.gold.dialsPw) {
+      projectedTier = "gold";
+    } else if (projectedArrUsd >= targets.silver.arrUsd && projectedDemosPw >= targets.silver.demosPw && projectedDialsPw >= targets.silver.dialsPw) {
+      projectedTier = "silver";
+    }
+    const nextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
+    const nextTargets = nextTier ? targets[nextTier] : null;
+    forecastMonths.push({
+      month: monthName,
+      projectedTier,
+      projectedMetrics: {
+        arrUsd: Math.round(projectedArrUsd),
+        demosPw: Math.round(projectedDemosPw * 10) / 10,
+        dialsPw: Math.round(projectedDialsPw)
+      },
+      gapToNextTier: nextTargets ? {
+        arrUsd: Math.max(0, nextTargets.arrUsd - projectedArrUsd),
+        demosPw: Math.max(0, nextTargets.demosPw - projectedDemosPw),
+        dialsPw: Math.max(0, nextTargets.dialsPw - projectedDialsPw)
+      } : { arrUsd: 0, demosPw: 0, dialsPw: 0 }
+    });
+  }
+  const targetTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : currentTier;
+  const targetMetrics = targetTier === "silver" ? targets.silver : targets.gold;
+  const totalMonthsToReach = 3;
+  const monthlyAverageArrUsd = targetMetrics.arrUsd / totalMonthsToReach;
+  const monthlyAverageDemosPw = targetMetrics.demosPw / totalMonthsToReach;
+  const monthlyAverageDialsPw = targetMetrics.dialsPw / totalMonthsToReach;
+  return {
+    currentTier,
+    currentMetrics,
+    forecastMonths,
+    actionableTargets: {
+      targetTier,
+      monthsToReach: totalMonthsToReach,
+      requiredMetrics: {
+        totalArrUsd: targetMetrics.arrUsd,
+        totalDemosPw: targetMetrics.demosPw,
+        totalDialsPw: targetMetrics.dialsPw,
+        monthlyAverageArrUsd: Math.round(monthlyAverageArrUsd),
+        monthlyAverageDemosPw: Math.round(monthlyAverageDemosPw * 10) / 10,
+        monthlyAverageDialsPw: Math.round(monthlyAverageDialsPw)
+      }
+    }
+  };
+}
+function formatTierForecast(forecast) {
+  const lines = [
+    `\u{1F4CA} Tier Forecast from ${forecast.currentTier.toUpperCase()}`,
+    `Current: $${forecast.currentMetrics.arrUsd.toLocaleString()} ARR | ${forecast.currentMetrics.demosPw.toFixed(1)} demos/wk | ${forecast.currentMetrics.dialsPw} dials/wk`,
+    ``,
+    `\u{1F3AF} To reach ${forecast.actionableTargets.targetTier.toUpperCase()} in 3 months:`,
+    `   \u2022 Monthly ARR: $${forecast.actionableTargets.requiredMetrics.monthlyAverageArrUsd.toLocaleString()}`,
+    `   \u2022 Monthly Demos: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDemosPw.toFixed(1)}/wk`,
+    `   \u2022 Monthly Dials: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDialsPw}`
+  ];
+  forecast.forecastMonths.forEach((month) => {
+    lines.push(`
+${month.month}: ${month.projectedTier.toUpperCase()} tier`);
+    if (month.gapToNextTier.arrUsd > 0) {
+      lines.push(
+        `   Gap to next: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
+      );
+    }
+  });
+  return lines.join("\n");
+}
+var init_tierForecastHelper = __esm({
+  "server/tierForecastHelper.ts"() {
+    "use strict";
+    init_commission();
+  }
+});
+
 // server/_core/index.ts
 import "dotenv/config";
 import express2 from "express";
@@ -2183,27 +2281,25 @@ function getLastSyncResult() {
 function getNextSyncTime() {
   return nextSyncTime;
 }
-function computeNextMonday7amUtc() {
+function computeNextDaily8amUtc() {
   const now = /* @__PURE__ */ new Date();
-  const dayOfWeek = now.getUTCDay();
   const next = new Date(now);
-  if (dayOfWeek === 1 && now.getUTCHours() < 7) {
-    next.setUTCHours(7, 0, 0, 0);
+  if (now.getUTCHours() < 8) {
+    next.setUTCHours(8, 0, 0, 0);
   } else {
-    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
-    next.setUTCDate(now.getUTCDate() + daysUntilMonday);
-    next.setUTCHours(7, 0, 0, 0);
+    next.setUTCDate(now.getUTCDate() + 1);
+    next.setUTCHours(8, 0, 0, 0);
   }
   return next;
 }
 function startWeeklySyncScheduler() {
-  const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 7 * * 1";
+  const cronExpression = process.env.DAILY_SYNC_CRON || "0 8 * * *";
   const task = cron.schedule(
     cronExpression,
     async () => {
       try {
         lastSyncResult = await runWeeklySync();
-        nextSyncTime = computeNextMonday7amUtc();
+        nextSyncTime = computeNextDaily8amUtc();
       } catch (err) {
         console.error("[WeeklySync] Unhandled error:", err);
       }
@@ -2212,7 +2308,7 @@ function startWeeklySyncScheduler() {
       timezone: "UTC"
     }
   );
-  nextSyncTime = computeNextMonday7amUtc();
+  nextSyncTime = computeNextDaily8amUtc();
   console.log(
     `[WeeklySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} (cron: "${cronExpression}")`
   );
@@ -3467,19 +3563,19 @@ function initializeDemoDetectionScheduler() {
     console.log("[DemoDetectionScheduler] Scheduler already initialized");
     return;
   }
-  const cronExpression = "0 9 * * 1";
+  const cronExpression = "0 8 * * *";
   scheduledJob = cron2.schedule(cronExpression, async () => {
     console.log("[DemoDetectionScheduler] Running demo detection at", (/* @__PURE__ */ new Date()).toISOString());
     await runDemoDetection();
   });
-  console.log("[DemoDetectionScheduler] Initialized - will run at 9 AM GMT every Monday");
+  console.log("[DemoDetectionScheduler] Initialized - will run at 8 AM GMT every day");
 }
 async function runDemoDetection() {
   try {
-    console.log("[DemoDetectionScheduler] Starting weekly demo detection");
+    console.log("[DemoDetectionScheduler] Starting daily demo detection");
     await detectDuplicateDemos();
     await detectCrmHygieneIssues();
-    console.log("[DemoDetectionScheduler] Weekly demo detection completed successfully");
+    console.log("[DemoDetectionScheduler] Daily demo detection completed successfully");
   } catch (error) {
     console.error("[DemoDetectionScheduler] Error during demo detection:", error);
   }
@@ -3797,6 +3893,18 @@ async function fetchUsdToGbpRate() {
     return rate;
   } catch {
     return _fxCache?.rate ?? 0.79;
+  }
+}
+async function fetchLiveRates() {
+  try {
+    const res = await fetch(
+      "https://api.exchangerate-api.com/v4/latest/USD"
+    );
+    if (!res.ok) throw new Error("FX API error");
+    const data = await res.json();
+    return data.rates;
+  } catch {
+    return { GBP: 0.79, EUR: 0.8656 };
   }
 }
 var appRouter = router({
@@ -4475,8 +4583,10 @@ var appRouter = router({
     }),
     // Get live FX rate
     fxRate: publicProcedure.query(async () => {
-      const rate = await fetchUsdToGbpRate();
-      return { usdToGbp: rate, fetchedAt: (/* @__PURE__ */ new Date()).toISOString() };
+      const rateGbp = await fetchUsdToGbpRate();
+      const rates = await fetchLiveRates();
+      const rateEur = rates.EUR ? 1 / rates.EUR : 0.8656;
+      return { usdToGbp: rateGbp, usdToEur: rateEur, fetchedAt: (/* @__PURE__ */ new Date()).toISOString() };
     }),
     // Payout calendar: all payouts grouped by month, split into past/current/future
     payoutCalendar: publicProcedure.query(async ({ ctx }) => {
@@ -4872,6 +4982,35 @@ var appRouter = router({
         message: `Tier report sent for ${reportMonth}/${reportYear}`,
         aeCount: tierData.length
       };
+    }),
+    // Tier forecast: 3-month projection with actionable targets
+    tierForecast: protectedProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const ae = await getAeProfileById(aeId);
+      if (!ae) throw new TRPCError9({ code: "NOT_FOUND", message: "AE not found" });
+      const last3Months = await getMetricsForAe(aeId, 3);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months);
+      const tierResult = calculateTier({
+        avgArrUsd,
+        avgDemosPw,
+        avgDialsPw,
+        avgRetentionRate: null,
+        isNewJoiner: isNewJoiner(ae.joinDate),
+        isTeamLeader: ae.isTeamLeader
+      });
+      const { calculateTierForecast: calculateTierForecast2 } = await Promise.resolve().then(() => (init_tierForecastHelper(), tierForecastHelper_exports));
+      const forecast = calculateTierForecast2(
+        tierResult.tier,
+        {
+          arrUsd: avgArrUsd,
+          demosPw: avgDemosPw,
+          dialsPw: avgDialsPw
+        },
+        ae.isTeamLeader,
+        0.05
+      );
+      return forecast;
     })
   }),
   // ─── Admin Utilities ─────────────────────────────────────────────────────

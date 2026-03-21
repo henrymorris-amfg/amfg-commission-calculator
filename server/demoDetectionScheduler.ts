@@ -14,17 +14,17 @@ export function initializeDemoDetectionScheduler(): void {
     return;
   }
 
-  // Schedule for Monday at 9 AM GMT
+  // Schedule for daily at 8 AM GMT
   // Cron format: second minute hour day month dayOfWeek
-  // 0 9 * * 1 = 9:00 AM every Monday
-  const cronExpression = "0 9 * * 1";
+  // 0 8 * * * = 8:00 AM every day
+  const cronExpression = "0 8 * * *";
 
   scheduledJob = cron.schedule(cronExpression, async () => {
     console.log("[DemoDetectionScheduler] Running demo detection at", new Date().toISOString());
     await runDemoDetection();
   });
 
-  console.log("[DemoDetectionScheduler] Initialized - will run at 9 AM GMT every Monday");
+  console.log("[DemoDetectionScheduler] Initialized - will run at 8 AM GMT every day");
 }
 
 export function stopDemoDetectionScheduler(): void {
@@ -37,13 +37,13 @@ export function stopDemoDetectionScheduler(): void {
 
 async function runDemoDetection(): Promise<void> {
   try {
-    console.log("[DemoDetectionScheduler] Starting weekly demo detection");
+    console.log("[DemoDetectionScheduler] Starting daily demo detection");
 
     // Run both detection processes
     await detectDuplicateDemos();
     await detectCrmHygieneIssues();
 
-    console.log("[DemoDetectionScheduler] Weekly demo detection completed successfully");
+    console.log("[DemoDetectionScheduler] Daily demo detection completed successfully");
   } catch (error) {
     console.error("[DemoDetectionScheduler] Error during demo detection:", error);
   }

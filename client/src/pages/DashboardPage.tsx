@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
 import { FlaggedDemosAlert } from "@/components/FlaggedDemosAlert";
+import { TierForecastCard } from "@/components/TierForecastCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
@@ -255,16 +256,26 @@ export default function DashboardPage() {
             </span>
           )}
           {fxData && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-              style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
-              <Clock className="w-3 h-3" />
-              Live FX: 1 USD = £{fxRate.toFixed(4)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
+                <Clock className="w-3 h-3" />
+                USD/GBP: {fxData.usdToGbp?.toFixed(4)}
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
+                <Clock className="w-3 h-3" />
+                USD/EUR: {fxData.usdToEur?.toFixed(4)}
+              </span>
+            </div>
           )}
         </div>
 
         {/* Live Dials from VOIP Studio */}
         <LiveDialsWidget />
+
+        {/* Tier Forecast */}
+        <TierForecastCard />
 
         {/* Tier Card + Stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

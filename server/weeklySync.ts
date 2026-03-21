@@ -545,17 +545,29 @@ function computeNextMonday7amUtc(): Date {
   return next;
 }
 
+function computeNextDaily8amUtc(): Date {
+  const now = new Date();
+  const next = new Date(now);
+  if (now.getUTCHours() < 8) {
+    next.setUTCHours(8, 0, 0, 0);
+  } else {
+    next.setUTCDate(now.getUTCDate() + 1);
+    next.setUTCHours(8, 0, 0, 0);
+  }
+  return next;
+}
+
 export function startWeeklySyncScheduler(): void {
-  // Default: Monday at 07:00 UTC (Monday morning UK time, ready for start of work day)
-  // Override with WEEKLY_SYNC_CRON env var (e.g. "0 7 * * 1")
-  const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 7 * * 1";
+  // Default: Daily at 08:00 UTC (8 AM GMT for real-time metrics accuracy)
+  // Override with DAILY_SYNC_CRON env var (e.g. "0 8 * * *")
+  const cronExpression = process.env.DAILY_SYNC_CRON || "0 8 * * *";
 
   const task = cron.schedule(
     cronExpression,
     async () => {
       try {
         lastSyncResult = await runWeeklySync();
-        nextSyncTime = computeNextMonday7amUtc();
+        nextSyncTime = computeNextDaily8amUtc();
       } catch (err) {
         console.error("[WeeklySync] Unhandled error:", err);
       }
@@ -565,7 +577,7 @@ export function startWeeklySyncScheduler(): void {
     }
   );
 
-  nextSyncTime = computeNextMonday7amUtc();
+  nextSyncTime = computeNextDaily8amUtc();
 
   console.log(
     `[WeeklySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} ` +

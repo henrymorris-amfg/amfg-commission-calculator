@@ -512,3 +512,31 @@
 - [x] Build admin audit view for team leaders
 - [x] Add bulk acknowledge and remediation tools for admins
 - [x] Test all features end-to-end (90 tests passing)
+
+
+## Daily Sync Implementation (Mar 21 2026)
+- [ ] Update Pipedrive sync scheduler from weekly to daily at 8 AM GMT
+- [ ] Update VOIP sync scheduler from weekly to daily at 8 AM GMT
+- [ ] Update demo detection scheduler from weekly to daily at 8 AM GMT
+- [ ] Test all three schedulers verify correct timing
+- [ ] Verify API costs remain minimal
+
+
+## FX Display & Tier Forecast (Mar 21 2026)
+- [ ] Fix FX display - correct GBP/USD rate showing on dashboard
+- [ ] Add EUR/USD exchange rate display
+- [ ] Add VOIP live widget to dashboard showing daily call count
+- [ ] Implement tier forecast with 3-month projection
+- [ ] Show actionable targets: "Need X dials/demos/revenue to reach Gold"
+- [ ] Add automated daily dials recalculation at 8 AM GMT
+- [ ] Test all features end-to-end
+
+
+## FX Display & Tier Forecast (Mar 21 2026) - COMPLETED
+- [x] Fix FX display with correct GBP/USD rate
+- [x] Add EUR/USD rate to FX display
+- [x] Implement tier forecast with 3-month projection
+- [x] Create TierForecastCard component
+- [x] Add tier forecast to dashboard
+- [x] Add automated daily dials recalculation at 8 AM GMT
+- [x] Test all features (90 tests passing)

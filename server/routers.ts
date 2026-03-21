@@ -98,6 +98,19 @@ async function fetchUsdToGbpRate(): Promise<number> {
   }
 }
 
+async function fetchLiveRates(): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(
+      "https://api.exchangerate-api.com/v4/latest/USD"
+    );
+    if (!res.ok) throw new Error("FX API error");
+    const data = (await res.json()) as { rates: Record<string, number> };
+    return data.rates;
+  } catch {
+    return { GBP: 0.79, EUR: 0.8656 };
+  }
+}
+
 // makeAeToken and getAeIdFromCtx are imported from ./aeAuth
 
 // ─── Routers ──────────────────────────────────────────────────────────────────
@@ -963,8 +976,10 @@ export const appRouter = router({
 
     // Get live FX rate
     fxRate: publicProcedure.query(async () => {
-      const rate = await fetchUsdToGbpRate();
-      return { usdToGbp: rate, fetchedAt: new Date().toISOString() };
+      const rateGbp = await fetchUsdToGbpRate();
+      const rates = await fetchLiveRates();
+      const rateEur = rates.EUR ? 1 / rates.EUR : 0.8656;
+      return { usdToGbp: rateGbp, usdToEur: rateEur, fetchedAt: new Date().toISOString() };
     }),
 
     // Payout calendar: all payouts grouped by month, split into past/current/future
@@ -1476,6 +1491,41 @@ export const appRouter = router({
           aeCount: tierData.length,
         };
       }),
+
+    // Tier forecast: 3-month projection with actionable targets
+    tierForecast: protectedProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+      const ae = await getAeProfileById(aeId);
+      if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
+
+      // Get current tier and metrics
+      const last3Months = await getMetricsForAe(aeId, 3);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months as any);
+      const tierResult = calculateTier({
+        avgArrUsd,
+        avgDemosPw,
+        avgDialsPw,
+        avgRetentionRate: null,
+        isNewJoiner: isNewJoiner(ae.joinDate),
+        isTeamLeader: ae.isTeamLeader,
+      });
+
+      const { calculateTierForecast } = await import("./tierForecastHelper");
+      const forecast = calculateTierForecast(
+        tierResult.tier,
+        {
+          arrUsd: avgArrUsd,
+          demosPw: avgDemosPw,
+          dialsPw: avgDialsPw,
+        },
+        ae.isTeamLeader,
+        0.05
+      );
+
+      return forecast;
+    }),
   }),
 
   // ─── Admin Utilities ─────────────────────────────────────────────────────
