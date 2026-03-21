@@ -1137,6 +1137,95 @@ var init_commission = __esm({
   }
 });
 
+// server/_core/notification.ts
+import { TRPCError as TRPCError7 } from "@trpc/server";
+async function notifyOwner(payload) {
+  const { title, content } = validatePayload(payload);
+  if (!ENV.forgeApiUrl) {
+    throw new TRPCError7({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Notification service URL is not configured."
+    });
+  }
+  if (!ENV.forgeApiKey) {
+    throw new TRPCError7({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Notification service API key is not configured."
+    });
+  }
+  const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+        "content-type": "application/json",
+        "connect-protocol-version": "1"
+      },
+      body: JSON.stringify({ title, content })
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.warn(
+        `[Notification] Failed to notify owner (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn("[Notification] Error calling notification service:", error);
+    return false;
+  }
+}
+var TITLE_MAX_LENGTH, CONTENT_MAX_LENGTH, trimValue, isNonEmptyString2, buildEndpointUrl, validatePayload;
+var init_notification = __esm({
+  "server/_core/notification.ts"() {
+    "use strict";
+    init_env();
+    TITLE_MAX_LENGTH = 1200;
+    CONTENT_MAX_LENGTH = 2e4;
+    trimValue = (value) => value.trim();
+    isNonEmptyString2 = (value) => typeof value === "string" && value.trim().length > 0;
+    buildEndpointUrl = (baseUrl) => {
+      const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+      return new URL(
+        "webdevtoken.v1.WebDevService/SendNotification",
+        normalizedBase
+      ).toString();
+    };
+    validatePayload = (input) => {
+      if (!isNonEmptyString2(input.title)) {
+        throw new TRPCError7({
+          code: "BAD_REQUEST",
+          message: "Notification title is required."
+        });
+      }
+      if (!isNonEmptyString2(input.content)) {
+        throw new TRPCError7({
+          code: "BAD_REQUEST",
+          message: "Notification content is required."
+        });
+      }
+      const title = trimValue(input.title);
+      const content = trimValue(input.content);
+      if (title.length > TITLE_MAX_LENGTH) {
+        throw new TRPCError7({
+          code: "BAD_REQUEST",
+          message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`
+        });
+      }
+      if (content.length > CONTENT_MAX_LENGTH) {
+        throw new TRPCError7({
+          code: "BAD_REQUEST",
+          message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`
+        });
+      }
+      return { title, content };
+    };
+  }
+});
+
 // server/fxService.ts
 var fxService_exports = {};
 __export(fxService_exports, {
@@ -1279,6 +1368,111 @@ function formatPayoutInfo(deal, lockedFxRate, currentFxRate) {
 var init_lockedFxPayoutHelper = __esm({
   "server/lockedFxPayoutHelper.ts"() {
     "use strict";
+    init_commission();
+  }
+});
+
+// server/tierReportEmail.ts
+function getTierChangeIndicator(current, previous) {
+  const tierRank = { bronze: 1, silver: 2, gold: 3 };
+  const currentRank = tierRank[current] || 1;
+  const previousRank = tierRank[previous] || 1;
+  if (currentRank > previousRank) return "\u2191 PROMOTED";
+  if (currentRank < previousRank) return "\u2193 DEMOTED";
+  return "\u2192 MAINTAINED";
+}
+function generateTierReportPlainText(aeData, reportMonth, reportYear, previousMonth, previousYear) {
+  const monthName = MONTH_NAMES[reportMonth - 1];
+  const previousMonthName = MONTH_NAMES[previousMonth - 1];
+  let text2 = `MONTHLY COMMISSION TIER REPORT
+`;
+  text2 += `${monthName} ${reportYear} (Comparing to ${previousMonthName} ${previousYear})
+`;
+  text2 += `${"=".repeat(80)}
+
+`;
+  text2 += `${"AE Name".padEnd(20)} | ${"Tier".padEnd(8)} | ${"Rate".padEnd(6)} | ${"Prev".padEnd(8)} | ${"Change".padEnd(12)} | ${"Commission".padEnd(12)} | Deals
+`;
+  text2 += `${"-".repeat(80)}
+`;
+  for (const ae of aeData) {
+    const change = getTierChangeIndicator(ae.currentTier, ae.previousTier);
+    text2 += `${ae.name.padEnd(20)} | ${ae.currentTier.padEnd(8)} | ${(ae.currentRate * 100).toString().padEnd(6)}% | ${ae.previousTier.padEnd(8)} | ${change.padEnd(12)} | \xA3${ae.totalCommissionGbp.toFixed(2).padEnd(12)} | ${ae.dealCount}
+`;
+  }
+  text2 += `
+${"=".repeat(80)}
+`;
+  text2 += `Report generated: ${(/* @__PURE__ */ new Date()).toLocaleString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "GMT"
+  })} GMT
+`;
+  return text2;
+}
+var init_tierReportEmail = __esm({
+  "server/tierReportEmail.ts"() {
+    "use strict";
+    init_commission();
+  }
+});
+
+// server/tierReportEmailService.ts
+var tierReportEmailService_exports = {};
+__export(tierReportEmailService_exports, {
+  calculateTier: () => calculateTier2,
+  getTierRate: () => getTierRate,
+  sendTierReportEmail: () => sendTierReportEmail
+});
+async function sendTierReportEmail(aeData, reportMonth, reportYear, previousMonth, previousYear) {
+  try {
+    const monthName = MONTH_NAMES[reportMonth - 1];
+    const previousMonthName = MONTH_NAMES[previousMonth - 1];
+    const subject = `Commission Tier Report - ${monthName} ${reportYear}`;
+    const plainTextContent = generateTierReportPlainText(
+      aeData,
+      reportMonth,
+      reportYear,
+      previousMonth,
+      previousYear
+    );
+    const result = await notifyOwner({
+      title: subject,
+      content: plainTextContent
+    });
+    if (!result) {
+      console.error("[TierReport] Failed to send tier report via notifyOwner");
+      return false;
+    }
+    console.log(`[TierReport] Successfully sent tier report for ${monthName} ${reportYear}`);
+    return true;
+  } catch (error) {
+    console.error("[TierReport] Error sending tier report:", error);
+    return false;
+  }
+}
+function calculateTier2(avgCommission) {
+  if (avgCommission >= 3e3) return "gold";
+  if (avgCommission >= 2e3) return "silver";
+  return "bronze";
+}
+function getTierRate(tier) {
+  const rates = {
+    bronze: 0.13,
+    silver: 0.16,
+    gold: 0.19
+  };
+  return rates[tier] || 0.13;
+}
+var init_tierReportEmailService = __esm({
+  "server/tierReportEmailService.ts"() {
+    "use strict";
+    init_notification();
+    init_tierReportEmail();
     init_commission();
   }
 });
@@ -1585,6 +1779,7 @@ function registerOAuthRoutes(app) {
 }
 
 // server/routers.ts
+init_trpc();
 import { TRPCError as TRPCError8 } from "@trpc/server";
 
 // server/spreadsheetSync.ts
@@ -3174,93 +3369,9 @@ function getGracePeriodStatus(aeStartDate, year, month) {
 init_const();
 
 // server/_core/systemRouter.ts
-import { z as z4 } from "zod";
-
-// server/_core/notification.ts
-init_env();
-import { TRPCError as TRPCError7 } from "@trpc/server";
-var TITLE_MAX_LENGTH = 1200;
-var CONTENT_MAX_LENGTH = 2e4;
-var trimValue = (value) => value.trim();
-var isNonEmptyString2 = (value) => typeof value === "string" && value.trim().length > 0;
-var buildEndpointUrl = (baseUrl) => {
-  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  return new URL(
-    "webdevtoken.v1.WebDevService/SendNotification",
-    normalizedBase
-  ).toString();
-};
-var validatePayload = (input) => {
-  if (!isNonEmptyString2(input.title)) {
-    throw new TRPCError7({
-      code: "BAD_REQUEST",
-      message: "Notification title is required."
-    });
-  }
-  if (!isNonEmptyString2(input.content)) {
-    throw new TRPCError7({
-      code: "BAD_REQUEST",
-      message: "Notification content is required."
-    });
-  }
-  const title = trimValue(input.title);
-  const content = trimValue(input.content);
-  if (title.length > TITLE_MAX_LENGTH) {
-    throw new TRPCError7({
-      code: "BAD_REQUEST",
-      message: `Notification title must be at most ${TITLE_MAX_LENGTH} characters.`
-    });
-  }
-  if (content.length > CONTENT_MAX_LENGTH) {
-    throw new TRPCError7({
-      code: "BAD_REQUEST",
-      message: `Notification content must be at most ${CONTENT_MAX_LENGTH} characters.`
-    });
-  }
-  return { title, content };
-};
-async function notifyOwner(payload) {
-  const { title, content } = validatePayload(payload);
-  if (!ENV.forgeApiUrl) {
-    throw new TRPCError7({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service URL is not configured."
-    });
-  }
-  if (!ENV.forgeApiKey) {
-    throw new TRPCError7({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service API key is not configured."
-    });
-  }
-  const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-        "content-type": "application/json",
-        "connect-protocol-version": "1"
-      },
-      body: JSON.stringify({ title, content })
-    });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.warn(
-        `[Notification] Failed to notify owner (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
-      );
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.warn("[Notification] Error calling notification service:", error);
-    return false;
-  }
-}
-
-// server/_core/systemRouter.ts
+init_notification();
 init_trpc();
+import { z as z4 } from "zod";
 var systemRouter = router({
   health: publicProcedure.input(
     z4.object({
@@ -4317,6 +4428,70 @@ var appRouter = router({
           totalNetUsd: Number(c.totalNetUsd.toFixed(2))
         }))
       };
+    }),
+    sendMonthlyTierReport: protectedProcedure.input(
+      z5.object({
+        reportMonth: z5.number().min(1).max(12),
+        reportYear: z5.number().min(2020)
+      })
+    ).mutation(async ({ ctx, input }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError8({ code: "UNAUTHORIZED" });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) throw new TRPCError8({ code: "FORBIDDEN" });
+      const { sendTierReportEmail: sendTierReportEmail2, calculateTier: calcTier, getTierRate: getTierRate2 } = await Promise.resolve().then(() => (init_tierReportEmailService(), tierReportEmailService_exports));
+      const { reportMonth, reportYear } = input;
+      let previousMonth = reportMonth - 1;
+      let previousYear = reportYear;
+      if (previousMonth < 1) {
+        previousMonth = 12;
+        previousYear -= 1;
+      }
+      const aeCommissions = await getAllAeProfiles();
+      const tierData = [];
+      for (const ae of aeCommissions) {
+        const currentMonthPayouts = await getPayoutsForMonth(ae.id, reportMonth, reportYear);
+        const currentCommission = currentMonthPayouts.reduce(
+          (sum, p) => sum + (p.netCommissionGbp || 0),
+          0
+        );
+        const previousMonthPayouts = await getPayoutsForMonth(
+          ae.id,
+          previousMonth,
+          previousYear
+        );
+        const previousCommission = previousMonthPayouts.reduce(
+          (sum, p) => sum + (p.netCommissionGbp || 0),
+          0
+        );
+        const currentTier = calcTier(currentCommission);
+        const previousTier = calcTier(previousCommission);
+        tierData.push({
+          id: ae.id,
+          name: ae.name,
+          currentTier,
+          currentRate: getTierRate2(currentTier),
+          previousTier,
+          previousRate: getTierRate2(previousTier),
+          totalCommissionGbp: currentCommission,
+          dealCount: currentMonthPayouts.length
+        });
+      }
+      const emailSent = await sendTierReportEmail2(
+        tierData,
+        reportMonth,
+        reportYear,
+        previousMonth,
+        previousYear
+      );
+      if (!emailSent) {
+        throw new TRPCError8({ code: "INTERNAL_SERVER_ERROR", message: "Failed to send tier report" });
+      }
+      return {
+        success: true,
+        message: `Tier report sent for ${reportMonth}/${reportYear}`,
+        aeCount: tierData.length
+      };
     })
   }),
   // ─── Admin Utilities ─────────────────────────────────────────────────────
@@ -4599,6 +4774,114 @@ function serveStatic(app) {
   });
 }
 
+// server/tierReportScheduler.ts
+init_tierReportEmailService();
+init_db();
+import * as cron2 from "node-cron";
+var scheduledJob = null;
+function initializeTierReportScheduler() {
+  if (scheduledJob) {
+    console.log("[TierReportScheduler] Scheduler already initialized");
+    return;
+  }
+  const cronExpression = "0 9 10 * *";
+  scheduledJob = cron2.schedule(cronExpression, async () => {
+    console.log("[TierReportScheduler] Running monthly tier report at", (/* @__PURE__ */ new Date()).toISOString());
+    await sendMonthlyTierReportJob();
+  });
+  console.log("[TierReportScheduler] Initialized - will run at 9 AM GMT on the 10th of each month");
+}
+async function sendMonthlyTierReportJob() {
+  try {
+    const db = await getDb();
+    if (!db) {
+      console.error("[TierReportScheduler] Database connection failed");
+      return;
+    }
+    const now = /* @__PURE__ */ new Date();
+    let reportMonth = now.getMonth();
+    let reportYear = now.getFullYear();
+    reportMonth = reportMonth + 1;
+    let previousMonth = reportMonth - 1;
+    let previousYear = reportYear;
+    if (previousMonth < 1) {
+      previousMonth = 12;
+      previousYear -= 1;
+    }
+    console.log(
+      `[TierReportScheduler] Generating report for ${previousMonth}/${previousYear}`
+    );
+    const aeCommissions = await db.query.aeProfiles.findMany({
+      columns: {
+        id: true,
+        name: true,
+        tier: true
+      }
+    });
+    const tierData = [];
+    let comparisonMonth = previousMonth - 1;
+    let comparisonYear = previousYear;
+    if (comparisonMonth < 1) {
+      comparisonMonth = 12;
+      comparisonYear -= 1;
+    }
+    for (const ae of aeCommissions) {
+      const currentMonthPayouts = await db.query.commissionPayouts.findMany({
+        where: (payouts, { eq: eq4, and: and3 }) => and3(
+          eq4(payouts.aeId, ae.id),
+          eq4(payouts.payoutMonth, previousMonth),
+          eq4(payouts.payoutYear, previousYear)
+        )
+      });
+      const currentCommission = currentMonthPayouts.reduce(
+        (sum, p) => sum + (p.netCommissionGbp || 0),
+        0
+      );
+      const previousMonthPayouts = await db.query.commissionPayouts.findMany({
+        where: (payouts, { eq: eq4, and: and3 }) => and3(
+          eq4(payouts.aeId, ae.id),
+          eq4(payouts.payoutMonth, comparisonMonth),
+          eq4(payouts.payoutYear, comparisonYear)
+        )
+      });
+      const previousCommission = previousMonthPayouts.reduce(
+        (sum, p) => sum + (p.netCommissionGbp || 0),
+        0
+      );
+      const currentTier = calculateTier2(currentCommission);
+      const previousTier = calculateTier2(previousCommission);
+      tierData.push({
+        id: ae.id,
+        name: ae.name,
+        currentTier,
+        currentRate: getTierRate(currentTier),
+        previousTier,
+        previousRate: getTierRate(previousTier),
+        totalCommissionGbp: currentCommission,
+        dealCount: currentMonthPayouts.length
+      });
+    }
+    const emailSent = await sendTierReportEmail(
+      tierData,
+      previousMonth,
+      previousYear,
+      comparisonMonth,
+      comparisonYear
+    );
+    if (emailSent) {
+      console.log(
+        `[TierReportScheduler] Successfully sent tier report for ${previousMonth}/${previousYear}`
+      );
+    } else {
+      console.error(
+        `[TierReportScheduler] Failed to send tier report for ${previousMonth}/${previousYear}`
+      );
+    }
+  } catch (error) {
+    console.error("[TierReportScheduler] Error in sendMonthlyTierReportJob:", error);
+  }
+}
+
 // server/_core/index.ts
 function isPortAvailable(port) {
   return new Promise((resolve) => {
@@ -4644,5 +4927,6 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
   startWeeklySyncScheduler();
+  initializeTierReportScheduler();
 }
 startServer().catch(console.error);

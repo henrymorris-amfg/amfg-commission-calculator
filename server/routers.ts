@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { protectedProcedure } from "./_core/trpc";
 import { spreadsheetSyncRouter } from "./spreadsheetSync";
 import { pipedriveSyncRouter } from "./pipedriveSync";
 import { voipSyncRouter } from "./voipSync";
@@ -1384,6 +1385,94 @@ export const appRouter = router({
             totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
             totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
           })),
+        };
+      }),
+
+    sendMonthlyTierReport: protectedProcedure
+      .input(
+        z.object({
+          reportMonth: z.number().min(1).max(12),
+          reportYear: z.number().min(2020),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+        // Import here to avoid circular dependency
+        const { sendTierReportEmail, calculateTier: calcTier, getTierRate } = await import(
+          "./tierReportEmailService"
+        );
+
+        const { reportMonth, reportYear } = input;
+
+        // Calculate previous month
+        let previousMonth = reportMonth - 1;
+        let previousYear = reportYear;
+        if (previousMonth < 1) {
+          previousMonth = 12;
+          previousYear -= 1;
+        }
+
+        // Get all AEs
+        const aeCommissions = await getAllAeProfiles();
+        const tierData: Array<any> = [];
+
+        for (const ae of aeCommissions) {
+          // Get current month commission
+          const currentMonthPayouts = await getPayoutsForMonth(ae.id, reportMonth, reportYear);
+          const currentCommission = currentMonthPayouts.reduce(
+            (sum: number, p: any) => sum + (p.netCommissionGbp || 0),
+            0
+          );
+
+          // Get previous month commission
+          const previousMonthPayouts = await getPayoutsForMonth(
+            ae.id,
+            previousMonth,
+            previousYear
+          );
+          const previousCommission = previousMonthPayouts.reduce(
+            (sum: number, p: any) => sum + (p.netCommissionGbp || 0),
+            0
+          );
+
+          // Calculate tiers
+          const currentTier = calcTier(currentCommission);
+          const previousTier = calcTier(previousCommission);
+
+          tierData.push({
+            id: ae.id,
+            name: ae.name,
+            currentTier: currentTier as string,
+            currentRate: getTierRate(currentTier as string),
+            previousTier: previousTier as string,
+            previousRate: getTierRate(previousTier as string),
+            totalCommissionGbp: currentCommission,
+            dealCount: currentMonthPayouts.length,
+          });
+        }
+
+        // Send email
+        const emailSent = await sendTierReportEmail(
+          tierData as any,
+          reportMonth,
+          reportYear,
+          previousMonth,
+          previousYear
+        );
+
+        if (!emailSent) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to send tier report" });
+        }
+
+        return {
+          success: true,
+          message: `Tier report sent for ${reportMonth}/${reportYear}`,
+          aeCount: tierData.length,
         };
       }),
   }),

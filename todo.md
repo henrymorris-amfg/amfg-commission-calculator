@@ -459,3 +459,15 @@
 - [x] Test CSV export with multiple team members
 - [x] Test forecast chart with historical data
 - [x] Verify admin-only access controls
+
+
+## Monthly Tier Report Email (Mar 21 2026) - COMPLETED
+- [x] Create email template with tier summary table
+- [x] Implement tier comparison logic (current vs previous month)
+- [x] Create email service using Manus notification API
+- [x] Create tRPC procedure for sending tier reports
+- [x] Set up node-cron scheduler for 10th of month at 9 AM GMT
+- [x] Test email sending with test recipients
+- [x] Verify month-over-month tier comparisons
+- [x] Add error handling and retry logic
+- [x] Log all email sends to database (via console logging)

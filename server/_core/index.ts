@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startWeeklySyncScheduler } from "../weeklySync";
+import { initializeTierReportScheduler } from "../tierReportScheduler";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -64,6 +65,9 @@ async function startServer() {
 
   // Start the weekly auto-sync scheduler (Monday 20:00 UTC)
   startWeeklySyncScheduler();
+
+  // Start the monthly tier report scheduler (10th of month at 9 AM GMT)
+  initializeTierReportScheduler();
 }
 
 startServer().catch(console.error);
