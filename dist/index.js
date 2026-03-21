@@ -5539,14 +5539,39 @@ var appRouter = router({
           netCommissionUsd: netUsd
         });
       }
-      return {
-        commissions: Array.from(commissionsByAe.values()).map((c) => ({
-          ...c,
-          dealCount: new Set(c.payouts.map((p) => p.customerName)).size,
-          totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
-          totalNetUsd: Number(c.totalNetUsd.toFixed(2))
-        }))
-      };
+      const commissionsWithTier = await Promise.all(
+        Array.from(commissionsByAe.values()).map(async (c) => {
+          const aeProfile = allAes.find((m) => m.id === c.aeId);
+          let currentTier = "bronze";
+          try {
+            if (aeProfile) {
+              const last3Months = await getMetricsForAe(c.aeId, 3);
+              const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+                last3Months,
+                new Date(aeProfile.joinDate)
+              );
+              const tierResult = calculateTier({
+                avgArrUsd,
+                avgDemosPw,
+                avgDialsPw,
+                avgRetentionRate: null,
+                isNewJoiner: false,
+                isTeamLeader: aeProfile.isTeamLeader
+              });
+              currentTier = tierResult.tier;
+            }
+          } catch {
+          }
+          return {
+            ...c,
+            dealCount: new Set(c.payouts.map((p) => p.customerName)).size,
+            totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
+            totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
+            currentTier
+          };
+        })
+      );
+      return { commissions: commissionsWithTier };
     }),
     sendMonthlyTierReport: protectedProcedure.input(
       z6.object({

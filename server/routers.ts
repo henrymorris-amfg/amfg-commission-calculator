@@ -1402,14 +1402,42 @@ export const appRouter = router({
           });
         }
 
-        return {
-          commissions: Array.from(commissionsByAe.values()).map((c: any) => ({
-            ...c,
-            dealCount: new Set(c.payouts.map((p: any) => p.customerName)).size,
-            totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
-            totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
-          })),
-        };
+        // Add current tier for each AE
+        const commissionsWithTier = await Promise.all(
+          Array.from(commissionsByAe.values()).map(async (c: any) => {
+            const aeProfile = allAes.find((m) => m.id === c.aeId);
+            let currentTier: string = "bronze";
+            try {
+              if (aeProfile) {
+                const last3Months = await getMetricsForAe(c.aeId, 3);
+                const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+                  last3Months as any,
+                  new Date(aeProfile.joinDate)
+                );
+                const tierResult = calculateTier({
+                  avgArrUsd,
+                  avgDemosPw,
+                  avgDialsPw,
+                  avgRetentionRate: null,
+                  isNewJoiner: false,
+                  isTeamLeader: aeProfile.isTeamLeader,
+                });
+                currentTier = tierResult.tier;
+              }
+            } catch {
+              // fallback to bronze if tier calculation fails
+            }
+            return {
+              ...c,
+              dealCount: new Set(c.payouts.map((p: any) => p.customerName)).size,
+              totalNetGbp: Number(c.totalNetGbp.toFixed(2)),
+              totalNetUsd: Number(c.totalNetUsd.toFixed(2)),
+              currentTier,
+            };
+          })
+        );
+
+        return { commissions: commissionsWithTier };
       }),
 
     sendMonthlyTierReport: protectedProcedure

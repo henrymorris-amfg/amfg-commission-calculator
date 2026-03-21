@@ -1,8 +1,13 @@
 import { trpc } from "@/lib/trpc";
-import { TrendingUp } from "lucide-react";
+import { useAeAuth } from "@/contexts/AeAuthContext";
+import { TrendingUp, AlertCircle } from "lucide-react";
 
 export function TierForecastCard() {
-  const { data: forecast, isLoading } = trpc.commissionStructure.tierForecast.useQuery();
+  const { ae } = useAeAuth();
+  const { data: forecast, isLoading, error } = trpc.commissionStructure.tierForecast.useQuery(
+    undefined,
+    { enabled: !!ae, retry: false }
+  );
 
   if (isLoading) {
     return (
@@ -12,6 +17,18 @@ export function TierForecastCard() {
           <div className="h-4 bg-muted rounded w-full"></div>
           <div className="h-4 bg-muted rounded w-5/6"></div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg p-6 bg-card border border-border">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="w-5 h-5" />
+          <p className="text-sm font-medium">Could not load tier forecast</p>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">{error.message}</p>
       </div>
     );
   }

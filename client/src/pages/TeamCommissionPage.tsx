@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ArrowUpCircle,
   ArrowDownCircle,
+  Medal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -229,7 +230,22 @@ export default function TeamCommissionPage() {
                       >
                         <div className="flex items-center gap-4 flex-1">
                           <div className="flex-1 text-left">
-                            <p className="font-semibold text-foreground">{commission.aeName}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-foreground">{commission.aeName}</p>
+                              {commission.currentTier && (() => {
+                                const tier = (commission.currentTier as string).toLowerCase() as keyof typeof TIER_CONFIG;
+                                const cfg = TIER_CONFIG[tier] ?? TIER_CONFIG.bronze;
+                                return (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                    style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.color}40` }}
+                                  >
+                                    <Medal className="w-3 h-3" />
+                                    {cfg.label}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {commission.dealCount} deals • {commission.payoutCount} payouts
                             </p>

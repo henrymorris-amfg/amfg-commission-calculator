@@ -572,3 +572,10 @@
 - [x] Fix resyncPayouts.ts TypeScript errors — removed non-existent isActive filter, fixed insert columns to match schema (grossCommissionUsd, referralDeductionUsd, onboardingDeductionGbp), used correct commissionStructures column names (bronzeRate/silverRate/goldRate)
 - [x] Add "Rolling Avg" view to Data Audit page — new toggle shows weeks worked divisor (e.g. 3.5w), demos/week, and dials/week per month per AE, using the same join-date-bounded computeActiveWeeks logic as the tier engine
 - [x] All 109 tests passing
+
+## Four Fixes (Mar 21 2026) - COMPLETED
+- [x] Fix tier forecast on AE dashboard — TierForecastCard was querying before AE auth was ready (no enabled guard); also fixed error state to show message instead of silent null
+- [x] Remove Spreadsheet Sync tab from admin navigation — data syncs automatically via daily scheduler
+- [x] Add tier badges with medal icons to Team Commissions admin view — backend now returns currentTier per AE; UI shows Bronze/Silver/Gold badge with Medal icon and tier colour
+- [x] Email delivery: keeping Resend (already fully wired); Gmail SMTP not needed
+- [x] 109 tests passing
