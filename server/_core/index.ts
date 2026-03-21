@@ -65,16 +65,17 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 
-  // Start the weekly auto-sync scheduler (Monday 20:00 UTC)
+  // ─── Scheduled Jobs ─────────────────────────────────────────────────────────
+  // Daily 08:00 UTC: Pipedrive ARR sync + VOIP dials sync + Spreadsheet demos sync
   startWeeklySyncScheduler();
 
-  // Start the monthly tier report scheduler (10th of month at 9 AM GMT)
+  // Monthly 10th at 09:00 GMT: Tier report email to team leader
   initializeTierReportScheduler();
 
-  // Start the weekly demo detection scheduler (Monday at 9 AM GMT)
+  // Daily 08:00 GMT: Demo duplicate detection + CRM hygiene checks
   initializeDemoDetectionScheduler();
 
-  // Start the daily tier change notification scheduler (8:05 AM GMT)
+  // Daily 08:05 GMT: Tier change notifications (runs after sync to use fresh data)
   initializeTierChangeScheduler();
 }
 

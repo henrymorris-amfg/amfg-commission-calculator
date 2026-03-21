@@ -551,3 +551,11 @@
 - [x] Add tier_change_notifications table (aeId, previousTier, newTier, month/year, sentAt, deliveryStatus)
 - [x] Add Tier Change Notifications panel to TeamCommissionPage (manual trigger + history)
 - [x] Write 11 unit tests for tier change notifier (all passing, 101 total tests)
+
+## Daily Sync Schedulers (Mar 21 2026) - COMPLETED
+- [x] Pipedrive sync scheduler: already daily at 8:00 AM UTC (cron: "0 8 * * *") — confirmed
+- [x] VOIP sync scheduler: already daily at 8:00 AM UTC (same scheduler as Pipedrive) — confirmed
+- [x] Demo detection scheduler: already daily at 8:00 AM GMT (cron: "0 8 * * *") — confirmed
+- [x] Tier change notifications: daily at 8:05 AM GMT (cron: "5 8 * * *") — confirmed
+- [x] Updated stale comments in index.ts and weeklySync.ts to accurately reflect daily schedules
+- [x] All 101 tests passing

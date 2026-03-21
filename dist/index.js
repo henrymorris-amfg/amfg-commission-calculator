@@ -2720,7 +2720,7 @@ function startWeeklySyncScheduler() {
         lastSyncResult = await runWeeklySync();
         nextSyncTime = computeNextDaily8amUtc();
       } catch (err) {
-        console.error("[WeeklySync] Unhandled error:", err);
+        console.error("[DailySync] Unhandled error:", err);
       }
     },
     {
@@ -2729,7 +2729,7 @@ function startWeeklySyncScheduler() {
   );
   nextSyncTime = computeNextDaily8amUtc();
   console.log(
-    `[WeeklySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} (cron: "${cronExpression}")`
+    `[DailySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} (cron: "${cronExpression}")`
   );
   void task;
 }

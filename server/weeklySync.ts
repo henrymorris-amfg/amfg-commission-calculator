@@ -1,7 +1,7 @@
 /**
- * Weekly Auto-Sync Scheduler
+ * Daily Auto-Sync Scheduler
  *
- * Runs every Monday at 07:00 UTC (Monday morning UK time, ready for start of work day).
+ * Runs every day at 08:00 UTC.
  * Performs three operations in sequence:
  *   1. VOIP Studio sync  — pulls dials, connection rate, talk time (full history from join date)
  *   2. Spreadsheet sync  — pulls latest dials/demos from the Sales Report sheet
@@ -9,8 +9,8 @@
  *
  * Results are logged to console for server-side visibility.
  *
- * The schedule can be overridden via the WEEKLY_SYNC_CRON env var.
- * Default: "0 7 * * 1"  (Monday 07:00 UTC)
+ * The schedule can be overridden via the DAILY_SYNC_CRON env var.
+ * Default: "0 8 * * *"  (every day at 08:00 UTC)
  */
 
 import cron from "node-cron";
@@ -558,7 +558,7 @@ function computeNextDaily8amUtc(): Date {
 }
 
 export function startWeeklySyncScheduler(): void {
-  // Default: Daily at 08:00 UTC (8 AM GMT for real-time metrics accuracy)
+  // Daily at 08:00 UTC — Pipedrive ARR, VOIP dials, Spreadsheet demos
   // Override with DAILY_SYNC_CRON env var (e.g. "0 8 * * *")
   const cronExpression = process.env.DAILY_SYNC_CRON || "0 8 * * *";
 
@@ -569,7 +569,7 @@ export function startWeeklySyncScheduler(): void {
         lastSyncResult = await runWeeklySync();
         nextSyncTime = computeNextDaily8amUtc();
       } catch (err) {
-        console.error("[WeeklySync] Unhandled error:", err);
+        console.error("[DailySync] Unhandled error:", err);
       }
     },
     {
@@ -580,7 +580,7 @@ export function startWeeklySyncScheduler(): void {
   nextSyncTime = computeNextDaily8amUtc();
 
   console.log(
-    `[WeeklySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} ` +
+    `[DailySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} ` +
     `(cron: "${cronExpression}")`
   );
 
