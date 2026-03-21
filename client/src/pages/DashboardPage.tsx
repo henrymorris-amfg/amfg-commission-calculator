@@ -6,6 +6,9 @@ import { useAeAuth } from "@/contexts/AeAuthContext";
 import AppLayout from "@/components/AppLayout";
 import { FlaggedDemosAlert } from "@/components/FlaggedDemosAlert";
 import { TierForecastCard } from "@/components/TierForecastCard";
+import { EarningsHeroCard } from "@/components/EarningsHeroCard";
+import { NextPayoutsWidget } from "@/components/NextPayoutsWidget";
+import { WeeklyActivityStrip } from "@/components/WeeklyActivityStrip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
@@ -204,6 +207,9 @@ export default function DashboardPage() {
         {/* Flagged Demos Alert */}
         <FlaggedDemosAlert />
 
+        {/* Earnings Hero Card */}
+        <EarningsHeroCard />
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
@@ -256,193 +262,145 @@ export default function DashboardPage() {
             </span>
           )}
           {fxData && (
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-                style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
-                <Clock className="w-3 h-3" />
-                USD/GBP: {fxData.usdToGbp?.toFixed(4)}
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-                style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
-                <Clock className="w-3 h-3" />
-                USD/EUR: {fxData.usdToEur?.toFixed(4)}
-              </span>
-            </div>
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+              style={{ background: "oklch(0.20 0.018 250)", border: "1px solid oklch(0.28 0.02 250)", color: "oklch(0.65 0.01 250)" }}>
+              <Clock className="w-3 h-3" />
+              GBP {fxData.usdToGbp?.toFixed(4)} · EUR {fxData.usdToEur?.toFixed(4)}
+            </span>
           )}
         </div>
 
-        {/* Live Dials from VOIP Studio */}
-        <LiveDialsWidget />
+        {/* Weekly Activity Strip */}
+        <WeeklyActivityStrip />
 
-        {/* Tier Forecast */}
-        <TierForecastCard />
-
-        {/* Tier Card + Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Tier Card */}
-          <div className="lg:col-span-1 rounded-2xl p-6 relative overflow-hidden"
-            style={{ background: tierConfig.bg, border: `1px solid ${tierConfig.border}` }}>
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 -translate-y-8 translate-x-8"
-              style={{ background: `radial-gradient(circle, ${tierConfig.color}, transparent)` }} />
-            <div className="relative">
-              <p className="text-xs font-medium tracking-widest uppercase mb-3"
-                style={{ color: tierConfig.color }}>
-                Current Tier — {MONTH_NAMES[selectedMonth - 1]}
-              </p>
-              {tierLoading ? (
-                <div className="h-12 w-24 rounded-lg bg-muted animate-pulse" />
-              ) : (
-                <>
-                  <h2 className="text-5xl font-bold mb-1" style={{ color: tierConfig.color }}>
-                    {tierConfig.label}
-                  </h2>
-                  <p className="text-3xl font-bold text-foreground">{(commRate * 100).toFixed(0)}%</p>
-                  <p className="text-sm text-muted-foreground mt-2">{tierConfig.description}</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-            {[
-              {
-                label: `${MONTH_NAMES[selectedMonth - 1]} Earnings`,
-                value: `£${currentMonthGbp.toFixed(2)}`,
-                icon: DollarSign,
-                sub: "Commission this month",
-                color: "oklch(0.82 0.14 75)",
-              },
-              {
-                label: "YTD Earnings",
-                value: `£${ytdGbp.toFixed(2)}`,
-                icon: TrendingUp,
-                sub: `Jan–${MONTH_NAMES[selectedMonth - 1]} ${selectedYear}`,
-                color: "oklch(0.60 0.15 200)",
-              },
-              {
-                label: "Active Deals",
-                value: String(deals.length),
-                icon: Target,
-                sub: "Total logged contracts",
-                color: "oklch(0.65 0.12 55)",
-              },
-              {
-                label: "Commission Rate",
-                value: `${(commRate * 100).toFixed(0)}%`,
-                icon: Award,
-                sub: `${tierConfig.label} tier rate`,
-                color: tierConfig.color as string,
-              },
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div key={stat.label} className="rounded-2xl p-5 bg-card border border-border">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ background: `${stat.color}20` }}>
-                      <Icon className="w-4 h-4" style={{ color: stat.color }} />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
-                </div>
-              );
-            })}
-          </div>
+        {/* Tier Forecast + Next Payouts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TierForecastCard />
+          <NextPayoutsWidget />
         </div>
 
-        {/* ARR Trend Chart */}
-        {/* ── Tier Progress Indicators ─────────────────────────────────────────── */}
-        <div className="rounded-2xl bg-card border border-border p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">
-                {nextTier
-                  ? `Progress to ${TIER_CONFIG[nextTier].label}`
-                  : "You've reached the top tier"}
-              </h3>
-              {nextTier && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  3-month rolling avg (Nov–Jan) · used for tier
-                </p>
-              )}
+        {/* ── Unified Tier Status Card ──────────────────────────────────────── */}
+        <div className="rounded-2xl bg-card border border-border overflow-hidden">
+          {/* Header row: tier badge + data freshness */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border"
+            style={{ background: tierConfig.bg }}>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <h2 className="text-4xl font-bold" style={{ color: tierConfig.color }}>{tierConfig.label}</h2>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{(commRate * 100).toFixed(0)}% commission</p>
+                <p className="text-xs text-muted-foreground">{tierConfig.description}</p>
+              </div>
             </div>
-            <button
-              onClick={() => navigate("/metrics")}
-              className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
-            >
-              Update metrics <ArrowRight className="w-3 h-3" />
-            </button>
+            <div className="text-right">
+              {tierData?.lastSyncedAt ? (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                  <Info className="w-3 h-3" />
+                  Data synced {new Date(tierData.lastSyncedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </p>
+              ) : null}
+              <button
+                onClick={() => navigate("/metrics")}
+                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors mt-1 ml-auto"
+              >
+                Update metrics <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
           </div>
 
-          {tierLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />)}
-            </div>
-          ) : tier === "gold" ? (
-            <div className="flex flex-col items-center justify-center py-6 gap-2">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center"
-                style={{ background: "oklch(0.82 0.14 75 / 0.15)", border: "1px solid oklch(0.82 0.14 75 / 0.4)" }}>
-                <Award className="w-6 h-6" style={{ color: "oklch(0.88 0.14 75)" }} />
-              </div>
-              <p className="text-sm font-medium text-foreground">Gold tier achieved</p>
-              <p className="text-xs text-muted-foreground">You're earning the maximum 19% commission rate.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {progressItems.map((item) => {
-                const pct = item.exempt ? 100 : Math.min(100, item.target > 0 ? (item.current / item.target) * 100 : 0);
-                const met = item.exempt || item.current >= item.target;
-                const remaining = item.target - item.current;
-                const progressColor = met
-                  ? "oklch(0.55 0.18 145)"
-                  : pct >= 75
-                  ? "oklch(0.82 0.14 75)"
-                  : "oklch(0.65 0.12 55)";
-
+          <div className="p-6 space-y-5">
+            {/* Quick stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: `${MONTH_NAMES[selectedMonth - 1]} earnings`, value: `£${currentMonthGbp.toFixed(2)}`, icon: DollarSign, color: "oklch(0.82 0.14 75)" },
+                { label: `YTD ${selectedYear}`, value: `£${ytdGbp.toFixed(2)}`, icon: TrendingUp, color: "oklch(0.60 0.15 200)" },
+                { label: "Active deals", value: String(deals.length), icon: Target, color: "oklch(0.65 0.12 55)" },
+                { label: "Commission rate", value: `${(commRate * 100).toFixed(0)}%`, icon: Award, color: tierConfig.color as string },
+              ].map((stat) => {
+                const Icon = stat.icon;
                 return (
-                  <div key={item.label} className="rounded-xl p-4 border border-border bg-secondary/30 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <p className="text-xs text-muted-foreground font-medium">{item.label}</p>
-                      {met ? (
-                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: "oklch(0.55 0.18 145 / 0.15)", color: "oklch(0.70 0.18 145)" }}>
-                          ✓
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: "oklch(0.55 0.22 25 / 0.15)", color: "oklch(0.70 0.22 25)" }}>
-                          {Math.round(pct)}%
-                        </span>
-                      )}
+                  <div key={stat.label} className="rounded-xl p-3 bg-secondary/40 border border-border/50">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Icon className="w-3.5 h-3.5" style={{ color: stat.color }} />
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
                     </div>
-
-                    <div>
-                      <div className="flex items-baseline justify-between mb-1.5">
-                        <span className="text-lg font-bold text-foreground">{item.format(item.current)}</span>
-                        <span className="text-xs text-muted-foreground">/ {item.format(item.target)}</span>
-                      </div>
-                      <ProgressBar value={item.exempt ? item.target : item.current} max={item.target} color={progressColor} />
-                    </div>
-
-                    {item.exempt ? (
-                      <p className="text-xs" style={{ color: "oklch(0.75 0.12 200)" }}>{item.exemptLabel}</p>
-                    ) : met ? (
-                      <p className="text-xs flex items-center gap-1" style={{ color: "oklch(0.70 0.18 145)" }}>
-                        <ChevronUp className="w-3 h-3" /> Target met
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Need <span className="text-foreground font-medium">{item.format(remaining)}</span> more
-                      </p>
-                    )}
+                    <p className="text-xl font-bold text-foreground">{stat.value}</p>
                   </div>
                 );
               })}
             </div>
-          )}
+
+            {/* Progress to next tier */}
+            {tierLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[1,2,3,4].map(i => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}
+              </div>
+            ) : tier === "gold" ? (
+              <div className="flex items-center gap-3 p-4 rounded-xl"
+                style={{ background: "oklch(0.82 0.14 75 / 0.08)", border: "1px solid oklch(0.82 0.14 75 / 0.25)" }}>
+                <Award className="w-5 h-5" style={{ color: "oklch(0.88 0.14 75)" }} />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Gold tier — maximum rate achieved!</p>
+                  <p className="text-xs text-muted-foreground">You're earning the maximum 19% commission rate.</p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                  Progress to {nextTier ? TIER_CONFIG[nextTier].label : "next tier"}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {progressItems.map((item) => {
+                    const pct = item.exempt ? 100 : Math.min(100, item.target > 0 ? (item.current / item.target) * 100 : 0);
+                    const met = item.exempt || item.current >= item.target;
+                    const remaining = item.target - item.current;
+                    const progressColor = met ? "oklch(0.55 0.18 145)" : pct >= 75 ? "oklch(0.82 0.14 75)" : "oklch(0.65 0.12 55)";
+                    return (
+                      <div key={item.label} className="rounded-xl p-3 border border-border bg-secondary/30 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <p className="text-xs text-muted-foreground font-medium">{item.label}</p>
+                          {met ? (
+                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.55 0.18 145 / 0.15)", color: "oklch(0.70 0.18 145)" }}>✓</span>
+                          ) : (
+                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.55 0.22 25 / 0.15)", color: "oklch(0.70 0.22 25)" }}>{Math.round(pct)}%</span>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-baseline justify-between mb-1">
+                            <span className="text-base font-bold text-foreground">{item.format(item.current)}</span>
+                            <span className="text-xs text-muted-foreground">/ {item.format(item.target)}</span>
+                          </div>
+                          <ProgressBar value={item.exempt ? item.target : item.current} max={item.target} color={progressColor} />
+                        </div>
+                        {item.exempt ? (
+                          <p className="text-xs" style={{ color: "oklch(0.75 0.12 200)" }}>{item.exemptLabel}</p>
+                        ) : met ? (
+                          <p className="text-xs flex items-center gap-1" style={{ color: "oklch(0.70 0.18 145)" }}><ChevronUp className="w-3 h-3" /> Target met</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Need <span className="text-foreground font-medium">{item.format(remaining)}</span> more</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Reasons why not higher tier */}
+            {tierData?.reasons && tierData.reasons.length > 0 && tier !== "gold" && (
+              <div className="pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-1.5">Why not {nextTier ? TIER_CONFIG[nextTier].label : "higher tier"}:</p>
+                <ul className="space-y-1">
+                  {tierData.reasons.map((r, i) => (
+                    <li key={i} className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />{r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Commission Forecast Calculator ───────────────────────────────────── */}
@@ -546,82 +504,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* Tier Criteria Breakdown */}
-        {tierData && (
-          <div className="rounded-2xl bg-card border border-border p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Tier Criteria — {MONTH_NAMES[selectedMonth - 1]}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                  <Info className="w-3 h-3" />
-                  Averages from last 3 complete months · used for tier calculation
-                </p>
-              </div>
-              <button
-                onClick={() => navigate("/metrics")}
-                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
-              >
-                Update metrics <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  label: "Avg ARR / Month",
-                  value: `$${tierData.avgArrUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-                  met: tierData.meetsArr,
-                  note: tierData.isNewJoiner ? "Exempt (new joiner)" : undefined,
-                },
-                {
-                  label: "Demos Done / wk",
-                  value: tierData.avgDemosPw.toFixed(1),
-                  met: tierData.meetsDemos,
-                },
-                {
-                  label: "Dials / wk",
-                  value: tierData.avgDialsPw.toFixed(0),
-                  met: tierData.meetsDials,
-                },
-                {
-                  label: "Retention Rate",
-                  value: tierData.avgRetentionRate != null ? `${tierData.avgRetentionRate.toFixed(1)}%` : "No data",
-                  met: tierData.meetsRetention,
-                  note: tierData.avgRetentionRate == null ? "No data yet" : tierData.isNewJoiner ? "Exempt (new joiner)" : undefined,
-                },
-              ].map((c) => (
-                <div key={c.label} className="rounded-xl p-4 border"
-                  style={{
-                    borderColor: c.note ? "oklch(0.60 0.15 200 / 0.3)" : c.met ? "oklch(0.55 0.18 145 / 0.3)" : "oklch(0.55 0.22 25 / 0.3)",
-                    background: c.note ? "oklch(0.60 0.15 200 / 0.05)" : c.met ? "oklch(0.55 0.18 145 / 0.05)" : "oklch(0.55 0.22 25 / 0.05)",
-                  }}>
-                  <p className="text-xs text-muted-foreground mb-1">{c.label}</p>
-                  <p className="text-xl font-bold text-foreground">{c.value}</p>
-                  {c.note ? (
-                    <p className="text-xs mt-1" style={{ color: "oklch(0.75 0.12 200)" }}>{c.note}</p>
-                  ) : (
-                    <p className="text-xs mt-1" style={{ color: c.met ? "oklch(0.70 0.18 145)" : "oklch(0.70 0.22 25)" }}>
-                      {c.met ? "✓ Met" : "✗ Not met"}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-            {tierData.reasons.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-2">Why not Gold/Silver:</p>
-                <ul className="space-y-1">
-                  {tierData.reasons.map((r, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Recent Deals */}
         <div className="rounded-2xl bg-card border border-border p-6">

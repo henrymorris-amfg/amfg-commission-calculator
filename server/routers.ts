@@ -56,8 +56,8 @@ import {
   resetPinAttempts,
   getDb,
 } from "./db";
-import { deals, commissionPayouts } from "../drizzle/schema";
-import { eq, like, and, inArray } from "drizzle-orm";
+import { deals, commissionPayouts, aeProfiles, monthlyMetrics } from "../drizzle/schema";
+import { eq, like, and, inArray, or, gt, lt, gte, lte } from "drizzle-orm";
 
 // Seed the initial commission structure on first startup
 seedInitialCommissionStructure().catch(console.error);
@@ -530,6 +530,7 @@ export const appRouter = router({
             demosTotal: m.demosTotal,
             dialsTotal: m.dialsTotal,
           })),
+          lastSyncedAt: allMetrics.length > 0 ? (allMetrics[0] as any).updatedAt ?? null : null,
         };
       }),
 
@@ -1092,6 +1093,100 @@ export const appRouter = router({
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
       return resyncAllPayouts(aeId);
+    }),
+
+    /**
+     * Dashboard summary: MTD commission, YTD commission, pipeline (future payouts),
+     * best-ever month, and the next 3 upcoming payout months.
+     */
+    dashboardSummary: publicProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+
+      const allPayouts = await getPayoutsForAe(aeId);
+      const allDeals = await getDealsForAe(aeId);
+      const dealMap = new Map(allDeals.map((d) => [d.id, d]));
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      // MTD: payouts for current month
+      const mtdGbp = allPayouts
+        .filter((p) => p.payoutYear === currentYear && p.payoutMonth === currentMonth)
+        .reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+
+      // YTD: payouts for current calendar year (past + current months only)
+      const ytdGbp = allPayouts
+        .filter((p) => p.payoutYear === currentYear && p.payoutMonth <= currentMonth)
+        .reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+
+      // Pipeline: all future payouts (months strictly after current)
+      const pipelineGbp = allPayouts
+        .filter(
+          (p) =>
+            p.payoutYear > currentYear ||
+            (p.payoutYear === currentYear && p.payoutMonth > currentMonth)
+        )
+        .reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+
+      // Best single month ever (past + current)
+      const monthTotals = new Map<string, number>();
+      for (const p of allPayouts) {
+        const isPastOrCurrent =
+          p.payoutYear < currentYear ||
+          (p.payoutYear === currentYear && p.payoutMonth <= currentMonth);
+        if (!isPastOrCurrent) continue;
+        const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
+        monthTotals.set(key, (monthTotals.get(key) ?? 0) + Number(p.netCommissionGbp));
+      }
+      const bestMonthGbp = monthTotals.size > 0 ? Math.max(...Array.from(monthTotals.values())) : 0;
+
+      // Next 3 upcoming payout months (future only, sorted ascending)
+      type MonthEntry = {
+        year: number;
+        month: number;
+        totalGbp: number;
+        payouts: Array<{
+          customerName: string;
+          netCommissionGbp: number;
+          payoutNumber: number;
+          totalPayouts: number;
+        }>;
+      };
+      const futureMap = new Map<string, MonthEntry>();
+      for (const p of allPayouts) {
+        const isFuture =
+          p.payoutYear > currentYear ||
+          (p.payoutYear === currentYear && p.payoutMonth > currentMonth);
+        if (!isFuture) continue;
+        const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
+        if (!futureMap.has(key)) {
+          futureMap.set(key, { year: p.payoutYear, month: p.payoutMonth, totalGbp: 0, payouts: [] });
+        }
+        const entry = futureMap.get(key)!;
+        const netGbp = Number(p.netCommissionGbp);
+        entry.totalGbp += netGbp;
+        const deal = dealMap.get(p.dealId);
+        const dealPayoutCount = allPayouts.filter((pp) => pp.dealId === p.dealId).length;
+        entry.payouts.push({
+          customerName: deal?.customerName ?? "Unknown",
+          netCommissionGbp: netGbp,
+          payoutNumber: p.payoutNumber,
+          totalPayouts: dealPayoutCount,
+        });
+      }
+      const next3Months = Array.from(futureMap.values())
+        .sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month))
+        .slice(0, 3);
+
+      return {
+        mtdGbp,
+        ytdGbp,
+        pipelineGbp,
+        bestMonthGbp,
+        next3Months,
+      };
     }),
   }),
 
@@ -1702,6 +1797,169 @@ export const appRouter = router({
       
       return { success: true, message: `Recalculated ${updated} deal tiers` };
     }),
+  }),
+
+  // ─── Leaderboard ──────────────────────────────────────────────────────────
+  leaderboard: router({
+    get: publicProcedure
+      .input(
+        z.object({
+          period: z.enum(["current_quarter", "last_quarter", "ytd", "all_time"]).default("current_quarter"),
+        })
+      )
+      .query(async ({ input, ctx }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Determine date range for the period
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // 1-indexed
+        const currentQuarter = Math.ceil(currentMonth / 3);
+
+        let fromYear: number, fromMonth: number, toYear: number, toMonth: number;
+
+        if (input.period === "current_quarter") {
+          fromMonth = (currentQuarter - 1) * 3 + 1;
+          fromYear = currentYear;
+          toMonth = currentMonth;
+          toYear = currentYear;
+        } else if (input.period === "last_quarter") {
+          const lq = currentQuarter === 1 ? 4 : currentQuarter - 1;
+          const ly = currentQuarter === 1 ? currentYear - 1 : currentYear;
+          fromMonth = (lq - 1) * 3 + 1;
+          fromYear = ly;
+          toMonth = lq * 3;
+          toYear = ly;
+        } else if (input.period === "ytd") {
+          fromMonth = 1;
+          fromYear = currentYear;
+          toMonth = currentMonth;
+          toYear = currentYear;
+        } else {
+          // all_time: last 24 months
+          const d = new Date(now);
+          d.setMonth(d.getMonth() - 24);
+          fromYear = d.getFullYear();
+          fromMonth = d.getMonth() + 1;
+          toYear = currentYear;
+          toMonth = currentMonth;
+        }
+
+        // Get all active AE profiles
+        const profiles = await db
+          .select()
+          .from(aeProfiles)
+          .where(eq(aeProfiles.isActive, true));
+
+        // Get metrics for all AEs in the period
+        const metricsRows = await db
+          .select()
+          .from(monthlyMetrics)
+          .where(
+            and(
+              or(
+                and(
+                  eq(monthlyMetrics.year, fromYear),
+                  gte(monthlyMetrics.month, fromMonth)
+                ),
+                and(
+                  gt(monthlyMetrics.year, fromYear),
+                  lt(monthlyMetrics.year, toYear)
+                ),
+                and(
+                  eq(monthlyMetrics.year, toYear),
+                  lte(monthlyMetrics.month, toMonth)
+                )
+              )
+            )
+          );
+
+        // Get deals for all AEs in the period (for ARR signed)
+        const dealsRows = await db
+          .select()
+          .from(deals)
+          .where(
+            and(
+              or(
+                and(
+                  eq(deals.startYear, fromYear),
+                  gte(deals.startMonth, fromMonth)
+                ),
+                and(
+                  gt(deals.startYear, fromYear),
+                  lt(deals.startYear, toYear)
+                ),
+                and(
+                  eq(deals.startYear, toYear),
+                  lte(deals.startMonth, toMonth)
+                )
+              )
+            )
+          );
+
+        // Aggregate per AE
+        const entries = profiles.map((profile) => {
+          const myMetrics = metricsRows.filter((m) => m.aeId === profile.id);
+          const myDeals = dealsRows.filter((d) => d.aeId === profile.id);
+
+          const totalDials = myMetrics.reduce((s, m) => s + (m.dialsTotal ?? 0), 0);
+          const totalDemos = myMetrics.reduce((s, m) => s + (m.demosTotal ?? 0), 0);
+          const totalArrUsd = myDeals.reduce((s, d) => s + Number(d.arrUsd), 0);
+          const dealCount = myDeals.length;
+
+          // Current tier (based on most recent 3 months)
+          const recentMetrics = myMetrics
+            .sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month)
+            .slice(0, 3);
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+            recentMetrics.map((m) => ({
+              year: m.year,
+              month: m.month,
+              arrUsd: Number(m.arrUsd),
+              demosTotal: m.demosTotal,
+              dialsTotal: m.dialsTotal,
+            })) as any,
+            new Date(profile.joinDate)
+          );
+          const tierResult = calculateTier({
+            avgArrUsd,
+            avgDemosPw,
+            avgDialsPw,
+            avgRetentionRate: null,
+            isNewJoiner: isNewJoiner(profile.joinDate, now),
+            isTeamLeader: profile.isTeamLeader,
+          });
+
+          return {
+            aeId: profile.id,
+            name: profile.name,
+            isTeamLeader: profile.isTeamLeader,
+            tier: tierResult.tier,
+            totalArrUsd,
+            totalDials,
+            totalDemos,
+            dealCount,
+            isCurrentAe: profile.id === aeId,
+          };
+        });
+
+        // Sort by ARR descending
+        const ranked = entries
+          .sort((a, b) => b.totalArrUsd - a.totalArrUsd)
+          .map((e, idx) => ({ ...e, rank: idx + 1 }));
+
+        return {
+          entries: ranked,
+          period: input.period,
+          fromYear,
+          fromMonth,
+          toYear,
+          toMonth,
+        };
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

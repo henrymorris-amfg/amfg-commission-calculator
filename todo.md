@@ -611,3 +611,30 @@
 - [x] Rewrote tierForecastHelper.ts: actionableTargets now shows extraNeeded (gap to next tier) not raw threshold/3
 - [x] Redesigned TierForecastCard: current metrics grid + actionable targets with green ticks + month projection
 - [x] 109 tests passing (12 test files)
+
+## AE Dashboard Overhaul + Leaderboard (Mar 21 2026)
+
+### Phase 1 — Dashboard Hero & Payouts (MTD/YTD + Next 3 Payouts)
+- [x] Add `commission.dashboardSummary` tRPC procedure: MTD commission GBP, YTD commission GBP, current tier rate, next payout amount + date
+- [x] Add EarningsHeroCard at top of dashboard (MTD GBP, YTD GBP, tier rate badge, pipeline ARR)
+- [x] Add NextPayoutsWidget on dashboard (next 3 upcoming payout months with amounts)
+
+### Phase 2 — Tier Forecast Urgency + Weekly Activity Strip
+- [x] Add weeks-left-in-quarter urgency banner to TierForecastCard
+- [x] Update TierForecastCard to show "X weeks left in Q2 · need +Y dials/week above current pace"
+- [x] Add WeeklyActivityStrip component: dials today, dials this week vs target, demos this week vs target
+- [x] Wire WeeklyActivityStrip to voipSync.myDialsToday + voipSync.myDialsThisWeek + demo count
+
+### Phase 3 — Dashboard Cleanup + Motivational Stats
+- [x] Consolidated "Tier Criteria" and "Progress to Next Tier" into one unified TierStatusCard
+- [x] Added data freshness indicator (lastSyncedAt from monthly_metrics updatedAt)
+- [x] Removed duplicate tier criteria breakdown section
+
+### Phase 4 — Leaderboard
+- [x] Add `leaderboard.get` tRPC procedure: aggregate demosTotal, dialsTotal, arrUsd per AE for period, compute tier, return ranked array
+- [x] Create LeaderboardPage at /leaderboard with period selector (This Quarter / Last Quarter / YTD / All Time)
+- [x] Top-3 podium section (1st/2nd/3rd with crown/medal icons, name, tier badge, ARR)
+- [x] Full ranked table: rank, name, tier, ARR signed, demos done, dials made, deal count
+- [x] Highlight current AE's row in the table
+- [x] Add Leaderboard nav item to AppLayout (visible to all AEs, Trophy icon)
+- [x] 109 tests passing (12 test files)

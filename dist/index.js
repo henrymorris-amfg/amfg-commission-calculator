@@ -4755,7 +4755,7 @@ var systemRouter = router({
 init_trpc();
 init_db();
 init_schema();
-import { eq as eq6, like, and as and3, inArray } from "drizzle-orm";
+import { eq as eq6, like, and as and3, inArray, or as or2, gt, lt, gte as gte2, lte as lte2 } from "drizzle-orm";
 seedInitialCommissionStructure().catch(console.error);
 var _fxCache = null;
 var FX_CACHE_TTL_MS = 5 * 60 * 1e3;
@@ -5115,7 +5115,8 @@ var appRouter = router({
           arrUsd: m.arrUsd,
           demosTotal: m.demosTotal,
           dialsTotal: m.dialsTotal
-        }))
+        })),
+        lastSyncedAt: allMetrics.length > 0 ? allMetrics[0].updatedAt ?? null : null
       };
     }),
     // Calculate tier from manual inputs (for preview without saving)
@@ -5542,6 +5543,61 @@ var appRouter = router({
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED", message: "Not authenticated" });
       return resyncAllPayouts(aeId);
+    }),
+    /**
+     * Dashboard summary: MTD commission, YTD commission, pipeline (future payouts),
+     * best-ever month, and the next 3 upcoming payout months.
+     */
+    dashboardSummary: publicProcedure.query(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const allPayouts = await getPayoutsForAe(aeId);
+      const allDeals = await getDealsForAe(aeId);
+      const dealMap = new Map(allDeals.map((d) => [d.id, d]));
+      const now = /* @__PURE__ */ new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const mtdGbp = allPayouts.filter((p) => p.payoutYear === currentYear && p.payoutMonth === currentMonth).reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+      const ytdGbp = allPayouts.filter((p) => p.payoutYear === currentYear && p.payoutMonth <= currentMonth).reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+      const pipelineGbp = allPayouts.filter(
+        (p) => p.payoutYear > currentYear || p.payoutYear === currentYear && p.payoutMonth > currentMonth
+      ).reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+      const monthTotals = /* @__PURE__ */ new Map();
+      for (const p of allPayouts) {
+        const isPastOrCurrent = p.payoutYear < currentYear || p.payoutYear === currentYear && p.payoutMonth <= currentMonth;
+        if (!isPastOrCurrent) continue;
+        const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
+        monthTotals.set(key, (monthTotals.get(key) ?? 0) + Number(p.netCommissionGbp));
+      }
+      const bestMonthGbp = monthTotals.size > 0 ? Math.max(...Array.from(monthTotals.values())) : 0;
+      const futureMap = /* @__PURE__ */ new Map();
+      for (const p of allPayouts) {
+        const isFuture = p.payoutYear > currentYear || p.payoutYear === currentYear && p.payoutMonth > currentMonth;
+        if (!isFuture) continue;
+        const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
+        if (!futureMap.has(key)) {
+          futureMap.set(key, { year: p.payoutYear, month: p.payoutMonth, totalGbp: 0, payouts: [] });
+        }
+        const entry = futureMap.get(key);
+        const netGbp = Number(p.netCommissionGbp);
+        entry.totalGbp += netGbp;
+        const deal = dealMap.get(p.dealId);
+        const dealPayoutCount = allPayouts.filter((pp) => pp.dealId === p.dealId).length;
+        entry.payouts.push({
+          customerName: deal?.customerName ?? "Unknown",
+          netCommissionGbp: netGbp,
+          payoutNumber: p.payoutNumber,
+          totalPayouts: dealPayoutCount
+        });
+      }
+      const next3Months = Array.from(futureMap.values()).sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month)).slice(0, 3);
+      return {
+        mtdGbp,
+        ytdGbp,
+        pipelineGbp,
+        bestMonthGbp,
+        next3Months
+      };
     })
   }),
   // --- Spreadsheet Sync ────────────────────────────────────────────────────
@@ -6035,6 +6091,133 @@ var appRouter = router({
         }
       }
       return { success: true, message: `Recalculated ${updated} deal tiers` };
+    })
+  }),
+  // ─── Leaderboard ──────────────────────────────────────────────────────────
+  leaderboard: router({
+    get: publicProcedure.input(
+      z6.object({
+        period: z6.enum(["current_quarter", "last_quarter", "ytd", "all_time"]).default("current_quarter")
+      })
+    ).query(async ({ input, ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED" });
+      const db = await getDb();
+      if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR" });
+      const now = /* @__PURE__ */ new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const currentQuarter = Math.ceil(currentMonth / 3);
+      let fromYear, fromMonth, toYear, toMonth;
+      if (input.period === "current_quarter") {
+        fromMonth = (currentQuarter - 1) * 3 + 1;
+        fromYear = currentYear;
+        toMonth = currentMonth;
+        toYear = currentYear;
+      } else if (input.period === "last_quarter") {
+        const lq = currentQuarter === 1 ? 4 : currentQuarter - 1;
+        const ly = currentQuarter === 1 ? currentYear - 1 : currentYear;
+        fromMonth = (lq - 1) * 3 + 1;
+        fromYear = ly;
+        toMonth = lq * 3;
+        toYear = ly;
+      } else if (input.period === "ytd") {
+        fromMonth = 1;
+        fromYear = currentYear;
+        toMonth = currentMonth;
+        toYear = currentYear;
+      } else {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - 24);
+        fromYear = d.getFullYear();
+        fromMonth = d.getMonth() + 1;
+        toYear = currentYear;
+        toMonth = currentMonth;
+      }
+      const profiles = await db.select().from(aeProfiles).where(eq6(aeProfiles.isActive, true));
+      const metricsRows = await db.select().from(monthlyMetrics).where(
+        and3(
+          or2(
+            and3(
+              eq6(monthlyMetrics.year, fromYear),
+              gte2(monthlyMetrics.month, fromMonth)
+            ),
+            and3(
+              gt(monthlyMetrics.year, fromYear),
+              lt(monthlyMetrics.year, toYear)
+            ),
+            and3(
+              eq6(monthlyMetrics.year, toYear),
+              lte2(monthlyMetrics.month, toMonth)
+            )
+          )
+        )
+      );
+      const dealsRows = await db.select().from(deals).where(
+        and3(
+          or2(
+            and3(
+              eq6(deals.startYear, fromYear),
+              gte2(deals.startMonth, fromMonth)
+            ),
+            and3(
+              gt(deals.startYear, fromYear),
+              lt(deals.startYear, toYear)
+            ),
+            and3(
+              eq6(deals.startYear, toYear),
+              lte2(deals.startMonth, toMonth)
+            )
+          )
+        )
+      );
+      const entries = profiles.map((profile) => {
+        const myMetrics = metricsRows.filter((m) => m.aeId === profile.id);
+        const myDeals = dealsRows.filter((d) => d.aeId === profile.id);
+        const totalDials = myMetrics.reduce((s, m) => s + (m.dialsTotal ?? 0), 0);
+        const totalDemos = myMetrics.reduce((s, m) => s + (m.demosTotal ?? 0), 0);
+        const totalArrUsd = myDeals.reduce((s, d) => s + Number(d.arrUsd), 0);
+        const dealCount = myDeals.length;
+        const recentMetrics = myMetrics.sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month).slice(0, 3);
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
+          recentMetrics.map((m) => ({
+            year: m.year,
+            month: m.month,
+            arrUsd: Number(m.arrUsd),
+            demosTotal: m.demosTotal,
+            dialsTotal: m.dialsTotal
+          })),
+          new Date(profile.joinDate)
+        );
+        const tierResult = calculateTier({
+          avgArrUsd,
+          avgDemosPw,
+          avgDialsPw,
+          avgRetentionRate: null,
+          isNewJoiner: isNewJoiner(profile.joinDate, now),
+          isTeamLeader: profile.isTeamLeader
+        });
+        return {
+          aeId: profile.id,
+          name: profile.name,
+          isTeamLeader: profile.isTeamLeader,
+          tier: tierResult.tier,
+          totalArrUsd,
+          totalDials,
+          totalDemos,
+          dealCount,
+          isCurrentAe: profile.id === aeId
+        };
+      });
+      const ranked = entries.sort((a, b) => b.totalArrUsd - a.totalArrUsd).map((e, idx) => ({ ...e, rank: idx + 1 }));
+      return {
+        entries: ranked,
+        period: input.period,
+        fromYear,
+        fromMonth,
+        toYear,
+        toMonth
+      };
     })
   })
 });

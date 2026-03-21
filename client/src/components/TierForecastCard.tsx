@@ -1,11 +1,12 @@
+import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { TrendingUp, AlertCircle, CheckCircle2, ArrowRight, Target } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle2, ArrowRight, Target, Clock } from "lucide-react";
 
 const TIER_COLORS = {
   bronze: { text: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-500/30", badge: "bg-amber-500/20 text-amber-700" },
   silver: { text: "text-slate-400", bg: "bg-slate-500/10", border: "border-slate-500/30", badge: "bg-slate-500/20 text-slate-300" },
-  gold: { text: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/30", badge: "bg-yellow-500/20 text-yellow-600" },
+  gold:   { text: "text-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/30", badge: "bg-yellow-500/20 text-yellow-600" },
 };
 
 function TierBadge({ tier }: { tier: string }) {
@@ -23,14 +24,12 @@ function MetricRow({
   target,
   extra,
   alreadyMeets,
-  unit = "",
 }: {
   label: string;
   current: string;
   target: string;
   extra: string | null;
   alreadyMeets: boolean;
-  unit?: string;
 }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
@@ -43,10 +42,10 @@ function MetricRow({
         <span className="text-sm text-muted-foreground truncate">{label}</span>
       </div>
       <div className="flex items-center gap-2 text-sm shrink-0 ml-2">
-        <span className="text-foreground font-medium">{current}{unit}</span>
+        <span className="text-foreground font-medium">{current}</span>
         <ArrowRight className="w-3 h-3 text-muted-foreground" />
         <span className={alreadyMeets ? "text-green-500 font-semibold" : "text-foreground font-semibold"}>
-          {target}{unit}
+          {target}
         </span>
         {!alreadyMeets && extra && (
           <span className="text-xs text-orange-500 font-medium">(+{extra})</span>
@@ -56,8 +55,33 @@ function MetricRow({
   );
 }
 
+/** Returns weeks remaining until the end of the current quarter */
+function useWeeksLeftInQuarter(): { weeksLeft: number; quarterLabel: string; isUrgent: boolean } {
+  return useMemo(() => {
+    const now = new Date();
+    const month = now.getMonth(); // 0-indexed
+    // Quarter end months (0-indexed): Q1=Feb(2), Q2=May(5), Q3=Aug(8), Q4=Nov(11)
+    const quarterEnds = [2, 5, 8, 11];
+    const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
+    const qIdx = Math.floor(month / 3);
+    const endMonth = quarterEnds[qIdx];
+    const endYear = now.getFullYear();
+    // Last day of the quarter-end month
+    const quarterEnd = new Date(endYear, endMonth + 1, 0); // day 0 of next month = last day of endMonth
+    const msLeft = quarterEnd.getTime() - now.getTime();
+    const weeksLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24 * 7)));
+    return {
+      weeksLeft,
+      quarterLabel: quarterLabels[qIdx],
+      isUrgent: weeksLeft <= 4,
+    };
+  }, []);
+}
+
 export function TierForecastCard() {
   const { ae } = useAeAuth();
+  const { weeksLeft, quarterLabel, isUrgent } = useWeeksLeftInQuarter();
+
   const { data: forecast, isLoading, error } = trpc.commissionStructure.tierForecast.useQuery(
     undefined,
     { enabled: !!ae, retry: false }
@@ -96,6 +120,17 @@ export function TierForecastCard() {
   const at = forecast.actionableTargets;
   const allMet = at?.alreadyMeets.arr && at?.alreadyMeets.demos && at?.alreadyMeets.dials;
 
+  // Build urgency message: "6 weeks left in Q2 · need +93 dials/week above current pace"
+  const urgencyParts: string[] = [];
+  if (at && !allMet) {
+    if (!at.alreadyMeets.dials && at.extraNeeded.dialsPw > 0)
+      urgencyParts.push(`+${at.extraNeeded.dialsPw} dials/wk`);
+    if (!at.alreadyMeets.demos && at.extraNeeded.demosPw > 0)
+      urgencyParts.push(`+${at.extraNeeded.demosPw.toFixed(1)} demos/wk`);
+    if (!at.alreadyMeets.arr && at.extraNeeded.arrUsd > 0)
+      urgencyParts.push(`+$${at.extraNeeded.arrUsd.toLocaleString()} ARR/mo`);
+  }
+
   return (
     <div className="rounded-xl bg-card border border-border overflow-hidden">
       {/* Header */}
@@ -111,6 +146,47 @@ export function TierForecastCard() {
           Based on your rolling 3-month averages
         </p>
       </div>
+
+      {/* Urgency banner */}
+      {at && !allMet && (
+        <div
+          className="px-5 py-2.5 flex items-center gap-2 border-b border-border/40"
+          style={{
+            background: isUrgent
+              ? "oklch(0.55 0.22 25 / 0.08)"
+              : "oklch(0.60 0.15 200 / 0.06)",
+            borderColor: isUrgent
+              ? "oklch(0.55 0.22 25 / 0.25)"
+              : "oklch(0.60 0.15 200 / 0.2)",
+          }}
+        >
+          <Clock
+            className="w-3.5 h-3.5 shrink-0"
+            style={{ color: isUrgent ? "oklch(0.70 0.22 25)" : "oklch(0.65 0.12 200)" }}
+          />
+          <p
+            className="text-xs font-medium"
+            style={{ color: isUrgent ? "oklch(0.70 0.22 25)" : "oklch(0.65 0.12 200)" }}
+          >
+            <span className="font-bold">{weeksLeft} week{weeksLeft !== 1 ? "s" : ""} left in {quarterLabel}</span>
+            {urgencyParts.length > 0 && (
+              <> · need {urgencyParts.join(", ")} above current pace to reach{" "}
+                <span className="font-bold">{at.targetTier.toUpperCase()}</span>
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* All met banner */}
+      {at && allMet && (
+        <div className="px-5 py-2.5 flex items-center gap-2 border-b border-border/40 bg-green-500/5 border-green-500/20">
+          <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+          <p className="text-xs font-medium text-green-600">
+            <span className="font-bold">{weeksLeft} weeks left in {quarterLabel}</span> · all targets met — on track for {at.targetTier.toUpperCase()}!
+          </p>
+        </div>
+      )}
 
       <div className="p-5 space-y-5">
         {/* Current metrics summary */}
@@ -146,11 +222,6 @@ export function TierForecastCard() {
                   {at.targetTier.toUpperCase()}
                 </span>
               </p>
-              {allMet && (
-                <span className="ml-auto text-xs text-green-500 font-medium flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> All targets met!
-                </span>
-              )}
             </div>
             <div className="space-y-0 rounded-lg border border-border/60 px-3 divide-y divide-border/40">
               <MetricRow
@@ -209,7 +280,7 @@ export function TierForecastCard() {
                       <span className="text-xs text-green-500 font-medium">↑ upgrade</span>
                     )}
                   </div>
-                  {hasGap && (
+                  {hasGap ? (
                     <div className="text-right text-xs text-muted-foreground space-y-0.5">
                       {month.gapToNextTier.arrUsd > 0 && (
                         <p>
@@ -236,8 +307,7 @@ export function TierForecastCard() {
                         </p>
                       )}
                     </div>
-                  )}
-                  {!hasGap && (
+                  ) : (
                     <span className="text-xs text-green-500 font-medium">On track ✓</span>
                   )}
                 </div>

@@ -14,6 +14,7 @@ import PayoutCalendarPage from "./pages/PayoutCalendarPage";
 import TeamCommissionPage from "./pages/TeamCommissionPage";
 import CommissionForecastPage from "./pages/CommissionForecastPage";
 import { DemoAuditPage } from "./pages/DemoAuditPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
 import SpreadsheetSyncPage from "./pages/SpreadsheetSyncPage";
 import PipedriveSyncPage from "./pages/PipedriveSyncPage";
 import VoipSyncPage from "./pages/VoipSyncPage";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/team-commissions" component={TeamCommissionPage} />
       <Route path="/forecast" component={CommissionForecastPage} />
       <Route path="/demo-audit" component={DemoAuditPage} />
+      <Route path="/leaderboard" component={LeaderboardPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

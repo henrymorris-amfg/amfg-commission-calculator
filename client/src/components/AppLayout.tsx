@@ -14,6 +14,7 @@ import {
   Menu,
   Settings2,
   TrendingUp,
+  Trophy,
   Users,
   X,
   Zap,
@@ -35,6 +36,7 @@ import { Label } from "@/components/ui/label";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
+  { path: "/leaderboard", label: "Leaderboard", icon: Trophy, adminOnly: false },
   { path: "/metrics", label: "Activity Metrics", icon: BarChart3, adminOnly: false },
   { path: "/deals", label: "Deals", icon: DollarSign, adminOnly: false },
   { path: "/summary", label: "Commission Summary", icon: TrendingUp, adminOnly: false },
