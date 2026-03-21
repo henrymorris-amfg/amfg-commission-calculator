@@ -1586,8 +1586,28 @@ export const appRouter = router({
       if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
 
       // Get current tier and metrics (join-date-bounded months)
-      const last3Months = await getMetricsForAe(aeId, 3);
-      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months as any, new Date(ae.joinDate));
+      const last3MonthsRaw = await getMetricsForAe(aeId, 3);
+      const joinDate = new Date(ae.joinDate);
+
+      // Convert decimal strings from MySQL to numbers (arrUsd is a DECIMAL column)
+      const last3Months = last3MonthsRaw.map((m) => {
+        const monthDate = new Date(m.year, m.month - 1, 1);
+        const monthsSinceJoin =
+          (monthDate.getFullYear() - joinDate.getFullYear()) * 12 +
+          (monthDate.getMonth() - joinDate.getMonth());
+        // Apply grace period: within 6 months of join, assume $25k ARR
+        const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
+        return {
+          year: m.year,
+          month: m.month,
+          arrUsd,
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+        };
+      });
+
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months, joinDate);
       const tierResult = calculateTier({
         avgArrUsd,
         avgDemosPw,

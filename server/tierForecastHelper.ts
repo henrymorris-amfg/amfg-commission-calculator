@@ -1,8 +1,13 @@
 /**
  * Tier Forecast Helper
- * Calculates 3-month forward-looking tier projections with actionable targets
+ * Calculates 3-month forward-looking tier projections with actionable targets.
+ *
+ * Key design:
+ * - "actionableTargets" shows the GAP between current metrics and next tier threshold
+ *   (not the raw threshold divided by 3), so AEs know exactly what extra effort is needed.
+ * - "gapToNextTier" per month shows the remaining gap at that projected point in time.
+ * - "alreadyMeets" flags indicate whether the AE is already meeting each criterion.
  */
-
 import { STANDARD_TARGETS, TEAM_LEADER_TARGETS, Tier } from "../shared/commission";
 
 export interface TierForecast {
@@ -12,6 +17,12 @@ export interface TierForecast {
     demosPw: number;
     dialsPw: number;
   };
+  nextTier: Tier | null; // null if already at gold
+  nextTierTargets: {
+    arrUsd: number;
+    demosPw: number;
+    dialsPw: number;
+  } | null;
   forecastMonths: Array<{
     month: string;
     projectedTier: Tier;
@@ -25,19 +36,31 @@ export interface TierForecast {
       demosPw: number;
       dialsPw: number;
     };
+    willUpgrade: boolean; // true if this month projects a tier upgrade vs current
   }>;
+  /** Actionable targets: what the AE needs to sustain to hit next tier */
   actionableTargets: {
     targetTier: Tier;
     monthsToReach: number;
-    requiredMetrics: {
-      totalArrUsd: number;
-      totalDemosPw: number;
-      totalDialsPw: number;
-      monthlyAverageArrUsd: number;
-      monthlyAverageDemosPw: number;
-      monthlyAverageDialsPw: number;
+    /** The next tier's absolute threshold values */
+    thresholds: {
+      arrUsd: number;
+      demosPw: number;
+      dialsPw: number;
     };
-  };
+    /** Extra effort needed per month on top of current performance (0 if already meeting) */
+    extraNeeded: {
+      arrUsd: number;
+      demosPw: number;
+      dialsPw: number;
+    };
+    /** Whether the AE is already meeting each threshold */
+    alreadyMeets: {
+      arr: boolean;
+      demos: boolean;
+      dials: boolean;
+    };
+  } | null; // null if already at gold
 }
 
 export function calculateTierForecast(
@@ -50,8 +73,12 @@ export function calculateTierForecast(
   const tierOrder: Tier[] = ["bronze", "silver", "gold"];
   const currentTierIndex = tierOrder.indexOf(currentTier);
 
+  // Determine next tier
+  const nextTier: Tier | null = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : null;
+  const nextTierTargets = nextTier ? targets[nextTier as "silver" | "gold"] : null;
+
   // Project next 3 months
-  const forecastMonths = [];
+  const forecastMonths: TierForecast["forecastMonths"] = [];
   let projectedArrUsd = currentMetrics.arrUsd;
   let projectedDemosPw = currentMetrics.demosPw;
   let projectedDialsPw = currentMetrics.dialsPw;
@@ -85,9 +112,9 @@ export function calculateTierForecast(
       projectedTier = "silver";
     }
 
-    // Calculate gap to next tier
-    const nextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
-    const nextTargets = nextTier ? targets[nextTier] : null;
+    // Calculate gap to next tier at this projected point
+    const projNextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
+    const projNextTargets = projNextTier ? targets[projNextTier as "silver" | "gold"] : null;
 
     forecastMonths.push({
       month: monthName,
@@ -97,63 +124,89 @@ export function calculateTierForecast(
         demosPw: Math.round(projectedDemosPw * 10) / 10,
         dialsPw: Math.round(projectedDialsPw),
       },
-      gapToNextTier: nextTargets
+      gapToNextTier: projNextTargets
         ? {
-            arrUsd: Math.max(0, nextTargets.arrUsd - projectedArrUsd),
-            demosPw: Math.max(0, nextTargets.demosPw - projectedDemosPw),
-            dialsPw: Math.max(0, nextTargets.dialsPw - projectedDialsPw),
+            arrUsd: Math.max(0, Math.round(projNextTargets.arrUsd - projectedArrUsd)),
+            demosPw: Math.max(0, Math.round((projNextTargets.demosPw - projectedDemosPw) * 10) / 10),
+            dialsPw: Math.max(0, Math.round(projNextTargets.dialsPw - projectedDialsPw)),
           }
         : { arrUsd: 0, demosPw: 0, dialsPw: 0 },
+      willUpgrade:
+        tierOrder.indexOf(projectedTier) > currentTierIndex,
     });
   }
 
-  // Calculate actionable targets for next tier
-  const targetTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : currentTier;
-  const targetMetrics = targetTier === "silver" ? targets.silver : targets.gold;
-
-  const totalMonthsToReach = 3;
-  const monthlyAverageArrUsd = targetMetrics.arrUsd / totalMonthsToReach;
-  const monthlyAverageDemosPw = targetMetrics.demosPw / totalMonthsToReach;
-  const monthlyAverageDialsPw = targetMetrics.dialsPw / totalMonthsToReach;
+  // Build actionable targets
+  const actionableTargets: TierForecast["actionableTargets"] = nextTierTargets && nextTier
+    ? {
+        targetTier: nextTier,
+        monthsToReach: 3,
+        thresholds: {
+          arrUsd: nextTierTargets.arrUsd,
+          demosPw: nextTierTargets.demosPw,
+          dialsPw: nextTierTargets.dialsPw,
+        },
+        extraNeeded: {
+          arrUsd: Math.max(0, Math.round(nextTierTargets.arrUsd - currentMetrics.arrUsd)),
+          demosPw: Math.max(0, Math.round((nextTierTargets.demosPw - currentMetrics.demosPw) * 10) / 10),
+          dialsPw: Math.max(0, Math.round(nextTierTargets.dialsPw - currentMetrics.dialsPw)),
+        },
+        alreadyMeets: {
+          arr: currentMetrics.arrUsd >= nextTierTargets.arrUsd,
+          demos: currentMetrics.demosPw >= nextTierTargets.demosPw,
+          dials: currentMetrics.dialsPw >= nextTierTargets.dialsPw,
+        },
+      }
+    : null;
 
   return {
     currentTier,
     currentMetrics,
+    nextTier,
+    nextTierTargets: nextTierTargets
+      ? {
+          arrUsd: nextTierTargets.arrUsd,
+          demosPw: nextTierTargets.demosPw,
+          dialsPw: nextTierTargets.dialsPw,
+        }
+      : null,
     forecastMonths,
-    actionableTargets: {
-      targetTier,
-      monthsToReach: totalMonthsToReach,
-      requiredMetrics: {
-        totalArrUsd: targetMetrics.arrUsd,
-        totalDemosPw: targetMetrics.demosPw,
-        totalDialsPw: targetMetrics.dialsPw,
-        monthlyAverageArrUsd: Math.round(monthlyAverageArrUsd),
-        monthlyAverageDemosPw: Math.round(monthlyAverageDemosPw * 10) / 10,
-        monthlyAverageDialsPw: Math.round(monthlyAverageDialsPw),
-      },
-    },
+    actionableTargets,
   };
 }
 
 /**
- * Format tier forecast for display
+ * Format tier forecast for display (used in notifications/emails)
  */
 export function formatTierForecast(forecast: TierForecast): string {
   const lines = [
     `📊 Tier Forecast from ${forecast.currentTier.toUpperCase()}`,
     `Current: $${forecast.currentMetrics.arrUsd.toLocaleString()} ARR | ${forecast.currentMetrics.demosPw.toFixed(1)} demos/wk | ${forecast.currentMetrics.dialsPw} dials/wk`,
     ``,
-    `🎯 To reach ${forecast.actionableTargets.targetTier.toUpperCase()} in 3 months:`,
-    `   • Monthly ARR: $${forecast.actionableTargets.requiredMetrics.monthlyAverageArrUsd.toLocaleString()}`,
-    `   • Monthly Demos: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDemosPw.toFixed(1)}/wk`,
-    `   • Monthly Dials: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDialsPw}`,
   ];
 
+  if (forecast.actionableTargets) {
+    const at = forecast.actionableTargets;
+    lines.push(`🎯 To reach ${at.targetTier.toUpperCase()}:`);
+    lines.push(`   Target: $${at.thresholds.arrUsd.toLocaleString()} ARR | ${at.thresholds.demosPw}/wk demos | ${at.thresholds.dialsPw}/wk dials`);
+    if (at.extraNeeded.arrUsd > 0) lines.push(`   Need +$${at.extraNeeded.arrUsd.toLocaleString()} more ARR/month`);
+    if (at.extraNeeded.demosPw > 0) lines.push(`   Need +${at.extraNeeded.demosPw.toFixed(1)} more demos/week`);
+    if (at.extraNeeded.dialsPw > 0) lines.push(`   Need +${at.extraNeeded.dialsPw} more dials/week`);
+    if (at.alreadyMeets.arr && at.alreadyMeets.demos && at.alreadyMeets.dials) {
+      lines.push(`   ✅ Already meeting all ${at.targetTier.toUpperCase()} targets!`);
+    }
+    lines.push(``);
+  } else {
+    lines.push(`🏆 Already at GOLD tier — maximum commission rate!`);
+    lines.push(``);
+  }
+
   forecast.forecastMonths.forEach((month) => {
-    lines.push(`\n${month.month}: ${month.projectedTier.toUpperCase()} tier`);
-    if (month.gapToNextTier.arrUsd > 0) {
+    const upgrade = month.willUpgrade ? " ⬆️" : "";
+    lines.push(`${month.month}: ${month.projectedTier.toUpperCase()} tier${upgrade}`);
+    if (month.gapToNextTier.arrUsd > 0 || month.gapToNextTier.demosPw > 0 || month.gapToNextTier.dialsPw > 0) {
       lines.push(
-        `   Gap to next: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
+        `   Gap: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
       );
     }
   });

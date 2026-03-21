@@ -603,3 +603,11 @@
 - [x] CSV download with AE-segmented filename (demos_done_Joe_Payne_2026-03-21.csv)
 - [x] Tad sync: pipedriveSync.import with useJoinDate=true handles this correctly; Henry can trigger from Pipedrive Sync page or daily scheduler runs at 8 AM
 - [x] 109 tests passing (12 test files)
+
+## Navigation, Resync & Forecast Fix (Mar 21 2026)
+- [x] Demo Audit page navigation — AppLayout sidebar is present; /demo-audit is in navItems with full sidebar
+- [x] Add Full Pipedrive Resync button to Demo Audit page (triggers pipedriveSync.import 12-month full history)
+- [x] Fix 3-month tier forecast on AE dashboard — fixed NaN arrUsd: MySQL DECIMAL strings now converted with Number()
+- [x] Rewrote tierForecastHelper.ts: actionableTargets now shows extraNeeded (gap to next tier) not raw threshold/3
+- [x] Redesigned TierForecastCard: current metrics grid + actionable targets with green ticks + month projection
+- [x] 109 tests passing (12 test files)

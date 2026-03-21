@@ -2217,6 +2217,8 @@ function calculateTierForecast(currentTier, currentMetrics, isTeamLeader = false
   const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
   const tierOrder = ["bronze", "silver", "gold"];
   const currentTierIndex = tierOrder.indexOf(currentTier);
+  const nextTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : null;
+  const nextTierTargets = nextTier ? targets[nextTier] : null;
   const forecastMonths = [];
   let projectedArrUsd = currentMetrics.arrUsd;
   let projectedDemosPw = currentMetrics.demosPw;
@@ -2236,8 +2238,8 @@ function calculateTierForecast(currentTier, currentMetrics, isTeamLeader = false
     } else if (projectedArrUsd >= targets.silver.arrUsd && projectedDemosPw >= targets.silver.demosPw && projectedDialsPw >= targets.silver.dialsPw) {
       projectedTier = "silver";
     }
-    const nextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
-    const nextTargets = nextTier ? targets[nextTier] : null;
+    const projNextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
+    const projNextTargets = projNextTier ? targets[projNextTier] : null;
     forecastMonths.push({
       month: monthName,
       projectedTier,
@@ -2246,53 +2248,73 @@ function calculateTierForecast(currentTier, currentMetrics, isTeamLeader = false
         demosPw: Math.round(projectedDemosPw * 10) / 10,
         dialsPw: Math.round(projectedDialsPw)
       },
-      gapToNextTier: nextTargets ? {
-        arrUsd: Math.max(0, nextTargets.arrUsd - projectedArrUsd),
-        demosPw: Math.max(0, nextTargets.demosPw - projectedDemosPw),
-        dialsPw: Math.max(0, nextTargets.dialsPw - projectedDialsPw)
-      } : { arrUsd: 0, demosPw: 0, dialsPw: 0 }
+      gapToNextTier: projNextTargets ? {
+        arrUsd: Math.max(0, Math.round(projNextTargets.arrUsd - projectedArrUsd)),
+        demosPw: Math.max(0, Math.round((projNextTargets.demosPw - projectedDemosPw) * 10) / 10),
+        dialsPw: Math.max(0, Math.round(projNextTargets.dialsPw - projectedDialsPw))
+      } : { arrUsd: 0, demosPw: 0, dialsPw: 0 },
+      willUpgrade: tierOrder.indexOf(projectedTier) > currentTierIndex
     });
   }
-  const targetTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : currentTier;
-  const targetMetrics = targetTier === "silver" ? targets.silver : targets.gold;
-  const totalMonthsToReach = 3;
-  const monthlyAverageArrUsd = targetMetrics.arrUsd / totalMonthsToReach;
-  const monthlyAverageDemosPw = targetMetrics.demosPw / totalMonthsToReach;
-  const monthlyAverageDialsPw = targetMetrics.dialsPw / totalMonthsToReach;
+  const actionableTargets = nextTierTargets && nextTier ? {
+    targetTier: nextTier,
+    monthsToReach: 3,
+    thresholds: {
+      arrUsd: nextTierTargets.arrUsd,
+      demosPw: nextTierTargets.demosPw,
+      dialsPw: nextTierTargets.dialsPw
+    },
+    extraNeeded: {
+      arrUsd: Math.max(0, Math.round(nextTierTargets.arrUsd - currentMetrics.arrUsd)),
+      demosPw: Math.max(0, Math.round((nextTierTargets.demosPw - currentMetrics.demosPw) * 10) / 10),
+      dialsPw: Math.max(0, Math.round(nextTierTargets.dialsPw - currentMetrics.dialsPw))
+    },
+    alreadyMeets: {
+      arr: currentMetrics.arrUsd >= nextTierTargets.arrUsd,
+      demos: currentMetrics.demosPw >= nextTierTargets.demosPw,
+      dials: currentMetrics.dialsPw >= nextTierTargets.dialsPw
+    }
+  } : null;
   return {
     currentTier,
     currentMetrics,
+    nextTier,
+    nextTierTargets: nextTierTargets ? {
+      arrUsd: nextTierTargets.arrUsd,
+      demosPw: nextTierTargets.demosPw,
+      dialsPw: nextTierTargets.dialsPw
+    } : null,
     forecastMonths,
-    actionableTargets: {
-      targetTier,
-      monthsToReach: totalMonthsToReach,
-      requiredMetrics: {
-        totalArrUsd: targetMetrics.arrUsd,
-        totalDemosPw: targetMetrics.demosPw,
-        totalDialsPw: targetMetrics.dialsPw,
-        monthlyAverageArrUsd: Math.round(monthlyAverageArrUsd),
-        monthlyAverageDemosPw: Math.round(monthlyAverageDemosPw * 10) / 10,
-        monthlyAverageDialsPw: Math.round(monthlyAverageDialsPw)
-      }
-    }
+    actionableTargets
   };
 }
 function formatTierForecast(forecast) {
   const lines = [
     `\u{1F4CA} Tier Forecast from ${forecast.currentTier.toUpperCase()}`,
     `Current: $${forecast.currentMetrics.arrUsd.toLocaleString()} ARR | ${forecast.currentMetrics.demosPw.toFixed(1)} demos/wk | ${forecast.currentMetrics.dialsPw} dials/wk`,
-    ``,
-    `\u{1F3AF} To reach ${forecast.actionableTargets.targetTier.toUpperCase()} in 3 months:`,
-    `   \u2022 Monthly ARR: $${forecast.actionableTargets.requiredMetrics.monthlyAverageArrUsd.toLocaleString()}`,
-    `   \u2022 Monthly Demos: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDemosPw.toFixed(1)}/wk`,
-    `   \u2022 Monthly Dials: ${forecast.actionableTargets.requiredMetrics.monthlyAverageDialsPw}`
+    ``
   ];
+  if (forecast.actionableTargets) {
+    const at = forecast.actionableTargets;
+    lines.push(`\u{1F3AF} To reach ${at.targetTier.toUpperCase()}:`);
+    lines.push(`   Target: $${at.thresholds.arrUsd.toLocaleString()} ARR | ${at.thresholds.demosPw}/wk demos | ${at.thresholds.dialsPw}/wk dials`);
+    if (at.extraNeeded.arrUsd > 0) lines.push(`   Need +$${at.extraNeeded.arrUsd.toLocaleString()} more ARR/month`);
+    if (at.extraNeeded.demosPw > 0) lines.push(`   Need +${at.extraNeeded.demosPw.toFixed(1)} more demos/week`);
+    if (at.extraNeeded.dialsPw > 0) lines.push(`   Need +${at.extraNeeded.dialsPw} more dials/week`);
+    if (at.alreadyMeets.arr && at.alreadyMeets.demos && at.alreadyMeets.dials) {
+      lines.push(`   \u2705 Already meeting all ${at.targetTier.toUpperCase()} targets!`);
+    }
+    lines.push(``);
+  } else {
+    lines.push(`\u{1F3C6} Already at GOLD tier \u2014 maximum commission rate!`);
+    lines.push(``);
+  }
   forecast.forecastMonths.forEach((month) => {
-    lines.push(`
-${month.month}: ${month.projectedTier.toUpperCase()} tier`);
-    if (month.gapToNextTier.arrUsd > 0) {
+    const upgrade = month.willUpgrade ? " \u2B06\uFE0F" : "";
+    lines.push(`${month.month}: ${month.projectedTier.toUpperCase()} tier${upgrade}`);
+    if (month.gapToNextTier.arrUsd > 0 || month.gapToNextTier.demosPw > 0 || month.gapToNextTier.dialsPw > 0) {
       lines.push(
-        `   Gap to next: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
+        `   Gap: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
       );
     }
   });
@@ -5919,8 +5941,22 @@ var appRouter = router({
       if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED" });
       const ae = await getAeProfileById(aeId);
       if (!ae) throw new TRPCError9({ code: "NOT_FOUND", message: "AE not found" });
-      const last3Months = await getMetricsForAe(aeId, 3);
-      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months, new Date(ae.joinDate));
+      const last3MonthsRaw = await getMetricsForAe(aeId, 3);
+      const joinDate = new Date(ae.joinDate);
+      const last3Months = last3MonthsRaw.map((m) => {
+        const monthDate = new Date(m.year, m.month - 1, 1);
+        const monthsSinceJoin = (monthDate.getFullYear() - joinDate.getFullYear()) * 12 + (monthDate.getMonth() - joinDate.getMonth());
+        const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25e3 : Number(m.arrUsd);
+        return {
+          year: m.year,
+          month: m.month,
+          arrUsd,
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
+        };
+      });
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months, joinDate);
       const tierResult = calculateTier({
         avgArrUsd,
         avgDemosPw,

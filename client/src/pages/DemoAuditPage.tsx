@@ -7,7 +7,10 @@
  */
 
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAeAuth } from "@/contexts/AeAuthContext";
+import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +43,7 @@ import {
   Video,
   Trash2,
   AlertCircle,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,6 +54,8 @@ function formatDate(date: Date | string | null | undefined): string {
 }
 
 export function DemoAuditPage() {
+  const { ae, isLoading } = useAeAuth();
+  const [, navigate] = useLocation();
   const [selectedAeId, setSelectedAeId] = useState<string>("all");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
@@ -92,6 +98,16 @@ export function DemoAuditPage() {
       toast.success("Issues resolved.");
     },
     onError: () => toast.error("Failed to resolve issues."),
+  });
+
+  // Full Pipedrive resync (re-pulls demo activities from Pipedrive for all AEs)
+  const fullResync = trpc.pipedriveSync.import.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Pipedrive resync complete — ${data.updatedMetrics?.length ?? 0} months updated.`);
+      refetchDemos();
+      refetchFlags();
+    },
+    onError: (err) => toast.error(`Resync failed: ${err.message}`),
   });
 
   // Manual trigger for demo detection
@@ -164,7 +180,10 @@ export function DemoAuditPage() {
     selectedAeId === "all" || h.aeId.toString() === selectedAeId
   );
 
+  if (isLoading || !ae) return null;
+
   return (
+    <AppLayout>
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -182,6 +201,19 @@ export function DemoAuditPage() {
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fullResync.mutate({ months: 12, useJoinDate: true, mergeMode: "replace" })}
+            disabled={fullResync.isPending}
+          >
+            {fullResync.isPending ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Zap className="h-4 w-4 mr-2" />
+            )}
+            {fullResync.isPending ? "Resyncing..." : "Full Pipedrive Resync"}
           </Button>
           <Button
             variant="outline"
@@ -534,5 +566,6 @@ export function DemoAuditPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </AppLayout>
   );
 }
