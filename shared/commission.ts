@@ -139,10 +139,55 @@ export interface MonthData {
 }
 
 /**
- * Compute 3-month rolling averages for ARR, demos pw, dials pw.
- * Dials and demos are divided by 12 weeks (3 months × 4 weeks, holiday-adjusted).
+ * Compute the number of weeks an AE has been active across the given months.
+ * For the first (oldest) month, only count weeks from the join date onwards.
+ * Subsequent months count as full 4-week months.
+ * Result is capped at 12 weeks (3 full months).
  */
-export function computeRollingAverages(last3Months: MonthData[]): {
+export function computeActiveWeeks(
+  months: MonthData[],
+  joinDate: Date | null
+): number {
+  if (months.length === 0) return 12;
+  if (!joinDate) return Math.min(months.length * 4, 12);
+
+  // Sort ascending so oldest month is first
+  const sorted = [...months].sort((a, b) =>
+    a.year !== b.year ? a.year - b.year : a.month - b.month
+  );
+
+  let totalWeeks = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const m = sorted[i];
+    const monthStart = new Date(m.year, m.month - 1, 1);
+    const monthEnd = new Date(m.year, m.month, 0); // last day of month
+
+    if (i === 0 && joinDate > monthStart) {
+      // First month: only count days from join date to end of month
+      const effectiveStart = joinDate > monthStart ? joinDate : monthStart;
+      const daysInMonth = monthEnd.getDate();
+      const daysWorked = Math.max(
+        0,
+        (monthEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24) + 1
+      );
+      totalWeeks += (daysWorked / daysInMonth) * 4;
+    } else {
+      totalWeeks += 4;
+    }
+  }
+
+  return Math.min(Math.max(totalWeeks, 0.5), 12); // at least 0.5 weeks, cap at 12
+}
+
+/**
+ * Compute 3-month rolling averages for ARR, demos pw, dials pw.
+ * Dials and demos are divided by actual weeks worked since join date (capped at 12).
+ * Pass joinDate to correctly prorate the first partial month for new joiners.
+ */
+export function computeRollingAverages(
+  last3Months: MonthData[],
+  joinDate?: Date | null
+): {
   avgArrUsd: number;
   avgDemosPw: number;
   avgDialsPw: number;
@@ -154,10 +199,14 @@ export function computeRollingAverages(last3Months: MonthData[]): {
   const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
   const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
   const n = last3Months.length;
+  // Use actual weeks worked when joinDate is provided, otherwise default to 12
+  const weeks = joinDate != null
+    ? computeActiveWeeks(last3Months, joinDate)
+    : Math.min(n * 4, 12);
   return {
     avgArrUsd: totalArr / n,
-    avgDemosPw: totalDemos / 12, // always divide by 12 weeks
-    avgDialsPw: totalDials / 12,
+    avgDemosPw: totalDemos / weeks,
+    avgDialsPw: totalDials / weeks,
   };
 }
 

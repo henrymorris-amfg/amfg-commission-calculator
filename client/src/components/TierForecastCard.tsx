@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { TrendingUp } from "lucide-react";
 
 export function TierForecastCard() {
-  const { data: forecast, isLoading } = trpc.commission.tierForecast.useQuery();
+  const { data: forecast, isLoading } = trpc.commissionStructure.tierForecast.useQuery();
 
   if (isLoading) {
     return (

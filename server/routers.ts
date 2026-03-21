@@ -327,12 +327,14 @@ export const appRouter = router({
 
   // ─── Metrics ───────────────────────────────────────────────────────────────
   metrics: router({
-    // Save or update metrics for a given month
+    // Save or update metrics for a given month — ADMIN (team leader) only
     upsert: publicProcedure
       .input(
         z.object({
           year: z.number().int().min(2020).max(2100),
           month: z.number().int().min(1).max(12),
+          // aeId is required when called by admin on behalf of another AE
+          aeId: z.number().int().optional(),
           arrUsd: z.number().min(0),
           demosTotal: z.number().int().min(0),
           dialsTotal: z.number().int().min(0),
@@ -340,8 +342,14 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const aeId = getAeIdFromCtx(ctx);
-        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can edit activity data." });
+        }
+        // Admin can edit any AE's metrics; if no aeId provided, edit own
+        const aeId = input.aeId ?? callerId;
         await upsertMonthlyMetric({
           aeId,
           year: input.year,
@@ -479,7 +487,7 @@ export const appRouter = router({
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
           })) as any;
 
-        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any);
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any, new Date(profile.joinDate));
         const avgRetentionRate = computeAvgRetention(last6 as any);
         const newJoiner = isNewJoiner(profile.joinDate, targetDate);
 
@@ -666,7 +674,7 @@ export const appRouter = router({
               };
             });
 
-          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3, new Date(profile.joinDate));
           const avgRetentionRate = computeAvgRetention(last6);
           const newJoiner = isNewJoiner(profile.joinDate, targetDate);
 
@@ -1542,16 +1550,16 @@ export const appRouter = router({
       }),
 
     // Tier forecast: 3-month projection with actionable targets
-    tierForecast: protectedProcedure.query(async ({ ctx }) => {
+    tierForecast: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
 
       const ae = await getAeProfileById(aeId);
       if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
 
-      // Get current tier and metrics
+      // Get current tier and metrics (join-date-bounded months)
       const last3Months = await getMetricsForAe(aeId, 3);
-      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months as any);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months as any, new Date(ae.joinDate));
       const tierResult = calculateTier({
         avgArrUsd,
         avgDemosPw,
@@ -1624,9 +1632,9 @@ export const appRouter = router({
         }).slice(0, 3);
         
         if (last3.length > 0) {
-          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any);
-          const avgRetention = computeAvgRetention(last3 as any);
           const profile = await getAeProfileById(deal.aeId);
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any, profile?.joinDate ? new Date(profile.joinDate) : null);
+          const avgRetention = computeAvgRetention(last3 as any);
           const newJoiner = isNewJoiner(profile?.joinDate || new Date(), targetDate);
           const tier = calculateTier({
             avgArrUsd,

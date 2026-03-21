@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { MONTH_NAMES } from "../../../shared/commission";
-import { Save, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { Save, ChevronLeft, ChevronRight, Info, Lock } from "lucide-react";
 import { GracePeriodIndicator } from "@/components/GracePeriodIndicator";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -28,6 +28,8 @@ export default function MetricsPage() {
 
   const utils = trpc.useUtils();
 
+  const isAdmin = ae?.isTeamLeader === true;
+
   const { data: existing, isLoading: metricLoading } = trpc.metrics.getForMonth.useQuery(
     { year, month },
     { enabled: !!ae }
@@ -45,8 +47,9 @@ export default function MetricsPage() {
     onError: (err) => toast.error(err.message),
   });
 
-  // Populate form when existing data loads
+  // Populate form when existing data loads (admin only)
   useEffect(() => {
+    if (!isAdmin) return;
     if (existing) {
       setArrUsd(String(existing.arrUsd));
       setDemosTotal(String(existing.demosTotal));
@@ -58,7 +61,7 @@ export default function MetricsPage() {
       setDialsTotal("");
       setRetentionRate("");
     }
-  }, [existing, metricLoading, year, month]);
+  }, [existing, metricLoading, year, month, isAdmin]);
 
   useEffect(() => {
     if (!isLoading && !ae) navigate("/");
@@ -118,7 +121,9 @@ export default function MetricsPage() {
         <div>
           <h1 className="text-4xl text-foreground">Activity Metrics</h1>
           <p className="text-muted-foreground mt-1">
-            Enter your monthly totals. Averages are calculated automatically.
+            {isAdmin
+              ? "View and edit monthly activity totals for all AEs."
+              : "Your monthly activity data. Synced automatically from Pipedrive and VOIP Studio."}
           </p>
         </div>
 
@@ -151,84 +156,123 @@ export default function MetricsPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Input Form */}
+          {/* Input Form — admin only; read-only view for AEs */}
           <div className="rounded-2xl bg-card border border-border p-6 space-y-5">
-            <h3 className="text-base font-semibold text-foreground">Monthly Totals</h3>
-
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">New ARR Signed (USD)</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                <Input
-                  type="number"
-                  min="0"
-                  value={arrUsd}
-                  onChange={(e) => setArrUsd(e.target.value)}
-                  placeholder="0"
-                  className="pl-7 bg-input border-border focus:border-primary h-11"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Total new ARR signed this month (excluding onboarding fees)</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Total Demos Done</Label>
-              <Input
-                type="number"
-                min="0"
-                value={demosTotal}
-                onChange={(e) => setDemosTotal(e.target.value)}
-                placeholder="0"
-                className="bg-input border-border focus:border-primary h-11"
-              />
-              <p className="text-xs text-muted-foreground">Total demos done this month (divided by 12 weeks for pw average)</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Total Dials</Label>
-              <Input
-                type="number"
-                min="0"
-                value={dialsTotal}
-                onChange={(e) => setDialsTotal(e.target.value)}
-                placeholder="0"
-                className="bg-input border-border focus:border-primary h-11"
-              />
-              <p className="text-xs text-muted-foreground">Total dials this month (divided by 12 weeks for pw average)</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Retention Rate (%)</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={retentionRate}
-                  onChange={(e) => setRetentionRate(e.target.value)}
-                  placeholder="e.g. 71.5"
-                  className="pr-8 bg-input border-border focus:border-primary h-11"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
-              </div>
-              <p className="text-xs text-muted-foreground">6-month average annualised retention score</p>
-            </div>
-
-            <Button
-              onClick={handleSave}
-              disabled={upsertMutation.isPending}
-              className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2"
-            >
-              {upsertMutation.isPending ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Saving...
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-foreground">Monthly Totals</h3>
+              {!isAdmin && (
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Lock className="w-3 h-3" /> Read-only
                 </span>
-              ) : (
-                <span className="flex items-center gap-2"><Save className="w-4 h-4" />Save Metrics</span>
               )}
-            </Button>
+            </div>
+
+            {/* Read-only view for non-admin AEs */}
+            {!isAdmin ? (
+              <div className="space-y-4">
+                {existing ? (
+                  <>
+                    {[
+                      { label: "New ARR Signed (USD)", value: `$${existing.arrUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+                      { label: "Total Demos Done", value: String(existing.demosTotal) },
+                      { label: "Total Dials", value: String(existing.dialsTotal) },
+                      { label: "Retention Rate", value: existing.retentionRate != null ? `${existing.retentionRate}%` : "—" },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <span className="text-sm text-muted-foreground">{item.label}</span>
+                        <span className="text-sm font-semibold text-foreground">{item.value}</span>
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground pt-2">
+                      Activity data is synced automatically from Pipedrive and VOIP Studio each morning. Contact your team leader to report any discrepancies.
+                    </p>
+                  </>
+                ) : (
+                  <div className="text-center py-6 space-y-2">
+                    <p className="text-sm text-muted-foreground">No data for {MONTH_NAMES[month - 1]} {year} yet.</p>
+                    <p className="text-xs text-muted-foreground">Data syncs automatically each morning from Pipedrive and VOIP Studio.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Admin edit form */
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">New ARR Signed (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={arrUsd}
+                      onChange={(e) => setArrUsd(e.target.value)}
+                      placeholder="0"
+                      className="pl-7 bg-input border-border focus:border-primary h-11"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total new ARR signed this month (excluding onboarding fees)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Total Demos Done</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={demosTotal}
+                    onChange={(e) => setDemosTotal(e.target.value)}
+                    placeholder="0"
+                    className="bg-input border-border focus:border-primary h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">Total demos done this month (divided by actual weeks worked for pw average)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Total Dials</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={dialsTotal}
+                    onChange={(e) => setDialsTotal(e.target.value)}
+                    placeholder="0"
+                    className="bg-input border-border focus:border-primary h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">Total dials this month (divided by actual weeks worked for pw average)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Retention Rate (%)</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={retentionRate}
+                      onChange={(e) => setRetentionRate(e.target.value)}
+                      placeholder="e.g. 71.5"
+                      className="pr-8 bg-input border-border focus:border-primary h-11"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">6-month average annualised retention score</p>
+                </div>
+
+                <Button
+                  onClick={handleSave}
+                  disabled={upsertMutation.isPending}
+                  className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2"
+                >
+                  {upsertMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2"><Save className="w-4 h-4" />Save Metrics</span>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Rolling Averages Preview */}
@@ -242,7 +286,7 @@ export default function MetricsPage() {
               </div>
               <p className="text-xs text-muted-foreground mb-4">
                 Used to determine your tier for <span className="text-foreground font-medium">{MONTH_NAMES[month - 1]} {year}</span>.
-                Based on the 3 months prior.
+                Based on months since your start date (up to 3 months).
               </p>
 
               {last3.length === 0 ? (
@@ -313,7 +357,7 @@ export default function MetricsPage() {
         <div className="rounded-2xl bg-card border border-border p-6 space-y-5">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Commission Structure</h2>
-            <p className="text-sm text-muted-foreground mt-1">Your tier is determined by rolling 3-month averages. Here's how commission is calculated.</p>
+            <p className="text-sm text-muted-foreground mt-1">Your tier is determined by rolling averages since your start date. Here's how commission is calculated.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

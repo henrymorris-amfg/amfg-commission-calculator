@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, name, joinDate, email FROM ae_profiles ORDER BY joinDate;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, name, joinDate, email FROM ae_profiles ORDER BY joinDate;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Henry Morris",
+      "joinDate": "2023-10-10 00:00:00",
+      "email": "henry.morris@amfg.ai"
+    },
+    {
+      "id": "30001",
+      "name": "Janos Rosenberg",
+      "joinDate": "2024-01-01 00:00:00",
+      "email": "janos.rosenberg@amfg.ai"
+    },
+    {
+      "id": "30002",
+      "name": "Joe Payne",
+      "joinDate": "2025-06-16 00:00:00",
+      "email": "joe.payne@amfg.ai"
+    },
+    {
+      "id": "30004",
+      "name": "Toby Greer",
+      "joinDate": "2025-07-28 00:00:00",
+      "email": "toby.greer@amfg.ai"
+    },
+    {
+      "id": "30003",
+      "name": "Julian Earl",
+      "joinDate": "2026-02-04 00:00:00",
+      "email": "julian.earl@amfg.ai"
+    },
+    {
+      "id": "60001",
+      "name": "Tad Tamulevicius",
+      "joinDate": "2026-03-15 00:00:00",
+      "email": "tad.tamulevicius@amfg.ai"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tjoinDate\temail\n1\tHenry Morris\t2023-10-10 00:00:00\thenry.morris@amfg.ai\n30001\tJanos Rosenberg\t2024-01-01 00:00:00\tjanos.rosenberg@amfg.ai\n30002\tJoe Payne\t2025-06-16 00:00:00\tjoe.payne@amfg.ai\n30004\tToby Greer\t2025-07-28 00:00:00\ttoby.greer@amfg.ai\n30003\tJulian Earl\t2026-02-04 00:00:00\tjulian.earl@amfg.ai\n60001\tTad Tamulevicius\t2026-03-15 00:00:00\ttad.tamulevicius@amfg.ai\n",
+  "stderr": "",
+  "execution_time_ms": 51
+}

@@ -15,6 +15,7 @@
  */
 
 import { notifyOwner } from "./_core/notification";
+import { sendTierChangeEmail } from "./emailService";
 import { getDb } from "./db";
 import {
   aeProfiles,
@@ -307,7 +308,7 @@ async function computeAeTierForMonth(
       retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
     }));
 
-  const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any);
+  const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3 as any, new Date(profile.joinDate));
   const avgRetentionRate = computeAvgRetention(last6 as any);
   const newJoiner = isNewJoiner(profile.joinDate, targetDate);
 
@@ -530,11 +531,43 @@ export async function checkAndNotifyTierChanges(
       let sent = false;
       let errorMsg: string | undefined;
 
+      // 1. Send Resend email directly to AE (if they have an email address)
+      if (currentSnapshot.aeEmail) {
+        const targets = currentSnapshot.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+        const nextTierKey = newTier === "bronze" ? "silver" : newTier === "silver" ? "gold" : null;
+        const nextTierTargets = nextTierKey && nextTierKey in targets
+          ? { ...targets[nextTierKey as "silver" | "gold"] }
+          : null;
+        try {
+          const emailSent = await sendTierChangeEmail({
+            toEmail: currentSnapshot.aeEmail,
+            toName: currentSnapshot.aeName,
+            previousTier,
+            newTier,
+            month: currentMonth,
+            year: currentYear,
+            avgArrUsd: currentSnapshot.avgArrUsd,
+            avgDemosPw: currentSnapshot.avgDemosPw,
+            avgDialsPw: currentSnapshot.avgDialsPw,
+            nextTierTargets: nextTierTargets ? {
+              arrUsd: nextTierTargets.arrUsd,
+              demosPw: nextTierTargets.demosPw,
+              dialsPw: nextTierTargets.dialsPw,
+            } : null,
+          });
+          if (emailSent) sent = true;
+        } catch (err) {
+          console.error(`[TierChangeNotifier] Resend email failed for ${ae.name}:`, err);
+        }
+      }
+
+      // 2. Also send owner notification (admin summary)
       try {
-        sent = await notifyOwner({ title, content });
+        const ownerSent = await notifyOwner({ title, content });
+        if (ownerSent) sent = true;
       } catch (err) {
         errorMsg = err instanceof Error ? err.message : String(err);
-        console.error(`[TierChangeNotifier] Failed to send notification for ${ae.name}:`, err);
+        console.error(`[TierChangeNotifier] Failed to send owner notification for ${ae.name}:`, err);
       }
 
       // Record in DB

@@ -266,7 +266,8 @@ var init_env = __esm({
       isProduction: process.env.NODE_ENV === "production",
       forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
       forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-      fxApiKey: process.env.FX_API_KEY ?? ""
+      fxApiKey: process.env.FX_API_KEY ?? "",
+      resendApiKey: process.env.RESEND_API_KEY ?? ""
     };
   }
 });
@@ -1086,7 +1087,32 @@ function calculateTier(inputs) {
     targets: targets.silver
   };
 }
-function computeRollingAverages(last3Months) {
+function computeActiveWeeks(months, joinDate) {
+  if (months.length === 0) return 12;
+  if (!joinDate) return Math.min(months.length * 4, 12);
+  const sorted = [...months].sort(
+    (a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month
+  );
+  let totalWeeks = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const m = sorted[i];
+    const monthStart = new Date(m.year, m.month - 1, 1);
+    const monthEnd = new Date(m.year, m.month, 0);
+    if (i === 0 && joinDate > monthStart) {
+      const effectiveStart = joinDate > monthStart ? joinDate : monthStart;
+      const daysInMonth = monthEnd.getDate();
+      const daysWorked = Math.max(
+        0,
+        (monthEnd.getTime() - effectiveStart.getTime()) / (1e3 * 60 * 60 * 24) + 1
+      );
+      totalWeeks += daysWorked / daysInMonth * 4;
+    } else {
+      totalWeeks += 4;
+    }
+  }
+  return Math.min(Math.max(totalWeeks, 0.5), 12);
+}
+function computeRollingAverages(last3Months, joinDate) {
   if (last3Months.length === 0) {
     return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
   }
@@ -1094,11 +1120,11 @@ function computeRollingAverages(last3Months) {
   const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
   const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
   const n = last3Months.length;
+  const weeks = joinDate != null ? computeActiveWeeks(last3Months, joinDate) : Math.min(n * 4, 12);
   return {
     avgArrUsd: totalArr / n,
-    avgDemosPw: totalDemos / 12,
-    // always divide by 12 weeks
-    avgDialsPw: totalDials / 12
+    avgDemosPw: totalDemos / weeks,
+    avgDialsPw: totalDials / weeks
   };
 }
 function computeAvgRetention(last6Months) {
@@ -1533,6 +1559,148 @@ var init_tierReportEmailService = __esm({
   }
 });
 
+// server/emailService.ts
+function buildEmailHtml(payload) {
+  const {
+    toName,
+    previousTier,
+    newTier,
+    month,
+    year,
+    avgArrUsd,
+    avgDemosPw,
+    avgDialsPw,
+    nextTierTargets
+  } = payload;
+  const isPromotion = newTier > previousTier;
+  const monthName = MONTH_NAMES2[month - 1];
+  const newTierColor = TIER_COLORS[newTier] ?? "#888";
+  const newRate = TIER_RATES[newTier] ?? "\u2014";
+  const prevRate = TIER_RATES[previousTier] ?? "\u2014";
+  const subject = isPromotion ? `\u{1F389} You've reached ${newTier.charAt(0).toUpperCase() + newTier.slice(1)} tier \u2014 ${monthName} ${year}` : `\u{1F4C9} Tier update: ${newTier.charAt(0).toUpperCase() + newTier.slice(1)} for ${monthName} ${year}`;
+  const headline = isPromotion ? `Congratulations, ${toName.split(" ")[0]}! You've been promoted to <strong style="color:${newTierColor}">${newTier.toUpperCase()}</strong> tier.` : `Hi ${toName.split(" ")[0]}, your tier for ${monthName} ${year} has been updated to <strong style="color:${newTierColor}">${newTier.toUpperCase()}</strong>.`;
+  const rateChange = isPromotion ? `Your commission rate increases from <strong>${prevRate}</strong> to <strong>${newRate}</strong> \u2014 effective for all new deals this month.` : `Your commission rate moves from <strong>${prevRate}</strong> to <strong>${newRate}</strong> for new deals this month.`;
+  const nextTierSection = nextTierTargets && newTier !== "gold" ? `
+      <div style="margin-top:24px;padding:16px;background:#f9f9f9;border-left:4px solid ${newTierColor};border-radius:4px;">
+        <p style="margin:0 0 8px;font-weight:600;color:#333;">To reach the next tier:</p>
+        <ul style="margin:0;padding-left:20px;color:#555;font-size:14px;">
+          <li>Monthly ARR: <strong>$${nextTierTargets.arrUsd.toLocaleString()}</strong>/mo avg</li>
+          <li>Demos: <strong>${nextTierTargets.demosPw}/wk</strong> avg</li>
+          <li>Dials: <strong>${nextTierTargets.dialsPw}/wk</strong> avg</li>
+        </ul>
+      </div>
+    ` : newTier === "gold" ? `<div style="margin-top:24px;padding:16px;background:#fffbea;border-left:4px solid #ffd700;border-radius:4px;"><p style="margin:0;color:#555;">You're at the top tier \u2014 keep it up! \u{1F3C6}</p></div>` : "";
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+    <!-- Header -->
+    <div style="background:${newTierColor};padding:32px 40px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:13px;text-transform:uppercase;letter-spacing:1px;">AMFG Commission</p>
+      <h1 style="margin:8px 0 0;color:#ffffff;font-size:24px;font-weight:700;">Tier Update \u2014 ${monthName} ${year}</h1>
+    </div>
+    <!-- Body -->
+    <div style="padding:32px 40px;">
+      <p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6;">${headline}</p>
+      <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">${rateChange}</p>
+
+      <!-- Current metrics -->
+      <div style="background:#f9f9f9;border-radius:6px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Your 3-Month Rolling Averages</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:6px 0;font-size:14px;color:#555;">Monthly ARR</td>
+            <td style="padding:6px 0;font-size:14px;font-weight:600;color:#333;text-align:right;">$${avgArrUsd.toLocaleString(void 0, { maximumFractionDigits: 0 })}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:14px;color:#555;">Demos / week</td>
+            <td style="padding:6px 0;font-size:14px;font-weight:600;color:#333;text-align:right;">${avgDemosPw.toFixed(1)}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:14px;color:#555;">Dials / week</td>
+            <td style="padding:6px 0;font-size:14px;font-weight:600;color:#333;text-align:right;">${Math.round(avgDialsPw)}</td>
+          </tr>
+        </table>
+      </div>
+
+      ${nextTierSection}
+
+      <p style="margin:24px 0 0;font-size:13px;color:#999;">
+        This is an automated notification from the AMFG Commission Calculator.
+        Log in to view your full commission breakdown.
+      </p>
+    </div>
+    <!-- Footer -->
+    <div style="padding:16px 40px;background:#f9f9f9;border-top:1px solid #eee;">
+      <p style="margin:0;font-size:12px;color:#aaa;">AMFG \xB7 Commission Calculator \xB7 ${(/* @__PURE__ */ new Date()).getFullYear()}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+async function sendTierChangeEmail(payload) {
+  if (!ENV.resendApiKey) {
+    console.warn("[emailService] RESEND_API_KEY not configured \u2014 skipping email to", payload.toEmail);
+    return false;
+  }
+  const { Resend } = await import("resend");
+  const resend = new Resend(ENV.resendApiKey);
+  const isPromotion = payload.newTier > payload.previousTier;
+  const monthName = MONTH_NAMES2[payload.month - 1];
+  const subject = isPromotion ? `\u{1F389} You've reached ${payload.newTier.charAt(0).toUpperCase() + payload.newTier.slice(1)} tier \u2014 ${monthName} ${payload.year}` : `\u{1F4C9} Tier update: ${payload.newTier.charAt(0).toUpperCase() + payload.newTier.slice(1)} for ${monthName} ${payload.year}`;
+  try {
+    const { error } = await resend.emails.send({
+      from: "AMFG Commission <commission@amfgcalc.manus.space>",
+      to: [payload.toEmail],
+      subject,
+      html: buildEmailHtml(payload)
+    });
+    if (error) {
+      console.error("[emailService] Resend error:", error);
+      return false;
+    }
+    console.log(`[emailService] Tier change email sent to ${payload.toEmail} (${payload.previousTier} \u2192 ${payload.newTier})`);
+    return true;
+  } catch (err) {
+    console.error("[emailService] Failed to send email:", err);
+    return false;
+  }
+}
+var MONTH_NAMES2, TIER_COLORS, TIER_RATES;
+var init_emailService = __esm({
+  "server/emailService.ts"() {
+    "use strict";
+    init_env();
+    MONTH_NAMES2 = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+    TIER_COLORS = {
+      bronze: "#cd7f32",
+      silver: "#c0c0c0",
+      gold: "#ffd700"
+    };
+    TIER_RATES = {
+      bronze: "13%",
+      silver: "16%",
+      gold: "19%"
+    };
+  }
+});
+
 // server/tierChangeNotifier.ts
 var tierChangeNotifier_exports = {};
 __export(tierChangeNotifier_exports, {
@@ -1718,7 +1886,7 @@ async function computeAeTierForMonth(aeId, year, month, db) {
     dialsTotal: m.dialsTotal,
     retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
   }));
-  const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+  const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3, new Date(profile.joinDate));
   const avgRetentionRate = computeAvgRetention(last6);
   const newJoiner = isNewJoiner(profile.joinDate, targetDate);
   const result = calculateTier({
@@ -1861,11 +2029,38 @@ async function checkAndNotifyTierChanges(forceMonth, forceYear) {
       const { title, content } = buildNotificationContent(event);
       let sent2 = false;
       let errorMsg;
+      if (currentSnapshot.aeEmail) {
+        const targets = currentSnapshot.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+        const nextTierKey = newTier === "bronze" ? "silver" : newTier === "silver" ? "gold" : null;
+        const nextTierTargets = nextTierKey && nextTierKey in targets ? { ...targets[nextTierKey] } : null;
+        try {
+          const emailSent = await sendTierChangeEmail({
+            toEmail: currentSnapshot.aeEmail,
+            toName: currentSnapshot.aeName,
+            previousTier,
+            newTier,
+            month: currentMonth,
+            year: currentYear,
+            avgArrUsd: currentSnapshot.avgArrUsd,
+            avgDemosPw: currentSnapshot.avgDemosPw,
+            avgDialsPw: currentSnapshot.avgDialsPw,
+            nextTierTargets: nextTierTargets ? {
+              arrUsd: nextTierTargets.arrUsd,
+              demosPw: nextTierTargets.demosPw,
+              dialsPw: nextTierTargets.dialsPw
+            } : null
+          });
+          if (emailSent) sent2 = true;
+        } catch (err) {
+          console.error(`[TierChangeNotifier] Resend email failed for ${ae.name}:`, err);
+        }
+      }
       try {
-        sent2 = await notifyOwner({ title, content });
+        const ownerSent = await notifyOwner({ title, content });
+        if (ownerSent) sent2 = true;
       } catch (err) {
         errorMsg = err instanceof Error ? err.message : String(err);
-        console.error(`[TierChangeNotifier] Failed to send notification for ${ae.name}:`, err);
+        console.error(`[TierChangeNotifier] Failed to send owner notification for ${ae.name}:`, err);
       }
       await recordNotification(
         ae.id,
@@ -1925,6 +2120,7 @@ var init_tierChangeNotifier = __esm({
   "server/tierChangeNotifier.ts"() {
     "use strict";
     init_notification();
+    init_emailService();
     init_db();
     init_schema();
     init_commission();
@@ -4504,19 +4700,26 @@ var appRouter = router({
   }),
   // ─── Metrics ───────────────────────────────────────────────────────────────
   metrics: router({
-    // Save or update metrics for a given month
+    // Save or update metrics for a given month — ADMIN (team leader) only
     upsert: publicProcedure.input(
       z6.object({
         year: z6.number().int().min(2020).max(2100),
         month: z6.number().int().min(1).max(12),
+        // aeId is required when called by admin on behalf of another AE
+        aeId: z6.number().int().optional(),
         arrUsd: z6.number().min(0),
         demosTotal: z6.number().int().min(0),
         dialsTotal: z6.number().int().min(0),
         retentionRate: z6.number().min(0).max(100).optional()
       })
     ).mutation(async ({ input, ctx }) => {
-      const aeId = getAeIdFromCtx(ctx);
-      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError9({ code: "UNAUTHORIZED", message: "Not logged in." });
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) {
+        throw new TRPCError9({ code: "FORBIDDEN", message: "Only admins can edit activity data." });
+      }
+      const aeId = input.aeId ?? callerId;
       await upsertMonthlyMetric({
         aeId,
         year: input.year,
@@ -4621,7 +4824,7 @@ var appRouter = router({
         dialsTotal: m.dialsTotal,
         retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
       }));
-      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3, new Date(profile.joinDate));
       const avgRetentionRate = computeAvgRetention(last6);
       const newJoiner = isNewJoiner(profile.joinDate, targetDate);
       const result = calculateTier({
@@ -4763,7 +4966,7 @@ var appRouter = router({
             retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null
           };
         });
-        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
+        const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3, new Date(profile.joinDate));
         const avgRetentionRate = computeAvgRetention(last6);
         const newJoiner = isNewJoiner(profile.joinDate, targetDate);
         const tierResult = calculateTier({
@@ -5441,13 +5644,13 @@ var appRouter = router({
       return getAllRecentNotifications2(input?.limit ?? 50);
     }),
     // Tier forecast: 3-month projection with actionable targets
-    tierForecast: protectedProcedure.query(async ({ ctx }) => {
+    tierForecast: publicProcedure.query(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED" });
       const ae = await getAeProfileById(aeId);
       if (!ae) throw new TRPCError9({ code: "NOT_FOUND", message: "AE not found" });
       const last3Months = await getMetricsForAe(aeId, 3);
-      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months);
+      const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months, new Date(ae.joinDate));
       const tierResult = calculateTier({
         avgArrUsd,
         avgDemosPw,
@@ -5507,9 +5710,9 @@ var appRouter = router({
           return d < targetDate;
         }).slice(0, 3);
         if (last3.length > 0) {
-          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3);
-          const avgRetention = computeAvgRetention(last3);
           const profile = await getAeProfileById(deal.aeId);
+          const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3, profile?.joinDate ? new Date(profile.joinDate) : null);
+          const avgRetention = computeAvgRetention(last3);
           const newJoiner = isNewJoiner(profile?.joinDate || /* @__PURE__ */ new Date(), targetDate);
           const tier = calculateTier({
             avgArrUsd,

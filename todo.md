@@ -559,3 +559,11 @@
 - [x] Tier change notifications: daily at 8:05 AM GMT (cron: "5 8 * * *") — confirmed
 - [x] Updated stale comments in index.ts and weeklySync.ts to accurately reflect daily schedules
 - [x] All 101 tests passing
+
+## Four Improvements (Mar 21 2026) - COMPLETED
+- [x] Fix 3-month rolling average to start from AE join date (not look back 3 months before join) — computeRollingAverages now accepts joinDate and divides by actual weeks worked
+- [x] Retrospectively applied: Julian Earl (joined Feb 4 2026) now correctly divides by ~3.5 weeks in Feb; Tad Tamulevicius (joined Mar 15 2026) handled automatically
+- [x] Remove AE ability to manually enter/edit activity data — MetricsPage now shows read-only view for AEs; admin edit form only shown for team leaders
+- [x] Fixed tier forecast card on AE dashboard — was calling wrong router (commission vs commissionStructure) and wrong auth (protectedProcedure vs publicProcedure with AE token)
+- [x] Resend email service wired up — emailService.ts sends rich HTML tier change emails directly to AE inboxes; falls back gracefully if RESEND_API_KEY not set
+- [x] 8 new unit tests for email service (109 total tests passing)
