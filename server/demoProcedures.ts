@@ -13,7 +13,7 @@ import {
 import { triggerDemoDetectionManually } from "./demoDetectionScheduler";
 import { TRPCError } from "@trpc/server";
 import { getAeIdFromCtx } from "./aeTokenUtils";
-import { getAeProfileById, getAllAeProfiles, getDb } from "./db";
+import { getAeProfileById, getAllAeProfiles, getDb, getAllDemoActivities } from "./db";
 import { duplicateDemoFlags, crmHygieneIssues } from "../drizzle/schema";
 import type { DuplicateDemoFlag, CrmHygieneIssue } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -224,6 +224,54 @@ export const demoRouter = router({
         });
       }
       return { success: true };
+    }),
+
+  /**
+   * Get all demo activities from Pipedrive (admin only)
+   * Supports optional AE filter and date range filter
+   */
+  getAllDemoActivities: protectedProcedure
+    .input(
+      z.object({
+        aeId: z.number().optional(),
+        fromDate: z.string().optional(), // YYYY-MM-DD
+        toDate: z.string().optional(),   // YYYY-MM-DD
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const callerId = getAeIdFromCtx(ctx);
+      if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+
+      const caller = await getAeProfileById(callerId);
+      if (!caller?.isTeamLeader) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Team leader access required." });
+      }
+
+      const fromDate = input.fromDate ? new Date(input.fromDate) : undefined;
+      const toDate = input.toDate ? new Date(input.toDate + "T23:59:59Z") : undefined;
+
+      const allActivities = await getAllDemoActivities(fromDate, toDate);
+
+      // Filter by AE if specified
+      const filtered = input.aeId
+        ? allActivities.filter(a => a.aeId === input.aeId)
+        : allActivities;
+
+      return filtered.map(a => ({
+        id: a.id,
+        aeId: a.aeId,
+        aeName: (a as any).aeName as string,
+        pipedriveActivityId: a.pipedriveActivityId,
+        subject: a.subject,
+        orgName: a.orgName,
+        dealId: a.dealId,
+        dealTitle: a.dealTitle,
+        doneDate: a.doneDate,
+        year: a.year,
+        month: a.month,
+        isValid: a.isValid,
+        flagReason: a.flagReason,
+      }));
     }),
 
   /**

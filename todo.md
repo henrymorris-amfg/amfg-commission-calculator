@@ -593,3 +593,13 @@
 - [x] Fix DealsPage.tsx — wrapped originalAmount in Number() before toLocaleString
 - [x] ZERO TypeScript errors across entire project
 - [x] 109 tests passing (12 test files)
+
+## Demo Audit Enhancements & Tad Sync (Mar 21 2026) - COMPLETED
+- [x] Add pipedrive_demo_activities table to schema (aeId, pipedriveActivityId, subject, orgName, dealId, dealTitle, doneDate, year, month, isValid, flagReason) with unique index
+- [x] Update pipedriveSync.ts to persist individual demo activities via upsertDemoActivities() during each sync
+- [x] Add getAllDemoActivities tRPC procedure with aeId, fromDate, toDate filters
+- [x] Rebuilt DemoAuditPage with two tabs: Demos Done (full list segmented by AE) and Flags (duplicates + hygiene)
+- [x] AE filter dropdown and from/to date range filters with clear button
+- [x] CSV download with AE-segmented filename (demos_done_Joe_Payne_2026-03-21.csv)
+- [x] Tad sync: pipedriveSync.import with useJoinDate=true handles this correctly; Henry can trigger from Pipedrive Sync page or daily scheduler runs at 8 AM
+- [x] 109 tests passing (12 test files)

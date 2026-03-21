@@ -10,13 +10,16 @@ import {
   InsertCommissionStructure,
   InsertDeal,
   InsertMonthlyMetric,
+  InsertPipedriveDemoActivity,
   InsertUser,
   MonthlyMetric,
+  PipedriveDemoActivity,
   aeProfiles,
   commissionPayouts,
   commissionStructures,
   deals,
   monthlyMetrics,
+  pipedriveDemoActivities,
   users,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -397,4 +400,97 @@ export async function seedInitialCommissionStructure(): Promise<void> {
     createdBy: "system",
     notes: "Initial commission structure seeded from hardcoded constants.",
   });
+}
+
+// ─── Pipedrive Demo Activities ────────────────────────────────────────────────
+
+/**
+ * Upsert a batch of individual Pipedrive demo activity records.
+ * Uses pipedriveActivityId as the unique key.
+ */
+export async function upsertDemoActivities(
+  activities: InsertPipedriveDemoActivity[]
+): Promise<void> {
+  const db = await getDb();
+  if (!db || activities.length === 0) return;
+
+  for (const activity of activities) {
+    await db
+      .insert(pipedriveDemoActivities)
+      .values(activity)
+      .onDuplicateKeyUpdate({
+        set: {
+          subject: activity.subject,
+          orgName: activity.orgName,
+          dealId: activity.dealId,
+          dealTitle: activity.dealTitle,
+          doneDate: activity.doneDate,
+          isValid: activity.isValid,
+          flagReason: activity.flagReason,
+          updatedAt: new Date(),
+        },
+      });
+  }
+}
+
+/**
+ * Get all demo activities for a given AE, optionally filtered by date range.
+ */
+export async function getDemoActivitiesForAe(
+  aeId: number,
+  fromDate?: Date,
+  toDate?: Date
+): Promise<PipedriveDemoActivity[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [eq(pipedriveDemoActivities.aeId, aeId)];
+  if (fromDate) conditions.push(gte(pipedriveDemoActivities.doneDate, fromDate));
+  if (toDate) conditions.push(lte(pipedriveDemoActivities.doneDate, toDate));
+
+  return db
+    .select()
+    .from(pipedriveDemoActivities)
+    .where(and(...conditions))
+    .orderBy(pipedriveDemoActivities.doneDate);
+}
+
+/**
+ * Get all demo activities across all AEs, optionally filtered by date range.
+ */
+export async function getAllDemoActivities(
+  fromDate?: Date,
+  toDate?: Date
+): Promise<(PipedriveDemoActivity & { aeName: string })[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (fromDate) conditions.push(gte(pipedriveDemoActivities.doneDate, fromDate) as ReturnType<typeof eq>);
+  if (toDate) conditions.push(lte(pipedriveDemoActivities.doneDate, toDate) as ReturnType<typeof eq>);
+
+  const rows = await db
+    .select({
+      id: pipedriveDemoActivities.id,
+      aeId: pipedriveDemoActivities.aeId,
+      aeName: aeProfiles.name,
+      pipedriveActivityId: pipedriveDemoActivities.pipedriveActivityId,
+      subject: pipedriveDemoActivities.subject,
+      orgName: pipedriveDemoActivities.orgName,
+      dealId: pipedriveDemoActivities.dealId,
+      dealTitle: pipedriveDemoActivities.dealTitle,
+      doneDate: pipedriveDemoActivities.doneDate,
+      year: pipedriveDemoActivities.year,
+      month: pipedriveDemoActivities.month,
+      isValid: pipedriveDemoActivities.isValid,
+      flagReason: pipedriveDemoActivities.flagReason,
+      createdAt: pipedriveDemoActivities.createdAt,
+      updatedAt: pipedriveDemoActivities.updatedAt,
+    })
+    .from(pipedriveDemoActivities)
+    .innerJoin(aeProfiles, eq(pipedriveDemoActivities.aeId, aeProfiles.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(pipedriveDemoActivities.doneDate);
+
+  return rows as (PipedriveDemoActivity & { aeName: string })[];
 }

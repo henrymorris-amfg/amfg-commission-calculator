@@ -31,6 +31,7 @@ var init_const = __esm({
 import {
   boolean,
   decimal,
+  index,
   int,
   json,
   mysqlEnum,
@@ -40,7 +41,7 @@ import {
   unique,
   varchar
 } from "drizzle-orm/mysql-core";
-var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, duplicateDemoFlags, crmHygieneIssues, tierChangeNotifications;
+var users, commissionStructures, aeProfiles, monthlyMetrics, deals, commissionPayouts, pipedriveDemoActivities, duplicateDemoFlags, crmHygieneIssues, tierChangeNotifications;
 var init_schema = __esm({
   "drizzle/schema.ts"() {
     "use strict";
@@ -194,6 +195,31 @@ var init_schema = __esm({
       netCommissionGbp: decimal("netCommissionGbp", { precision: 12, scale: 2 }).notNull(),
       createdAt: timestamp("createdAt").defaultNow().notNull()
     });
+    pipedriveDemoActivities = mysqlTable("pipedrive_demo_activities", {
+      id: int("id").autoincrement().primaryKey(),
+      aeId: int("aeId").notNull(),
+      pipedriveActivityId: varchar("pipedriveActivityId", { length: 128 }).notNull().unique(),
+      subject: varchar("subject", { length: 512 }).notNull(),
+      // Activity subject / deal name
+      orgName: varchar("orgName", { length: 256 }),
+      // Organisation name from Pipedrive
+      dealId: int("dealId"),
+      // Linked Pipedrive deal ID (if any)
+      dealTitle: varchar("dealTitle", { length: 512 }),
+      // Linked deal title
+      doneDate: timestamp("doneDate").notNull(),
+      // When marked done
+      year: int("year").notNull(),
+      month: int("month").notNull(),
+      isValid: boolean("isValid").default(true).notNull(),
+      // false if flagged as duplicate/hygiene
+      flagReason: varchar("flagReason", { length: 128 }),
+      // 'duplicate' | 'no_deal_link' | etc.
+      createdAt: timestamp("createdAt").defaultNow().notNull(),
+      updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    }, (t2) => ({
+      aeMonthIdx: index("pdemo_ae_month_idx").on(t2.aeId, t2.year, t2.month)
+    }));
     duplicateDemoFlags = mysqlTable("duplicate_demo_flags", {
       id: int("id").autoincrement().primaryKey(),
       aeId: int("aeId").notNull(),
@@ -287,11 +313,13 @@ __export(db_exports, {
   getAeProfileByName: () => getAeProfileByName,
   getAllAeProfiles: () => getAllAeProfiles,
   getAllCommissionStructures: () => getAllCommissionStructures,
+  getAllDemoActivities: () => getAllDemoActivities,
   getCommissionStructureById: () => getCommissionStructureById,
   getDb: () => getDb,
   getDealById: () => getDealById,
   getDealByPipedriveId: () => getDealByPipedriveId,
   getDealsForAe: () => getDealsForAe,
+  getDemoActivitiesForAe: () => getDemoActivitiesForAe,
   getMetricsForAe: () => getMetricsForAe,
   getMetricsForMonth: () => getMetricsForMonth,
   getPayoutsForAe: () => getPayoutsForAe,
@@ -303,10 +331,11 @@ __export(db_exports, {
   seedInitialCommissionStructure: () => seedInitialCommissionStructure,
   updateAeProfile: () => updateAeProfile,
   updateCommissionStructure: () => updateCommissionStructure,
+  upsertDemoActivities: () => upsertDemoActivities,
   upsertMonthlyMetric: () => upsertMonthlyMetric,
   upsertUser: () => upsertUser
 });
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -554,6 +583,57 @@ async function seedInitialCommissionStructure() {
     createdBy: "system",
     notes: "Initial commission structure seeded from hardcoded constants."
   });
+}
+async function upsertDemoActivities(activities) {
+  const db = await getDb();
+  if (!db || activities.length === 0) return;
+  for (const activity of activities) {
+    await db.insert(pipedriveDemoActivities).values(activity).onDuplicateKeyUpdate({
+      set: {
+        subject: activity.subject,
+        orgName: activity.orgName,
+        dealId: activity.dealId,
+        dealTitle: activity.dealTitle,
+        doneDate: activity.doneDate,
+        isValid: activity.isValid,
+        flagReason: activity.flagReason,
+        updatedAt: /* @__PURE__ */ new Date()
+      }
+    });
+  }
+}
+async function getDemoActivitiesForAe(aeId, fromDate, toDate) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(pipedriveDemoActivities.aeId, aeId)];
+  if (fromDate) conditions.push(gte(pipedriveDemoActivities.doneDate, fromDate));
+  if (toDate) conditions.push(lte(pipedriveDemoActivities.doneDate, toDate));
+  return db.select().from(pipedriveDemoActivities).where(and(...conditions)).orderBy(pipedriveDemoActivities.doneDate);
+}
+async function getAllDemoActivities(fromDate, toDate) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [];
+  if (fromDate) conditions.push(gte(pipedriveDemoActivities.doneDate, fromDate));
+  if (toDate) conditions.push(lte(pipedriveDemoActivities.doneDate, toDate));
+  const rows = await db.select({
+    id: pipedriveDemoActivities.id,
+    aeId: pipedriveDemoActivities.aeId,
+    aeName: aeProfiles.name,
+    pipedriveActivityId: pipedriveDemoActivities.pipedriveActivityId,
+    subject: pipedriveDemoActivities.subject,
+    orgName: pipedriveDemoActivities.orgName,
+    dealId: pipedriveDemoActivities.dealId,
+    dealTitle: pipedriveDemoActivities.dealTitle,
+    doneDate: pipedriveDemoActivities.doneDate,
+    year: pipedriveDemoActivities.year,
+    month: pipedriveDemoActivities.month,
+    isValid: pipedriveDemoActivities.isValid,
+    flagReason: pipedriveDemoActivities.flagReason,
+    createdAt: pipedriveDemoActivities.createdAt,
+    updatedAt: pipedriveDemoActivities.updatedAt
+  }).from(pipedriveDemoActivities).innerJoin(aeProfiles, eq(pipedriveDemoActivities.aeId, aeProfiles.id)).where(conditions.length > 0 ? and(...conditions) : void 0).orderBy(pipedriveDemoActivities.doneDate);
+  return rows;
 }
 var _db;
 var init_db = __esm({
@@ -3604,6 +3684,25 @@ var pipedriveSyncRouter = router({
       const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals2);
       const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
       const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
+      const demoActivityRecords = demos.filter((d) => d.marked_as_done_time).map((d) => {
+        const doneTime = d.marked_as_done_time;
+        const year = parseInt(doneTime.substring(0, 4), 10);
+        const month = parseInt(doneTime.substring(5, 7), 10);
+        return {
+          aeId: ae.id,
+          pipedriveActivityId: String(d.id),
+          subject: d.subject || "(no subject)",
+          orgName: d.org_name ?? null,
+          dealId: d.deal_id ?? null,
+          dealTitle: d.deal_title ?? null,
+          doneDate: new Date(doneTime),
+          year,
+          month,
+          isValid: true,
+          flagReason: null
+        };
+      });
+      await upsertDemoActivities(demoActivityRecords);
       const allMonthlyData = /* @__PURE__ */ new Map();
       monthlyArr.forEach((m) => {
         const key = `${m.calYear}-${m.calMonth}`;
@@ -4370,6 +4469,45 @@ var demoRouter = router({
       });
     }
     return { success: true };
+  }),
+  /**
+   * Get all demo activities from Pipedrive (admin only)
+   * Supports optional AE filter and date range filter
+   */
+  getAllDemoActivities: protectedProcedure.input(
+    z4.object({
+      aeId: z4.number().optional(),
+      fromDate: z4.string().optional(),
+      // YYYY-MM-DD
+      toDate: z4.string().optional()
+      // YYYY-MM-DD
+    })
+  ).query(async ({ ctx, input }) => {
+    const callerId = getAeIdFromCtx(ctx);
+    if (!callerId) throw new TRPCError6({ code: "UNAUTHORIZED" });
+    const caller = await getAeProfileById(callerId);
+    if (!caller?.isTeamLeader) {
+      throw new TRPCError6({ code: "FORBIDDEN", message: "Team leader access required." });
+    }
+    const fromDate = input.fromDate ? new Date(input.fromDate) : void 0;
+    const toDate = input.toDate ? /* @__PURE__ */ new Date(input.toDate + "T23:59:59Z") : void 0;
+    const allActivities = await getAllDemoActivities(fromDate, toDate);
+    const filtered = input.aeId ? allActivities.filter((a) => a.aeId === input.aeId) : allActivities;
+    return filtered.map((a) => ({
+      id: a.id,
+      aeId: a.aeId,
+      aeName: a.aeName,
+      pipedriveActivityId: a.pipedriveActivityId,
+      subject: a.subject,
+      orgName: a.orgName,
+      dealId: a.dealId,
+      dealTitle: a.dealTitle,
+      doneDate: a.doneDate,
+      year: a.year,
+      month: a.month,
+      isValid: a.isValid,
+      flagReason: a.flagReason
+    }));
   }),
   /**
    * Manual trigger for demo detection (admin only)

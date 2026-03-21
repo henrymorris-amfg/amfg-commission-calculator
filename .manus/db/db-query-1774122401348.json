@@ -1,0 +1,9 @@
+{
+  "query": "SELECT d.id, d.aeId, a.name as aeName, d.pipedriveActivityId, d.organizationName, d.demoDate, d.isDuplicate, d.isAcknowledged FROM duplicate_demo_flags d JOIN ae_profiles a ON d.aeId = a.id ORDER BY d.demoDate DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT d.id, d.aeId, a.name as aeName, d.pipedriveActivityId, d.organizationName, d.demoDate, d.isDuplicate, d.isAcknowledged FROM duplicate_demo_flags d JOIN ae_profiles a ON d.aeId = a.id ORDER BY d.demoDate DESC LIMIT 20;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 203
+}

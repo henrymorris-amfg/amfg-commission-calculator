@@ -1,6 +1,7 @@
 import {
   boolean,
   decimal,
+  index,
   int,
   json,
   mysqlEnum,
@@ -181,6 +182,30 @@ export const commissionPayouts = mysqlTable("commission_payouts", {
 
 export type CommissionPayout = typeof commissionPayouts.$inferSelect;
 export type InsertCommissionPayout = typeof commissionPayouts.$inferInsert;
+
+// ─── Pipedrive Demo Activities ───────────────────────────────────────────────
+// Stores individual demo activities synced from Pipedrive for audit purposes
+export const pipedriveDemoActivities = mysqlTable("pipedrive_demo_activities", {
+  id: int("id").autoincrement().primaryKey(),
+  aeId: int("aeId").notNull(),
+  pipedriveActivityId: varchar("pipedriveActivityId", { length: 128 }).notNull().unique(),
+  subject: varchar("subject", { length: 512 }).notNull(), // Activity subject / deal name
+  orgName: varchar("orgName", { length: 256 }), // Organisation name from Pipedrive
+  dealId: int("dealId"), // Linked Pipedrive deal ID (if any)
+  dealTitle: varchar("dealTitle", { length: 512 }), // Linked deal title
+  doneDate: timestamp("doneDate").notNull(), // When marked done
+  year: int("year").notNull(),
+  month: int("month").notNull(),
+  isValid: boolean("isValid").default(true).notNull(), // false if flagged as duplicate/hygiene
+  flagReason: varchar("flagReason", { length: 128 }), // 'duplicate' | 'no_deal_link' | etc.
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  aeMonthIdx: index("pdemo_ae_month_idx").on(t.aeId, t.year, t.month),
+}));
+
+export type PipedriveDemoActivity = typeof pipedriveDemoActivities.$inferSelect;
+export type InsertPipedriveDemoActivity = typeof pipedriveDemoActivities.$inferInsert;
 
 // ─── Duplicate Demo Flags ──────────────────────────────────────────────────────
 // Tracks demos that are duplicates within 6 months of the same organization

@@ -33,6 +33,7 @@ import {
   deletePayoutsForDeal,
   deleteDeal,
   getActiveCommissionStructure,
+  upsertDemoActivities,
 } from "./db";
 import {
   computeRollingAverages,
@@ -80,6 +81,12 @@ interface PipedriveActivity {
   marked_as_done_time: string | null;
   user_id: number;
   owner_name: string;
+  // Optional fields returned by Pipedrive activities API
+  org_id?: number | null;
+  org_name?: string | null;
+  deal_id?: number | null;
+  deal_title?: string | null;
+  note?: string | null;
 }
 
 interface PipedriveUser {
@@ -574,6 +581,29 @@ export const pipedriveSyncRouter = router({
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
         const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
         const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
+
+        // Persist individual demo activity records for the Demo Audit page
+        const demoActivityRecords: import("../drizzle/schema").InsertPipedriveDemoActivity[] = demos
+          .filter(d => d.marked_as_done_time)
+          .map(d => {
+            const doneTime = d.marked_as_done_time!;
+            const year = parseInt(doneTime.substring(0, 4), 10);
+            const month = parseInt(doneTime.substring(5, 7), 10);
+            return {
+              aeId: ae.id,
+              pipedriveActivityId: String(d.id),
+              subject: d.subject || "(no subject)",
+              orgName: d.org_name ?? null,
+              dealId: d.deal_id ?? null,
+              dealTitle: d.deal_title ?? null,
+              doneDate: new Date(doneTime),
+              year,
+              month,
+              isValid: true,
+              flagReason: null,
+            };
+          });
+        await upsertDemoActivities(demoActivityRecords);
 
                 const allMonthlyData = new Map<string, { arr: MonthlyArrAggregate | null, demos: MonthlyArrAggregate | null }>();
 

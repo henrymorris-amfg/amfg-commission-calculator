@@ -1,0 +1,8 @@
+{
+  "query": "SELECT m.aeId, a.name, m.calYear, m.calMonth, m.demosTotal, m.dialCount FROM monthly_metrics m JOIN ae_profiles a ON m.aeId = a.id ORDER BY a.name, m.calYear, m.calMonth;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT m.aeId, a.name, m.calYear, m.calMonth, m.demosTotal, m.dialCount FROM monthly_metrics m JOIN ae_profiles a ON m.aeId = a.id ORDER BY a.name, m.calYear, m.calMonth;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'm.calYear' in 'order clause'"
+  ]
+}
