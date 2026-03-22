@@ -2264,7 +2264,7 @@ var tierForecastHelper_exports = {};
 __export(tierForecastHelper_exports, {
   calculateTierForecast: () => calculateTierForecast
 });
-function calculateTierForecast(currentTier, currentMetrics, last3MonthsData, isTeamLeader = false) {
+function calculateTierForecast(currentTier, currentMetrics, allMonthsData, isTeamLeader = false) {
   const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
   const tierOrder = ["bronze", "silver", "gold"];
   const currentTierIndex = tierOrder.indexOf(currentTier);
@@ -2279,35 +2279,50 @@ function calculateTierForecast(currentTier, currentMetrics, last3MonthsData, isT
   const weeksLeftInQuarter = Math.ceil(daysLeftInQuarter / 7);
   const forecastMonths = [];
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const sortedData = [...last3MonthsData].sort((a, b) => {
-    return 0;
-  });
+  const monthMap = /* @__PURE__ */ new Map();
+  for (const m of allMonthsData) {
+    const key = `${m.year}-${String(m.month).padStart(2, "0")}`;
+    monthMap.set(key, { arrUsd: m.arrUsd, demosTotal: m.demosTotal, dialsTotal: m.dialsTotal });
+  }
+  const getRollingWindow = (year, month) => {
+    const window = [];
+    for (let i = 2; i >= 0; i--) {
+      let y = year;
+      let m = month - i;
+      while (m < 1) {
+        m += 12;
+        y -= 1;
+      }
+      const key = `${y}-${String(m).padStart(2, "0")}`;
+      const data = monthMap.get(key) || { arrUsd: 0, demosTotal: 0, dialsTotal: 0 };
+      window.push(data);
+    }
+    return window;
+  };
   for (let i = 1; i <= 3; i++) {
     const projectionDate = new Date(now);
     projectionDate.setMonth(projectionDate.getMonth() + i);
     const projectionMonth = projectionDate.getMonth() + 1;
     const projectionYear = projectionDate.getFullYear();
     const monthName = monthNames[projectionDate.getMonth()];
-    let projectedArrUsd = currentMetrics.arrUsd;
-    let projectedDemosPw = currentMetrics.demosPw;
-    let projectedDialsPw = currentMetrics.dialsPw;
-    if (last3MonthsData.length === 3) {
-      const oldestMonth = last3MonthsData[2];
-      const oldestArrUsd = oldestMonth.arrUsd;
-      const oldestDemosPw = oldestMonth.demosTotal / 4.33;
-      const oldestDialsPw = oldestMonth.dialsTotal / 4.33;
-      projectedArrUsd = (projectedArrUsd * 3 - oldestArrUsd) / 2;
-      projectedDemosPw = (projectedDemosPw * 3 - oldestDemosPw) / 2;
-      projectedDialsPw = (projectedDialsPw * 3 - oldestDialsPw) / 2;
-    }
-    let projectedTier = "bronze";
+    const window = getRollingWindow(projectionYear, projectionMonth);
+    const totalArr = window.reduce((sum, m) => sum + m.arrUsd, 0);
+    const totalDemos = window.reduce((sum, m) => sum + m.demosTotal, 0);
+    const totalDials = window.reduce((sum, m) => sum + m.dialsTotal, 0);
+    const projectedArrUsd = totalArr / 3;
+    const projectedDemosPw = totalDemos / 3 / 4.33;
+    const projectedDialsPw = totalDials / 3 / 4.33;
+    const tierResult = calculateTier({
+      avgArrUsd: projectedArrUsd,
+      avgDemosPw: projectedDemosPw,
+      avgDialsPw: projectedDialsPw,
+      avgRetentionRate: null,
+      isNewJoiner: false,
+      isTeamLeader
+    });
+    const projectedTier = tierResult.tier;
     const bronzeTargets2 = { arrUsd: 15e3, demosPw: 2, dialsPw: 100, retentionMin: 0 };
     const currentTierTargets2 = currentTier === "silver" ? targets.silver : currentTier === "gold" ? targets.gold : bronzeTargets2;
-    if (projectedArrUsd >= nextTierTargets.arrUsd && projectedDemosPw >= nextTierTargets.demosPw && projectedDialsPw >= nextTierTargets.dialsPw) {
-      projectedTier = nextTier;
-    } else if (projectedArrUsd >= currentTierTargets2.arrUsd && projectedDemosPw >= currentTierTargets2.demosPw && projectedDialsPw >= currentTierTargets2.dialsPw) {
-      projectedTier = currentTier;
-    }
     const gapToCurrentTier = {
       arrUsd: Math.max(0, currentTierTargets2.arrUsd - projectedArrUsd),
       demosPw: Math.max(0, currentTierTargets2.demosPw - projectedDemosPw),
@@ -2324,7 +2339,7 @@ function calculateTierForecast(currentTier, currentMetrics, last3MonthsData, isT
       projectedMetrics: {
         arrUsd: Math.round(projectedArrUsd),
         demosPw: Math.round(projectedDemosPw * 100) / 100,
-        dialsPw: Math.round(projectedDialsPw * 100) / 100
+        dialsPw: Math.round(projectedDialsPw)
       },
       gapToCurrentTier,
       gapToGold
