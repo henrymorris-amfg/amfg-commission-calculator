@@ -6224,21 +6224,24 @@ var appRouter = router({
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
       const projectedMonths = [];
-      for (let i = 3; i >= 0; i--) {
-        let histYear = currentYear;
-        let histMonth = currentMonth - i;
-        if (histMonth < 1) {
-          histMonth += 12;
-          histYear -= 1;
-        }
-        const histArr = allDeals.filter((d) => isDealActiveInMonth(d, histYear, histMonth)).reduce((sum, d) => sum + (Number(d.arrUsd) || 0), 0);
-        const histMetrics = last3Months.find((m) => m.year === histYear && m.month === histMonth);
+      for (const m of last3Months) {
         projectedMonths.push({
-          year: histYear,
-          month: histMonth,
-          arrUsd: histArr,
-          demosTotal: histMetrics?.demosTotal ?? 0,
-          dialsTotal: histMetrics?.dialsTotal ?? 0
+          year: m.year,
+          month: m.month,
+          arrUsd: Number(m.arrUsd),
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal
+        });
+      }
+      const currentMonthInMetrics = last3Months.find((m) => m.year === currentYear && m.month === currentMonth);
+      if (!currentMonthInMetrics) {
+        projectedMonths.push({
+          year: currentYear,
+          month: currentMonth,
+          arrUsd: 0,
+          // Assume $0 for current month if not yet recorded
+          demosTotal: 0,
+          dialsTotal: 0
         });
       }
       for (let i = 1; i <= 3; i++) {
@@ -6248,11 +6251,11 @@ var appRouter = router({
           projMonth -= 12;
           projYear += 1;
         }
-        const projectedArr = allDeals.filter((d) => isDealActiveInMonth(d, projYear, projMonth)).reduce((sum, d) => sum + (Number(d.arrUsd) || 0), 0);
         projectedMonths.push({
           year: projYear,
           month: projMonth,
-          arrUsd: projectedArr,
+          arrUsd: 0,
+          // Assume no new deals signed, so $0 ARR in future months
           demosTotal: 0,
           dialsTotal: 0
         });

@@ -1898,30 +1898,29 @@ export const appRouter = router({
       const currentMonth = now.getMonth() + 1;
       const projectedMonths: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }> = [];
 
-      // Add last 3 months + current month using deals data (for consistency with future projections)
-      for (let i = 3; i >= 0; i--) {
-        let histYear = currentYear;
-        let histMonth = currentMonth - i;
-        if (histMonth < 1) {
-          histMonth += 12;
-          histYear -= 1;
-        }
-        const histArr = allDeals
-          .filter((d: typeof deals.$inferSelect) => isDealActiveInMonth(d, histYear, histMonth))
-          .reduce((sum: number, d: typeof deals.$inferSelect) => sum + (Number(d.arrUsd) || 0), 0);
-
-        // Get demos/dials from monthly_metrics if available
-        const histMetrics = last3Months.find(m => m.year === histYear && m.month === histMonth);
+      // Add last 3 months + current month from monthly_metrics (for rolling average calculation)
+      for (const m of last3Months) {
         projectedMonths.push({
-          year: histYear,
-          month: histMonth,
-          arrUsd: histArr,
-          demosTotal: histMetrics?.demosTotal ?? 0,
-          dialsTotal: histMetrics?.dialsTotal ?? 0,
+          year: m.year,
+          month: m.month,
+          arrUsd: Number(m.arrUsd),
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+        });
+      }
+      // Also add current month if not already in last3Months
+      const currentMonthInMetrics = last3Months.find(m => m.year === currentYear && m.month === currentMonth);
+      if (!currentMonthInMetrics) {
+        projectedMonths.push({
+          year: currentYear,
+          month: currentMonth,
+          arrUsd: 0, // Assume $0 for current month if not yet recorded
+          demosTotal: 0,
+          dialsTotal: 0,
         });
       }
 
-      // Add next 3 months (projected based on contract start dates, demos/dials = 0)
+      // Add next 3 months (assume $0 ARR if no new deals are signed)
       for (let i = 1; i <= 3; i++) {
         let projYear = currentYear;
         let projMonth = currentMonth + i;
@@ -1929,20 +1928,16 @@ export const appRouter = router({
           projMonth -= 12;
           projYear += 1;
         }
-        const projectedArr = allDeals
-          .filter((d: typeof deals.$inferSelect) => isDealActiveInMonth(d, projYear, projMonth))
-          .reduce((sum: number, d: typeof deals.$inferSelect) => sum + (Number(d.arrUsd) || 0), 0);
         projectedMonths.push({
           year: projYear,
           month: projMonth,
-          arrUsd: projectedArr,
+          arrUsd: 0, // Assume no new deals signed, so $0 ARR in future months
           demosTotal: 0,
           dialsTotal: 0,
         });
       }
 
       const { calculateTierForecast } = await import("./tierForecastHelper");
-
       const forecast = calculateTierForecast(
         tierResult.tier,
         {
