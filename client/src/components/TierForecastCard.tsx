@@ -242,7 +242,7 @@ export function TierForecastCard() {
                 label="Dials / week"
                 current={Math.round(forecast.currentMetrics.dialsPw).toString()}
                 target={`${Math.round(forecast.currentMetrics.dialsPw + at.extraNeeded.dialsPw)}`}
-                extra={at.extraNeeded.dialsPw > 0 ? at.extraNeeded.dialsPw.toString() : null}
+                extra={at.extraNeeded.dialsPw > 0 ? Math.round(at.extraNeeded.dialsPw).toString() : null}
                 alreadyMeets={at.alreadyMeets.dials}
               />
             </div>
