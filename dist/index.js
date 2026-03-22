@@ -163,6 +163,8 @@ var init_schema = __esm({
       pipedriveWonTime: timestamp("pipedriveWonTime"),
       // Contract start date from Pipedrive (determines payout month)
       contractStartDate: timestamp("contractStartDate"),
+      // Original amount in native currency (for display purposes)
+      originalArr: decimal("originalArr", { precision: 12, scale: 2 }),
       // Churn tracking (for monthly deals)
       isChurned: boolean("isChurned").default(false).notNull(),
       churnMonth: int("churnMonth"),
@@ -3976,6 +3978,8 @@ var pipedriveSyncRouter = router({
             onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : void 0,
             onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : void 0
           });
+          const originalCurrency = (pdDeal.currency || "USD").toUpperCase();
+          const originalArr = pdDeal.value || 0;
           const dealId = await createDeal({
             aeId: ae.id,
             customerName: pdDeal.title,
@@ -3983,8 +3987,10 @@ var pipedriveSyncRouter = router({
             startYear,
             startMonth,
             startDay,
-            originalAmount: String(Math.round(arrUsd)),
             arrUsd: String(Math.round(arrUsd)),
+            originalAmount: String(Math.round(originalArr)),
+            originalCurrency,
+            originalArr: String(Math.round(originalArr)),
             onboardingFeePaid: true,
             isReferral: false,
             tierAtStart: tier,
@@ -3996,7 +4002,7 @@ var pipedriveSyncRouter = router({
             pipedriveWonTime: wonDate ? new Date(wonDate) : null,
             contractStartDate,
             billingFrequency: contractType,
-            notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`
+            notes: `Imported from Pipedrive (${originalCurrency} ${Math.round(originalArr).toLocaleString()}). Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`
           });
           const payouts = commResult.payoutSchedule.map((p, i) => {
             const payoutDate = addMonths(startYear, startMonth, i + 1);

@@ -251,6 +251,12 @@
 - [x] All 35 tests passing
 
 
+## Currency Conversion & Widget Auto-Refresh (Mar 22 2026)
+- [x] Fix EUR/GBP deal ARR conversion to USD (Pyxis, Actionplas showing wrong ARR)
+- [x] Display deals in native currency on Deals page with USD conversion for rolling average
+- [x] Verify GBP conversion for commission payouts is correct
+- [x] Fix dashboard Upcoming Payouts widget to auto-refresh when deals/payouts change
+
 ## Churn Logic Implementation (Feb 26 2026) - COMPLETED
 - [x] Check database schema for churn date fields (isChurned, churnMonth, churnYear, churnReason)
 - [x] Update payout calculation logic to respect 30-day churn cutoff

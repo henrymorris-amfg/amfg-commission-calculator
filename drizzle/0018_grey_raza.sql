@@ -1,0 +1,1 @@
+ALTER TABLE `deals` ADD `originalArr` decimal(12,2);

@@ -146,6 +146,8 @@ export const deals = mysqlTable("deals", {
   pipedriveWonTime: timestamp("pipedriveWonTime"),
   // Contract start date from Pipedrive (determines payout month)
   contractStartDate: timestamp("contractStartDate"),
+  // Original amount in native currency (for display purposes)
+  originalArr: decimal("originalArr", { precision: 12, scale: 2 }),
   // Churn tracking (for monthly deals)
   isChurned: boolean("isChurned").default(false).notNull(),
   churnMonth: int("churnMonth"), // 1–12, null if not churned

@@ -864,6 +864,8 @@ export const pipedriveSyncRouter = router({
             });
 
             // Create deal record
+            const originalCurrency = (pdDeal.currency || "USD").toUpperCase();
+            const originalArr = pdDeal.value || 0;
             const dealId = await createDeal({
               aeId: ae.id,
               customerName: pdDeal.title,
@@ -871,8 +873,10 @@ export const pipedriveSyncRouter = router({
               startYear,
               startMonth,
               startDay,
-              originalAmount: String(Math.round(arrUsd)),
               arrUsd: String(Math.round(arrUsd)),
+              originalAmount: String(Math.round(originalArr)),
+              originalCurrency: originalCurrency as "USD" | "EUR" | "GBP",
+              originalArr: String(Math.round(originalArr)),
               onboardingFeePaid: true,
               isReferral: false,
               tierAtStart: tier,
@@ -883,7 +887,7 @@ export const pipedriveSyncRouter = router({
               pipedriveWonTime: wonDate ? new Date(wonDate) : null,
               contractStartDate: contractStartDate,
               billingFrequency: contractType,
-              notes: `Imported from Pipedrive. Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`,
+              notes: `Imported from Pipedrive (${originalCurrency} ${Math.round(originalArr).toLocaleString()}). Pipeline: ${PIPELINE_NAMES[pdDeal.pipeline_id] || pdDeal.pipeline_id}`,
             });
 
             // Create payout schedule

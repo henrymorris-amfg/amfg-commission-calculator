@@ -68,6 +68,7 @@ export default function DealsPage() {
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
       utils.commission.payoutCalendar.invalidate();
+      utils.commission.dashboardSummary.invalidate();
       setShowForm(false);
       resetForm();
     },
@@ -80,6 +81,7 @@ export default function DealsPage() {
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
       utils.commission.payoutCalendar.invalidate();
+      utils.commission.dashboardSummary.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -91,6 +93,7 @@ export default function DealsPage() {
       utils.deals.getPayouts.invalidate();
       utils.commission.monthlySummary.invalidate();
       utils.commission.payoutCalendar.invalidate();
+      utils.commission.dashboardSummary.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -101,6 +104,7 @@ export default function DealsPage() {
       utils.deals.list.invalidate();
       utils.commission.monthlySummary.invalidate();
       utils.commission.payoutCalendar.invalidate();
+      utils.commission.dashboardSummary.invalidate();
       setShowChurnModal(false);
       setChurnDealId(null);
     },
