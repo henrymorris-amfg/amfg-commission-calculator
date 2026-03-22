@@ -6251,11 +6251,12 @@ var appRouter = router({
           projMonth -= 12;
           projYear += 1;
         }
+        const futureDealsArr = allDeals.filter((d) => d.startYear === projYear && d.startMonth === projMonth).reduce((sum, d) => sum + (Number(d.arrUsd) || 0), 0);
         projectedMonths.push({
           year: projYear,
           month: projMonth,
-          arrUsd: 0,
-          // Assume no new deals signed, so $0 ARR in future months
+          arrUsd: futureDealsArr,
+          // Include pending deals with future contract start dates
           demosTotal: 0,
           dialsTotal: 0
         });

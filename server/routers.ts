@@ -1920,7 +1920,7 @@ export const appRouter = router({
         });
       }
 
-      // Add next 3 months (assume $0 ARR if no new deals are signed)
+      // Add next 3 months (include deals with future contract start dates)
       for (let i = 1; i <= 3; i++) {
         let projYear = currentYear;
         let projMonth = currentMonth + i;
@@ -1928,10 +1928,14 @@ export const appRouter = router({
           projMonth -= 12;
           projYear += 1;
         }
+        // Include deals that start in this month (based on contract start date)
+        const futureDealsArr = allDeals
+          .filter((d: typeof deals.$inferSelect) => d.startYear === projYear && d.startMonth === projMonth)
+          .reduce((sum: number, d: typeof deals.$inferSelect) => sum + (Number(d.arrUsd) || 0), 0);
         projectedMonths.push({
           year: projYear,
           month: projMonth,
-          arrUsd: 0, // Assume no new deals signed, so $0 ARR in future months
+          arrUsd: futureDealsArr, // Include pending deals with future contract start dates
           demosTotal: 0,
           dialsTotal: 0,
         });

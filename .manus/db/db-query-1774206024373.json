@@ -1,0 +1,14 @@
+{
+  "query": "SELECT id, name FROM ae_profiles WHERE name = 'Toby Greer'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, name FROM ae_profiles WHERE name = 'Toby Greer'",
+  "rows": [
+    {
+      "id": "30004",
+      "name": "Toby Greer"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n30004\tToby Greer\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

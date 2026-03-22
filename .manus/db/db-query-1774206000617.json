@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO deals (aeId, customerName, contractType, startYear, startMonth, startDay, originalAmount, originalCurrency, arrUsd, conversionRate, onboardingFeePaid, isReferral, tierAtStart, fxRateAtEntry, commissionStructureId, billingFrequency, createdAt, updatedAt) VALUES (1, 'Test Future Deal', 'annual', 2026, 4, 1, 10000, 'USD', 10000, 1.0, true, false, 'bronze', 1.0, 1, 'annual', NOW(), NOW())",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute INSERT INTO deals (aeId, customerName, contractType, startYear, startMonth, startDay, originalAmount, originalCurrency, arrUsd, conversionRate, onboardingFeePaid, isReferral, tierAtStart, fxRateAtEntry, commissionStructureId, billingFrequency, createdAt, updatedAt) VALUES (1, 'Test Future Deal', 'annual', 2026, 4, 1, 10000, 'USD', 10000, 1.0, true, false, 'bronze', 1.0, 1, 'annual', NOW(), NOW())",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 92
+}
