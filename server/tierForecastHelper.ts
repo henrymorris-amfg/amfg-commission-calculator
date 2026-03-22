@@ -90,6 +90,7 @@ export function calculateTierForecast(
     monthMap.set(key, { arrUsd: m.arrUsd, demosTotal: m.demosTotal, dialsTotal: m.dialsTotal });
   }
 
+
   // Helper: get the 3-month rolling window ending in a given month
   const getRollingWindow = (
     year: number,
@@ -121,10 +122,12 @@ export function calculateTierForecast(
     // Get the 3-month rolling window ending in this projection month
     const window = getRollingWindow(projectionYear, projectionMonth);
 
+
     // Calculate rolling averages from the window
     const totalArr = window.reduce((sum, m) => sum + m.arrUsd, 0);
     const totalDemos = window.reduce((sum, m) => sum + m.demosTotal, 0);
     const totalDials = window.reduce((sum, m) => sum + m.dialsTotal, 0);
+
 
     const projectedArrUsd = totalArr / 3;
     const projectedDemosPw = totalDemos / 3 / 4.33; // Approximate demos per week

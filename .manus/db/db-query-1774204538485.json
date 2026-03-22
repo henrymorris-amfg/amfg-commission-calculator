@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, customerName, arrUsd, startYear, startMonth, contractType FROM deals WHERE aeId = 30004 ORDER BY startYear, startMonth",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, startYear, startMonth, contractType FROM deals WHERE aeId = 30004 ORDER BY startYear, startMonth",
+  "rows": [
+    {
+      "id": "90067",
+      "customerName": "Advantage Prototype Systems deal",
+      "arrUsd": "10907.40",
+      "startYear": "2025",
+      "startMonth": "8",
+      "contractType": "annual"
+    },
+    {
+      "id": "90070",
+      "customerName": "Advanced 3D, Inc",
+      "arrUsd": "11292.60",
+      "startYear": "2025",
+      "startMonth": "10",
+      "contractType": "annual"
+    },
+    {
+      "id": "90068",
+      "customerName": "JODDB deal",
+      "arrUsd": "16788.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "contractType": "annual"
+    },
+    {
+      "id": "90069",
+      "customerName": "Printerior deal",
+      "arrUsd": "10296.79",
+      "startYear": "2025",
+      "startMonth": "12",
+      "contractType": "annual"
+    },
+    {
+      "id": "90071",
+      "customerName": "Nutechnologies",
+      "arrUsd": "12995.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "contractType": "annual"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tstartYear\tstartMonth\tcontractType\n90067\tAdvantage Prototype Systems deal\t10907.40\t2025\t8\tannual\n90070\tAdvanced 3D, Inc\t11292.60\t2025\t10\tannual\n90068\tJODDB deal\t16788.00\t2025\t12\tannual\n90069\tPrinterior deal\t10296.79\t2025\t12\tannual\n90071\tNutechnologies\t12995.00\t2026\t2\tannual\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

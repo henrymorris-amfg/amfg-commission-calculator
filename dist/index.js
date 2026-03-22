@@ -6224,13 +6224,21 @@ var appRouter = router({
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
       const projectedMonths = [];
-      for (const m of last3Months) {
+      for (let i = 3; i >= 0; i--) {
+        let histYear = currentYear;
+        let histMonth = currentMonth - i;
+        if (histMonth < 1) {
+          histMonth += 12;
+          histYear -= 1;
+        }
+        const histArr = allDeals.filter((d) => isDealActiveInMonth(d, histYear, histMonth)).reduce((sum, d) => sum + (Number(d.arrUsd) || 0), 0);
+        const histMetrics = last3Months.find((m) => m.year === histYear && m.month === histMonth);
         projectedMonths.push({
-          year: m.year,
-          month: m.month,
-          arrUsd: Number(m.arrUsd),
-          demosTotal: m.demosTotal,
-          dialsTotal: m.dialsTotal
+          year: histYear,
+          month: histMonth,
+          arrUsd: histArr,
+          demosTotal: histMetrics?.demosTotal ?? 0,
+          dialsTotal: histMetrics?.dialsTotal ?? 0
         });
       }
       for (let i = 1; i <= 3; i++) {

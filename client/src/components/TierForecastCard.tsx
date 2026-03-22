@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
-import { TrendingUp, AlertCircle, CheckCircle2, ArrowRight, Target, Clock } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle2, ArrowDown, Target, Clock, Zap } from "lucide-react";
 
 const TIER_COLORS = {
   bronze: { text: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-500/30", badge: "bg-amber-500/20 text-amber-700" },
@@ -18,39 +18,20 @@ function TierBadge({ tier }: { tier: string }) {
   );
 }
 
-function MetricRow({
+function MetricBox({
   label,
-  current,
-  target,
-  extra,
-  alreadyMeets,
+  value,
+  unit,
 }: {
   label: string;
-  current: string;
-  target: string;
-  extra: string | null;
-  alreadyMeets: boolean;
+  value: string | number;
+  unit: string;
 }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
-      <div className="flex items-center gap-2 min-w-0">
-        {alreadyMeets ? (
-          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-        ) : (
-          <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 shrink-0" />
-        )}
-        <span className="text-sm text-muted-foreground truncate">{label}</span>
-      </div>
-      <div className="flex items-center gap-2 text-sm shrink-0 ml-2">
-        <span className="text-foreground font-medium">{current}</span>
-        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-        <span className={alreadyMeets ? "text-green-500 font-semibold" : "text-foreground font-semibold"}>
-          {target}
-        </span>
-        {!alreadyMeets && extra && (
-          <span className="text-xs text-orange-500 font-medium">(+{extra})</span>
-        )}
-      </div>
+    <div className="p-3 rounded-lg bg-muted/40">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <p className="text-base font-bold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{unit}</p>
     </div>
   );
 }
@@ -60,14 +41,12 @@ function useWeeksLeftInQuarter(): { weeksLeft: number; quarterLabel: string; isU
   return useMemo(() => {
     const now = new Date();
     const month = now.getMonth(); // 0-indexed
-    // Quarter end months (0-indexed): Q1=Feb(2), Q2=May(5), Q3=Aug(8), Q4=Nov(11)
     const quarterEnds = [2, 5, 8, 11];
     const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
     const qIdx = Math.floor(month / 3);
     const endMonth = quarterEnds[qIdx];
     const endYear = now.getFullYear();
-    // Last day of the quarter-end month
-    const quarterEnd = new Date(endYear, endMonth + 1, 0); // day 0 of next month = last day of endMonth
+    const quarterEnd = new Date(endYear, endMonth + 1, 0);
     const msLeft = quarterEnd.getTime() - now.getTime();
     const weeksLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24 * 7)));
     return {
@@ -119,17 +98,10 @@ export function TierForecastCard() {
   const tierCfg = TIER_COLORS[forecast.currentTier as keyof typeof TIER_COLORS] ?? TIER_COLORS.bronze;
   const at = forecast.actionableTargets;
   const allMet = at?.alreadyMeets.arr && at?.alreadyMeets.demos && at?.alreadyMeets.dials;
+  const isGold = forecast.currentTier === "gold";
 
-  // Build urgency message: "6 weeks left in Q2 · need +93 dials/week above current pace"
-  const urgencyParts: string[] = [];
-  if (at && !allMet) {
-    if (!at.alreadyMeets.dials && at.extraNeeded.dialsPw > 0)
-      urgencyParts.push(`+${at.extraNeeded.dialsPw} dials/wk`);
-    if (!at.alreadyMeets.demos && at.extraNeeded.demosPw > 0)
-      urgencyParts.push(`+${at.extraNeeded.demosPw.toFixed(1)} demos/wk`);
-    if (!at.alreadyMeets.arr && at.extraNeeded.arrUsd > 0)
-      urgencyParts.push(`+$${at.extraNeeded.arrUsd.toLocaleString()} ARR/mo`);
-  }
+  // Check if tier will degrade in the next 3 months
+  const willDegrade = forecast.forecastMonths.some((m) => m.projectedTier !== forecast.currentTier);
 
   return (
     <div className="rounded-xl bg-card border border-border overflow-hidden">
@@ -138,183 +110,193 @@ export function TierForecastCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className={`w-4 h-4 ${tierCfg.text}`} />
-            <h3 className="text-sm font-semibold text-foreground">3-Month Tier Forecast</h3>
+            <h3 className="text-sm font-semibold text-foreground">Your Tier Outlook</h3>
           </div>
           <TierBadge tier={forecast.currentTier} />
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Based on your rolling 3-month averages
+          {isGold ? "You're at the highest commission tier" : "Based on your 3-month rolling average"}
         </p>
       </div>
 
       {/* Urgency banner */}
-      {at && !allMet && (
+      {willDegrade && !isGold && (
         <div
-          className="px-5 py-2.5 flex items-center gap-2 border-b border-border/40"
+          className="px-5 py-3 flex items-start gap-3 border-b border-border/40"
           style={{
-            background: isUrgent
-              ? "oklch(0.55 0.22 25 / 0.08)"
-              : "oklch(0.60 0.15 200 / 0.06)",
-            borderColor: isUrgent
-              ? "oklch(0.55 0.22 25 / 0.25)"
-              : "oklch(0.60 0.15 200 / 0.2)",
+            background: "oklch(0.55 0.22 25 / 0.08)",
+            borderColor: "oklch(0.55 0.22 25 / 0.25)",
           }}
         >
-          <Clock
-            className="w-3.5 h-3.5 shrink-0"
-            style={{ color: isUrgent ? "oklch(0.70 0.22 25)" : "oklch(0.65 0.12 200)" }}
-          />
-          <p
-            className="text-xs font-medium"
-            style={{ color: isUrgent ? "oklch(0.70 0.22 25)" : "oklch(0.65 0.12 200)" }}
-          >
-            <span className="font-bold">{weeksLeft} week{weeksLeft !== 1 ? "s" : ""} left in {quarterLabel}</span>
-            {urgencyParts.length > 0 && (
-              <> · need {urgencyParts.join(", ")} above current pace to reach{" "}
-                <span className="font-bold">{at.targetTier.toUpperCase()}</span>
-              </>
-            )}
-          </p>
-        </div>
-      )}
-
-      {/* All met banner */}
-      {at && allMet && (
-        <div className="px-5 py-2.5 flex items-center gap-2 border-b border-border/40 bg-green-500/5 border-green-500/20">
-          <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
-          <p className="text-xs font-medium text-green-600">
-            <span className="font-bold">{weeksLeft} weeks left in {quarterLabel}</span> · all targets met — on track for {at.targetTier.toUpperCase()}!
-          </p>
-        </div>
-      )}
-
-      <div className="p-5 space-y-5">
-        {/* Current metrics summary */}
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div className="p-2 rounded-lg bg-muted/40">
-            <p className="text-xs text-muted-foreground mb-0.5">ARR/month</p>
-            <p className="text-sm font-semibold text-foreground">
-              ${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()}
-            </p>
-          </div>
-          <div className="p-2 rounded-lg bg-muted/40">
-            <p className="text-xs text-muted-foreground mb-0.5">Demos/wk</p>
-            <p className="text-sm font-semibold text-foreground">
-              {forecast.currentMetrics.demosPw.toFixed(1)}
-            </p>
-          </div>
-          <div className="p-2 rounded-lg bg-muted/40">
-            <p className="text-xs text-muted-foreground mb-0.5">Dials/wk</p>
-            <p className="text-sm font-semibold text-foreground">
-              {Math.round(forecast.currentMetrics.dialsPw)}
-            </p>
-          </div>
-        </div>
-
-        {/* Actionable targets */}
-        {at ? (
+          <ArrowDown className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "oklch(0.70 0.22 25)" }} />
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                To reach{" "}
-                <span className={TIER_COLORS[at.targetTier as keyof typeof TIER_COLORS]?.text ?? ""}>
-                  {at.targetTier.toUpperCase()}
-                </span>
-              </p>
-            </div>
-            <div className="space-y-0 rounded-lg border border-border/60 px-3 divide-y divide-border/40">
-              <MetricRow
-                label="ARR / month"
-                current={`$${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()}`}
-                target={`$${(forecast.currentMetrics.arrUsd + at.extraNeeded.arrUsd).toLocaleString()}`}
-                extra={at.extraNeeded.arrUsd > 0 ? `$${at.extraNeeded.arrUsd.toLocaleString()}` : null}
-                alreadyMeets={at.alreadyMeets.arr}
-              />
-              <MetricRow
-                label="Demos / week"
-                current={forecast.currentMetrics.demosPw.toFixed(1)}
-                target={`${(forecast.currentMetrics.demosPw + at.extraNeeded.demosPw).toFixed(1)}`}
-                extra={at.extraNeeded.demosPw > 0 ? at.extraNeeded.demosPw.toFixed(1) : null}
-                alreadyMeets={at.alreadyMeets.demos}
-              />
-              <MetricRow
-                label="Dials / week"
-                current={Math.round(forecast.currentMetrics.dialsPw).toString()}
-                target={`${Math.round(forecast.currentMetrics.dialsPw + at.extraNeeded.dialsPw)}`}
-                extra={at.extraNeeded.dialsPw > 0 ? Math.round(at.extraNeeded.dialsPw).toString() : null}
-                alreadyMeets={at.alreadyMeets.dials}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-            <CheckCircle2 className="w-4 h-4 text-yellow-500" />
-            <p className="text-sm font-medium text-yellow-600">
-              You're at Gold — maximum commission rate!
+            <p className="text-sm font-semibold" style={{ color: "oklch(0.70 0.22 25)" }}>
+              Your tier will drop if you do nothing
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {forecast.forecastMonths[0]?.month && (
+                <>
+                  By <span className="font-medium">{forecast.forecastMonths[0].month}</span>, you'll be{" "}
+                  <span className="font-medium">{forecast.forecastMonths[0].projectedTier.toUpperCase()}</span> if you don't take action
+                </>
+              )}
             </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Month-by-month projection */}
+      {/* Success banner */}
+      {isGold && (
+        <div className="px-5 py-3 flex items-start gap-3 border-b border-border/40 bg-green-500/5 border-green-500/20">
+          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-green-700">You're at Gold tier</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Maintain your current performance to stay at the highest commission rate
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="p-5 space-y-6">
+        {/* Section 1: Current Status */}
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-            3-Month Projection
-          </p>
-          <div className="space-y-1.5">
-            {forecast.forecastMonths.map((month) => {
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 bg-foreground rounded-full"></div>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Your Current Performance</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <MetricBox
+              label="ARR"
+              value={`$${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()}`}
+              unit="per month"
+            />
+            <MetricBox
+              label="Demos"
+              value={forecast.currentMetrics.demosPw.toFixed(1)}
+              unit="per week"
+            />
+            <MetricBox
+              label="Dials"
+              value={Math.round(forecast.currentMetrics.dialsPw)}
+              unit="per week"
+            />
+          </div>
+        </div>
+
+        {/* Section 2: Do Nothing Forecast */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-4 bg-foreground rounded-full"></div>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">If You Do Nothing</p>
+          </div>
+          <div className="space-y-2">
+            {forecast.forecastMonths.map((month, idx) => {
               const mCfg = TIER_COLORS[month.projectedTier as keyof typeof TIER_COLORS] ?? TIER_COLORS.bronze;
-              const hasGap =
-                month.gapToGold.arrUsd > 0 ||
-                month.gapToGold.demosPw > 0 ||
-                month.gapToGold.dialsPw > 0;
+              const isSameTier = month.projectedTier === forecast.currentTier;
               return (
                 <div
                   key={month.month}
-                  className="flex items-start justify-between p-2.5 rounded-lg bg-muted/30 text-sm"
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/40"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground w-8">{month.month}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-muted-foreground w-12">{month.month}</span>
                     <TierBadge tier={month.projectedTier} />
-                    {month.projectedTier !== forecast.currentTier && (
-                      <span className="text-xs text-orange-500 font-medium">↓ {month.projectedTier}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      ${Math.round(month.projectedMetrics.arrUsd).toLocaleString()} ARR
+                    </p>
+                    {!isSameTier && (
+                      <p className="text-xs font-semibold mt-0.5" style={{ color: mCfg.text.split("-")[1] }}>
+                        ↓ Drop from {forecast.currentTier.toUpperCase()}
+                      </p>
                     )}
                   </div>
-                  {hasGap ? (
-                    <div className="text-right text-xs text-muted-foreground space-y-0.5">
-                      {month.gapToGold.arrUsd > 0 && (
-                        <p>
-                          <span className={`${mCfg.text} font-medium`}>
-                            ${month.gapToGold.arrUsd.toLocaleString()}
-                          </span>{" "}
-                          to Gold
-                        </p>
-                      )}
-                      {month.gapToGold.demosPw > 0 && (
-                        <p>
-                          <span className={`${mCfg.text} font-medium`}>
-                            {month.gapToGold.demosPw.toFixed(1)}
-                          </span>{" "}
-                          demos/wk
-                        </p>
-                      )}
-                      {month.gapToGold.dialsPw > 0 && (
-                        <p>
-                          <span className={`${mCfg.text} font-medium`}>
-                            {Math.round(month.gapToGold.dialsPw)}
-                          </span>{" "}
-                          dials/wk
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xs text-green-500 font-medium">On track ✓</span>
-                  )}
                 </div>
               );
             })}
           </div>
         </div>
+
+        {/* Section 3: Action Items */}
+        {at && !isGold ? (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-4 bg-foreground rounded-full"></div>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                To Stay {forecast.currentTier.toUpperCase()} (or Reach {at.targetTier.toUpperCase()})
+              </p>
+            </div>
+            <div className="space-y-2">
+              {/* ARR */}
+              <div className="p-3 rounded-lg border border-border/60 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Annual Recurring Revenue</span>
+                  <span className={`text-sm font-bold ${at.alreadyMeets.arr ? "text-green-500" : "text-foreground"}`}>
+                    ${Math.round(forecast.currentMetrics.arrUsd + at.extraNeeded.arrUsd).toLocaleString()}
+                  </span>
+                </div>
+                {!at.alreadyMeets.arr && (
+                  <p className="text-xs text-orange-500 font-medium mt-1">
+                    Need +${Math.round(at.extraNeeded.arrUsd).toLocaleString()} more per month
+                  </p>
+                )}
+                {at.alreadyMeets.arr && (
+                  <p className="text-xs text-green-600 font-medium mt-1">✓ You already meet this target</p>
+                )}
+              </div>
+
+              {/* Demos */}
+              <div className="p-3 rounded-lg border border-border/60 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Demos per Week</span>
+                  <span className={`text-sm font-bold ${at.alreadyMeets.demos ? "text-green-500" : "text-foreground"}`}>
+                    {(forecast.currentMetrics.demosPw + at.extraNeeded.demosPw).toFixed(1)}
+                  </span>
+                </div>
+                {!at.alreadyMeets.demos && (
+                  <p className="text-xs text-orange-500 font-medium mt-1">
+                    Need +{at.extraNeeded.demosPw.toFixed(1)} more demos per week
+                  </p>
+                )}
+                {at.alreadyMeets.demos && (
+                  <p className="text-xs text-green-600 font-medium mt-1">✓ You already meet this target</p>
+                )}
+              </div>
+
+              {/* Dials */}
+              <div className="p-3 rounded-lg border border-border/60 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Dials per Week</span>
+                  <span className={`text-sm font-bold ${at.alreadyMeets.dials ? "text-green-500" : "text-foreground"}`}>
+                    {Math.round(forecast.currentMetrics.dialsPw + at.extraNeeded.dialsPw)}
+                  </span>
+                </div>
+                {!at.alreadyMeets.dials && (
+                  <p className="text-xs text-orange-500 font-medium mt-1">
+                    Need +{Math.round(at.extraNeeded.dialsPw)} more dials per week
+                  </p>
+                )}
+                {at.alreadyMeets.dials && (
+                  <p className="text-xs text-green-600 font-medium mt-1">✓ You already meet this target</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : isGold ? (
+          <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
+            <div className="flex items-start gap-2">
+              <Zap className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-700">Maintain your current numbers</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Keep hitting ${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()} ARR, {forecast.currentMetrics.demosPw.toFixed(1)} demos/week, and {Math.round(forecast.currentMetrics.dialsPw)} dials/week to stay at Gold
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

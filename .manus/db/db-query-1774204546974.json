@@ -1,0 +1,73 @@
+{
+  "query": "SELECT year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30004 ORDER BY year, month",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 30004 ORDER BY year, month",
+  "rows": [
+    {
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "53"
+    },
+    {
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "10907.00",
+      "demosTotal": "11",
+      "dialsTotal": "506"
+    },
+    {
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "0.00",
+      "demosTotal": "18",
+      "dialsTotal": "456"
+    },
+    {
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "11293.00",
+      "demosTotal": "20",
+      "dialsTotal": "346"
+    },
+    {
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "272"
+    },
+    {
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "27085.00",
+      "demosTotal": "14",
+      "dialsTotal": "122"
+    },
+    {
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "15",
+      "dialsTotal": "225"
+    },
+    {
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "15006.00",
+      "demosTotal": "9",
+      "dialsTotal": "74"
+    },
+    {
+      "year": "2026",
+      "month": "3",
+      "arrUsd": "0.00",
+      "demosTotal": "12",
+      "dialsTotal": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "year\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n2025\t7\t0.00\t0\t53\n2025\t8\t10907.00\t11\t506\n2025\t9\t0.00\t18\t456\n2025\t10\t11293.00\t20\t346\n2025\t11\t0.00\t15\t272\n2025\t12\t27085.00\t14\t122\n2026\t1\t0.00\t15\t225\n2026\t2\t15006.00\t9\t74\n2026\t3\t0.00\t12\t0\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
