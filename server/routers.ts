@@ -1029,6 +1029,20 @@ export const appRouter = router({
       const monthMap = new Map<string, CalendarMonth>();
 
       for (const p of payouts) {
+        const deal = dealMap.get(p.dealId);
+        
+        // Skip payouts for churned deals
+        if (deal?.isChurned) continue;
+        
+        // For monthly deals with churn date, skip payouts after 1 month post-churn
+        // (AMFG pays 1 month in arrears, so last payout is 1 month after churn)
+        if (deal?.contractType === "monthly" && deal?.churnYear && deal?.churnMonth) {
+          const payoutDate = p.payoutYear * 100 + p.payoutMonth;
+          const churnDate = deal.churnYear * 100 + deal.churnMonth;
+          const lastPayoutDate = churnDate + 1; // 1 month after churn
+          if (payoutDate > lastPayoutDate) continue;
+        }
+        
         const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
         if (!monthMap.has(key)) {
           const yr = p.payoutYear;
@@ -1046,7 +1060,6 @@ export const appRouter = router({
         const entry = monthMap.get(key)!;
         const netGbp = Number(p.netCommissionGbp);
         entry.totalGbp += netGbp;
-        const deal = dealMap.get(p.dealId);
 
         // Count total payouts for this deal
         const dealPayoutCount = payouts.filter(pp => pp.dealId === p.dealId).length;

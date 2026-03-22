@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, customerName, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30004 ORDER BY customerName",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30004 ORDER BY customerName",
+  "rows": [
+    {
+      "id": "90070",
+      "customerName": "Advanced 3D, Inc",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90067",
+      "customerName": "Advantage Prototype Systems deal",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90068",
+      "customerName": "JODDB deal",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90071",
+      "customerName": "Nutechnologies",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90069",
+      "customerName": "Printerior deal",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tisChurned\tchurnYear\tchurnMonth\n90070\tAdvanced 3D, Inc\t0\tNULL\tNULL\n90067\tAdvantage Prototype Systems deal\t0\tNULL\tNULL\n90068\tJODDB deal\t0\tNULL\tNULL\n90071\tNutechnologies\t0\tNULL\tNULL\n90069\tPrinterior deal\t0\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

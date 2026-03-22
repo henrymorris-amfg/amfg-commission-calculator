@@ -5546,6 +5546,14 @@ var appRouter = router({
       const currentMonth = now.getMonth() + 1;
       const monthMap = /* @__PURE__ */ new Map();
       for (const p of payouts) {
+        const deal = dealMap.get(p.dealId);
+        if (deal?.isChurned) continue;
+        if (deal?.contractType === "monthly" && deal?.churnYear && deal?.churnMonth) {
+          const payoutDate = p.payoutYear * 100 + p.payoutMonth;
+          const churnDate = deal.churnYear * 100 + deal.churnMonth;
+          const lastPayoutDate = churnDate + 1;
+          if (payoutDate > lastPayoutDate) continue;
+        }
         const key = `${p.payoutYear}-${String(p.payoutMonth).padStart(2, "0")}`;
         if (!monthMap.has(key)) {
           const yr = p.payoutYear;
@@ -5563,7 +5571,6 @@ var appRouter = router({
         const entry = monthMap.get(key);
         const netGbp = Number(p.netCommissionGbp);
         entry.totalGbp += netGbp;
-        const deal = dealMap.get(p.dealId);
         const dealPayoutCount = payouts.filter((pp) => pp.dealId === p.dealId).length;
         entry.payouts.push({
           dealId: p.dealId,

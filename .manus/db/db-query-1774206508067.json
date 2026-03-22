@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, aeId, customerName, isChurned, churnYear, churnMonth FROM deals WHERE customerName LIKE '%Paragon%' OR customerName LIKE '%Stratos%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, aeId, customerName, isChurned, churnYear, churnMonth FROM deals WHERE customerName LIKE '%Paragon%' OR customerName LIKE '%Stratos%'",
+  "rows": [
+    {
+      "id": "90003",
+      "aeId": "1",
+      "customerName": "Stratos Precision Engineering deal",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "12"
+    },
+    {
+      "id": "90031",
+      "aeId": "1",
+      "customerName": "Paragon Rapid Technologies (CNC License)",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taeId\tcustomerName\tisChurned\tchurnYear\tchurnMonth\n90003\t1\tStratos Precision Engineering deal\t1\t2025\t12\n90031\t1\tParagon Rapid Technologies (CNC License)\t1\t2025\t8\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}
