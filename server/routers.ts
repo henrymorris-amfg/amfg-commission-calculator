@@ -1873,6 +1873,62 @@ export const appRouter = router({
         isTeamLeader: ae.isTeamLeader,
       });
 
+      // Fetch all deals to calculate projected monthly metrics
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+      const allDeals = await db.select().from(deals).where(eq(deals.aeId, aeId));
+
+      // Helper: check if a deal is active in a given month
+      const isDealActiveInMonth = (deal: typeof deals.$inferSelect, year: number, month: number): boolean => {
+        if (!deal.contractStartDate) return false;
+        const startDate = new Date(deal.contractStartDate);
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth() + 1;
+        const isChurned = deal.isChurned && deal.churnYear && deal.churnMonth;
+        const churnYear = deal.churnYear ?? 0;
+        const churnMonth = deal.churnMonth ?? 0;
+        const startedByMonth = startYear < year || (startYear === year && startMonth <= month);
+        const notChurnedByMonth = !isChurned || churnYear > year || (churnYear === year && churnMonth > month);
+        return startedByMonth && notChurnedByMonth;
+      };
+
+      // Build projected months: last 3 actual months + next 3 projected months
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const projectedMonths: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }> = [];
+
+      // Add last 3 months from database
+      for (const m of last3Months) {
+        projectedMonths.push({
+          year: m.year,
+          month: m.month,
+          arrUsd: Number(m.arrUsd),
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal,
+        });
+      }
+
+      // Add next 3 months (projected based on contract start dates, demos/dials = 0)
+      for (let i = 1; i <= 3; i++) {
+        let projYear = currentYear;
+        let projMonth = currentMonth + i;
+        if (projMonth > 12) {
+          projMonth -= 12;
+          projYear += 1;
+        }
+        const projectedArr = allDeals
+          .filter((d: typeof deals.$inferSelect) => isDealActiveInMonth(d, projYear, projMonth))
+          .reduce((sum: number, d: typeof deals.$inferSelect) => sum + (Number(d.arrUsd) || 0), 0);
+        projectedMonths.push({
+          year: projYear,
+          month: projMonth,
+          arrUsd: projectedArr,
+          demosTotal: 0,
+          dialsTotal: 0,
+        });
+      }
+
       const { calculateTierForecast } = await import("./tierForecastHelper");
       const forecast = calculateTierForecast(
         tierResult.tier,
@@ -1881,7 +1937,7 @@ export const appRouter = router({
           demosPw: avgDemosPw,
           dialsPw: avgDialsPw,
         },
-        last3Months,
+        projectedMonths,
         ae.isTeamLeader
       );
 

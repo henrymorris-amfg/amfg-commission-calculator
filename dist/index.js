@@ -6190,6 +6190,50 @@ var appRouter = router({
         isNewJoiner: isNewJoiner(ae.joinDate),
         isTeamLeader: ae.isTeamLeader
       });
+      const db = await getDb();
+      if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+      const allDeals = await db.select().from(deals).where(eq6(deals.aeId, aeId));
+      const isDealActiveInMonth = (deal, year, month) => {
+        if (!deal.contractStartDate) return false;
+        const startDate = new Date(deal.contractStartDate);
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth() + 1;
+        const isChurned = deal.isChurned && deal.churnYear && deal.churnMonth;
+        const churnYear = deal.churnYear ?? 0;
+        const churnMonth = deal.churnMonth ?? 0;
+        const startedByMonth = startYear < year || startYear === year && startMonth <= month;
+        const notChurnedByMonth = !isChurned || churnYear > year || churnYear === year && churnMonth > month;
+        return startedByMonth && notChurnedByMonth;
+      };
+      const now = /* @__PURE__ */ new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const projectedMonths = [];
+      for (const m of last3Months) {
+        projectedMonths.push({
+          year: m.year,
+          month: m.month,
+          arrUsd: Number(m.arrUsd),
+          demosTotal: m.demosTotal,
+          dialsTotal: m.dialsTotal
+        });
+      }
+      for (let i = 1; i <= 3; i++) {
+        let projYear = currentYear;
+        let projMonth = currentMonth + i;
+        if (projMonth > 12) {
+          projMonth -= 12;
+          projYear += 1;
+        }
+        const projectedArr = allDeals.filter((d) => isDealActiveInMonth(d, projYear, projMonth)).reduce((sum, d) => sum + (Number(d.arrUsd) || 0), 0);
+        projectedMonths.push({
+          year: projYear,
+          month: projMonth,
+          arrUsd: projectedArr,
+          demosTotal: 0,
+          dialsTotal: 0
+        });
+      }
       const { calculateTierForecast: calculateTierForecast2 } = await Promise.resolve().then(() => (init_tierForecastHelper(), tierForecastHelper_exports));
       const forecast = calculateTierForecast2(
         tierResult.tier,
@@ -6198,7 +6242,7 @@ var appRouter = router({
           demosPw: avgDemosPw,
           dialsPw: avgDialsPw
         },
-        last3Months,
+        projectedMonths,
         ae.isTeamLeader
       );
       const lastSyncedAt = last3Months.length > 0 ? new Date(last3Months[0].year, last3Months[0].month - 1, 1) : /* @__PURE__ */ new Date();

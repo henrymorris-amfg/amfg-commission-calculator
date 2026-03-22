@@ -684,3 +684,11 @@
 - [x] Updated TierForecastCard to display gapToGold per month + tier drop warnings
 - [x] Forecast uses same rolling-window logic as tier calculation (Dec/Jan/Feb for March, etc.)
 - [x] 109 tests passing (12 test files)
+
+## 3-Month Forecast Degradation Fix (Mar 22 2026)
+- [x] Fixed forecast logic to use actual contract start dates from Pipedrive deals
+- [x] Rewrote tierForecast procedure: fetches all deals, calculates projected monthly metrics (ARR/demos/dials) based on contract start dates
+- [x] For future months with no deals, uses $0 ARR / 0 demos / 0 dials (future months have no demo/dial data yet)
+- [x] Updated calculateTierForecast to use projected metrics and show correct degradation (ARR/demos/dials decrease as old months roll off)
+- [x] Forecast now correctly shows degrading tier for Toby Greer: April/May/Jun shows decreasing ARR/demos/dials
+- [x] 109 tests passing (12 test files)
