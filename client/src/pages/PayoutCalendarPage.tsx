@@ -39,10 +39,16 @@ export default function PayoutCalendarPage() {
     undefined,
     { enabled: !!ae }
   );
+  const refreshPayoutsMutation = trpc.commission.refreshAll.useMutation();
 
   const handleRefresh = async () => {
-    await utils.commission.payoutCalendar.invalidate();
-    await refetchCalendar();
+    try {
+      await refreshPayoutsMutation.mutateAsync();
+      await utils.commission.payoutCalendar.invalidate();
+      await refetchCalendar();
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    }
   };
 
   useEffect(() => {
@@ -99,13 +105,13 @@ export default function PayoutCalendarPage() {
           </div>
           <Button
             onClick={handleRefresh}
-            disabled={calLoading}
+            disabled={calLoading || refreshPayoutsMutation.isPending}
             variant="outline"
             size="sm"
             className="gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${calLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`w-4 h-4 ${calLoading || refreshPayoutsMutation.isPending ? 'animate-spin' : ''}`} />
+            {refreshPayoutsMutation.isPending ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
 

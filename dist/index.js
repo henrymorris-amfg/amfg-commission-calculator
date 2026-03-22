@@ -1143,6 +1143,28 @@ var init_voipSync = __esm({
 });
 
 // shared/commission.ts
+var commission_exports = {};
+__export(commission_exports, {
+  ANNUAL_CONTRACT_PAYOUT_MONTHS: () => ANNUAL_CONTRACT_PAYOUT_MONTHS,
+  MONTHLY_CONTRACT_PAYOUT_MONTHS: () => MONTHLY_CONTRACT_PAYOUT_MONTHS,
+  MONTH_NAMES: () => MONTH_NAMES,
+  NEW_JOINER_GRACE_MONTHS: () => NEW_JOINER_GRACE_MONTHS,
+  ONBOARDING_DEDUCTION_GBP: () => ONBOARDING_DEDUCTION_GBP,
+  ONBOARDING_MIN_FEE_USD: () => ONBOARDING_MIN_FEE_USD,
+  RETENTION_BRONZE_MAX: () => RETENTION_BRONZE_MAX,
+  RETENTION_GOLD_MIN: () => RETENTION_GOLD_MIN,
+  RETENTION_SILVER_MIN: () => RETENTION_SILVER_MIN,
+  STANDARD_TARGETS: () => STANDARD_TARGETS,
+  TEAM_LEADER_TARGETS: () => TEAM_LEADER_TARGETS,
+  TIER_COMMISSION_RATE: () => TIER_COMMISSION_RATE,
+  addMonths: () => addMonths,
+  calculateCommission: () => calculateCommission,
+  calculateTier: () => calculateTier,
+  computeActiveWeeks: () => computeActiveWeeks,
+  computeAvgRetention: () => computeAvgRetention,
+  computeRollingAverages: () => computeRollingAverages,
+  isNewJoiner: () => isNewJoiner
+});
 function calculateTier(inputs) {
   const targets = inputs.isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
   const retentionAvailable = inputs.avgRetentionRate != null;
@@ -1287,7 +1309,7 @@ function addMonths(year, month, n) {
   const date = new Date(year, month - 1 + n, 1);
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
 }
-var TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS, RETENTION_SILVER_MIN, RETENTION_GOLD_MIN, MONTHLY_CONTRACT_PAYOUT_MONTHS, ANNUAL_CONTRACT_PAYOUT_MONTHS, ONBOARDING_DEDUCTION_GBP, NEW_JOINER_GRACE_MONTHS, MONTH_NAMES;
+var TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS, RETENTION_BRONZE_MAX, RETENTION_SILVER_MIN, RETENTION_GOLD_MIN, MONTHLY_CONTRACT_PAYOUT_MONTHS, ANNUAL_CONTRACT_PAYOUT_MONTHS, ONBOARDING_DEDUCTION_GBP, ONBOARDING_MIN_FEE_USD, NEW_JOINER_GRACE_MONTHS, MONTH_NAMES;
 var init_commission = __esm({
   "shared/commission.ts"() {
     "use strict";
@@ -1304,11 +1326,13 @@ var init_commission = __esm({
       silver: { arrUsd: 1e4, demosPw: 2, dialsPw: 50, retentionMin: 61 },
       gold: { arrUsd: 12500, demosPw: 2, dialsPw: 100, retentionMin: 71 }
     };
+    RETENTION_BRONZE_MAX = 60;
     RETENTION_SILVER_MIN = 61;
     RETENTION_GOLD_MIN = 71;
     MONTHLY_CONTRACT_PAYOUT_MONTHS = 12;
     ANNUAL_CONTRACT_PAYOUT_MONTHS = 1;
     ONBOARDING_DEDUCTION_GBP = 500;
+    ONBOARDING_MIN_FEE_USD = 1e3;
     NEW_JOINER_GRACE_MONTHS = 6;
     MONTH_NAMES = [
       "January",
@@ -2238,115 +2262,96 @@ var init_tierChangeNotifier = __esm({
 // server/tierForecastHelper.ts
 var tierForecastHelper_exports = {};
 __export(tierForecastHelper_exports, {
-  calculateTierForecast: () => calculateTierForecast,
-  formatTierForecast: () => formatTierForecast
+  calculateTierForecast: () => calculateTierForecast
 });
-function calculateTierForecast(currentTier, currentMetrics, isTeamLeader = false, historicalGrowthRate = 0.05) {
+function calculateTierForecast(currentTier, currentMetrics, last3MonthsData, isTeamLeader = false) {
   const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
   const tierOrder = ["bronze", "silver", "gold"];
   const currentTierIndex = tierOrder.indexOf(currentTier);
-  const nextTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : null;
-  const nextTierTargets = nextTier ? targets[nextTier] : null;
-  const forecastMonths = [];
-  let projectedArrUsd = currentMetrics.arrUsd;
-  let projectedDemosPw = currentMetrics.demosPw;
-  let projectedDialsPw = currentMetrics.dialsPw;
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const nextTier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : "gold";
+  const nextTierTargets = targets[nextTier];
   const now = /* @__PURE__ */ new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const quarterStart = Math.floor((currentMonth - 1) / 3) * 3 + 1;
+  const quarterEnd = quarterStart + 2;
+  const daysLeftInQuarter = new Date(currentYear, quarterEnd, 0).getDate() - now.getDate();
+  const weeksLeftInQuarter = Math.ceil(daysLeftInQuarter / 7);
+  const forecastMonths = [];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const sortedData = [...last3MonthsData].sort((a, b) => {
+    return 0;
+  });
   for (let i = 1; i <= 3; i++) {
-    projectedArrUsd *= 1 + historicalGrowthRate;
-    projectedDemosPw *= 1 + historicalGrowthRate;
-    projectedDialsPw *= 1 + historicalGrowthRate;
-    const forecastMonth = new Date(now);
-    forecastMonth.setMonth(forecastMonth.getMonth() + i);
-    const monthName = monthNames[forecastMonth.getMonth()];
-    let projectedTier = "bronze";
-    if (projectedArrUsd >= targets.gold.arrUsd && projectedDemosPw >= targets.gold.demosPw && projectedDialsPw >= targets.gold.dialsPw) {
-      projectedTier = "gold";
-    } else if (projectedArrUsd >= targets.silver.arrUsd && projectedDemosPw >= targets.silver.demosPw && projectedDialsPw >= targets.silver.dialsPw) {
-      projectedTier = "silver";
+    const projectionDate = new Date(now);
+    projectionDate.setMonth(projectionDate.getMonth() + i);
+    const projectionMonth = projectionDate.getMonth() + 1;
+    const projectionYear = projectionDate.getFullYear();
+    const monthName = monthNames[projectionDate.getMonth()];
+    let projectedArrUsd = currentMetrics.arrUsd;
+    let projectedDemosPw = currentMetrics.demosPw;
+    let projectedDialsPw = currentMetrics.dialsPw;
+    if (last3MonthsData.length === 3) {
+      const oldestMonth = last3MonthsData[2];
+      const oldestArrUsd = oldestMonth.arrUsd;
+      const oldestDemosPw = oldestMonth.demosTotal / 4.33;
+      const oldestDialsPw = oldestMonth.dialsTotal / 4.33;
+      projectedArrUsd = (projectedArrUsd * 3 - oldestArrUsd) / 2;
+      projectedDemosPw = (projectedDemosPw * 3 - oldestDemosPw) / 2;
+      projectedDialsPw = (projectedDialsPw * 3 - oldestDialsPw) / 2;
     }
-    const projNextTier = projectedTier === "bronze" ? "silver" : projectedTier === "silver" ? "gold" : null;
-    const projNextTargets = projNextTier ? targets[projNextTier] : null;
+    let projectedTier = "bronze";
+    const bronzeTargets2 = { arrUsd: 15e3, demosPw: 2, dialsPw: 100, retentionMin: 0 };
+    const currentTierTargets2 = currentTier === "silver" ? targets.silver : currentTier === "gold" ? targets.gold : bronzeTargets2;
+    if (projectedArrUsd >= nextTierTargets.arrUsd && projectedDemosPw >= nextTierTargets.demosPw && projectedDialsPw >= nextTierTargets.dialsPw) {
+      projectedTier = nextTier;
+    } else if (projectedArrUsd >= currentTierTargets2.arrUsd && projectedDemosPw >= currentTierTargets2.demosPw && projectedDialsPw >= currentTierTargets2.dialsPw) {
+      projectedTier = currentTier;
+    }
+    const gapToCurrentTier = {
+      arrUsd: Math.max(0, currentTierTargets2.arrUsd - projectedArrUsd),
+      demosPw: Math.max(0, currentTierTargets2.demosPw - projectedDemosPw),
+      dialsPw: Math.max(0, currentTierTargets2.dialsPw - projectedDialsPw)
+    };
+    const gapToGold = {
+      arrUsd: Math.max(0, targets.gold.arrUsd - projectedArrUsd),
+      demosPw: Math.max(0, targets.gold.demosPw - projectedDemosPw),
+      dialsPw: Math.max(0, targets.gold.dialsPw - projectedDialsPw)
+    };
     forecastMonths.push({
       month: monthName,
       projectedTier,
       projectedMetrics: {
         arrUsd: Math.round(projectedArrUsd),
-        demosPw: Math.round(projectedDemosPw * 10) / 10,
-        dialsPw: Math.round(projectedDialsPw)
+        demosPw: Math.round(projectedDemosPw * 100) / 100,
+        dialsPw: Math.round(projectedDialsPw * 100) / 100
       },
-      gapToNextTier: projNextTargets ? {
-        arrUsd: Math.max(0, Math.round(projNextTargets.arrUsd - projectedArrUsd)),
-        demosPw: Math.max(0, Math.round((projNextTargets.demosPw - projectedDemosPw) * 10) / 10),
-        dialsPw: Math.max(0, Math.round(projNextTargets.dialsPw - projectedDialsPw))
-      } : { arrUsd: 0, demosPw: 0, dialsPw: 0 },
-      willUpgrade: tierOrder.indexOf(projectedTier) > currentTierIndex
+      gapToCurrentTier,
+      gapToGold
     });
   }
-  const actionableTargets = nextTierTargets && nextTier ? {
+  const bronzeTargets = { arrUsd: 15e3, demosPw: 2, dialsPw: 100, retentionMin: 0 };
+  const currentTierTargets = currentTier === "silver" ? targets.silver : currentTier === "gold" ? targets.gold : bronzeTargets;
+  const actionableTargets = {
     targetTier: nextTier,
-    monthsToReach: 3,
-    thresholds: {
-      arrUsd: nextTierTargets.arrUsd,
-      demosPw: nextTierTargets.demosPw,
-      dialsPw: nextTierTargets.dialsPw
-    },
     extraNeeded: {
-      arrUsd: Math.max(0, Math.round(nextTierTargets.arrUsd - currentMetrics.arrUsd)),
-      demosPw: Math.max(0, Math.round((nextTierTargets.demosPw - currentMetrics.demosPw) * 10) / 10),
-      dialsPw: Math.max(0, Math.round(nextTierTargets.dialsPw - currentMetrics.dialsPw))
+      arrUsd: Math.max(0, nextTierTargets.arrUsd - currentMetrics.arrUsd),
+      demosPw: Math.max(0, nextTierTargets.demosPw - currentMetrics.demosPw),
+      dialsPw: Math.max(0, nextTierTargets.dialsPw - currentMetrics.dialsPw)
     },
     alreadyMeets: {
       arr: currentMetrics.arrUsd >= nextTierTargets.arrUsd,
       demos: currentMetrics.demosPw >= nextTierTargets.demosPw,
       dials: currentMetrics.dialsPw >= nextTierTargets.dialsPw
     }
-  } : null;
+  };
   return {
     currentTier,
     currentMetrics,
-    nextTier,
-    nextTierTargets: nextTierTargets ? {
-      arrUsd: nextTierTargets.arrUsd,
-      demosPw: nextTierTargets.demosPw,
-      dialsPw: nextTierTargets.dialsPw
-    } : null,
+    weeksLeftInQuarter,
     forecastMonths,
     actionableTargets
   };
-}
-function formatTierForecast(forecast) {
-  const lines = [
-    `\u{1F4CA} Tier Forecast from ${forecast.currentTier.toUpperCase()}`,
-    `Current: $${forecast.currentMetrics.arrUsd.toLocaleString()} ARR | ${forecast.currentMetrics.demosPw.toFixed(1)} demos/wk | ${forecast.currentMetrics.dialsPw} dials/wk`,
-    ``
-  ];
-  if (forecast.actionableTargets) {
-    const at = forecast.actionableTargets;
-    lines.push(`\u{1F3AF} To reach ${at.targetTier.toUpperCase()}:`);
-    lines.push(`   Target: $${at.thresholds.arrUsd.toLocaleString()} ARR | ${at.thresholds.demosPw}/wk demos | ${at.thresholds.dialsPw}/wk dials`);
-    if (at.extraNeeded.arrUsd > 0) lines.push(`   Need +$${at.extraNeeded.arrUsd.toLocaleString()} more ARR/month`);
-    if (at.extraNeeded.demosPw > 0) lines.push(`   Need +${at.extraNeeded.demosPw.toFixed(1)} more demos/week`);
-    if (at.extraNeeded.dialsPw > 0) lines.push(`   Need +${at.extraNeeded.dialsPw} more dials/week`);
-    if (at.alreadyMeets.arr && at.alreadyMeets.demos && at.alreadyMeets.dials) {
-      lines.push(`   \u2705 Already meeting all ${at.targetTier.toUpperCase()} targets!`);
-    }
-    lines.push(``);
-  } else {
-    lines.push(`\u{1F3C6} Already at GOLD tier \u2014 maximum commission rate!`);
-    lines.push(``);
-  }
-  forecast.forecastMonths.forEach((month) => {
-    const upgrade = month.willUpgrade ? " \u2B06\uFE0F" : "";
-    lines.push(`${month.month}: ${month.projectedTier.toUpperCase()} tier${upgrade}`);
-    if (month.gapToNextTier.arrUsd > 0 || month.gapToNextTier.demosPw > 0 || month.gapToNextTier.dialsPw > 0) {
-      lines.push(
-        `   Gap: $${month.gapToNextTier.arrUsd.toLocaleString()} ARR | ${month.gapToNextTier.demosPw.toFixed(1)} demos | ${month.gapToNextTier.dialsPw} dials`
-      );
-    }
-  });
-  return lines.join("\n");
 }
 var init_tierForecastHelper = __esm({
   "server/tierForecastHelper.ts"() {
@@ -5572,6 +5577,77 @@ var appRouter = router({
         currentMonthGbp: sorted.filter((m) => m.status === "current").reduce((sum, m) => sum + m.totalGbp, 0)
       };
     }),
+    // Refresh payouts: recompute for all deals (handles churn + contract type changes)
+    refreshAll: publicProcedure.mutation(async ({ ctx }) => {
+      const aeId = getAeIdFromCtx(ctx);
+      if (!aeId) throw new TRPCError9({ code: "UNAUTHORIZED", message: "Not authenticated" });
+      const db = await getDb();
+      if (!db) throw new TRPCError9({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const allDeals = await getDealsForAe(aeId);
+      const { calculateCommission: calculateCommission2 } = await Promise.resolve().then(() => (init_commission(), commission_exports));
+      const { getCurrentFxRates: getCurrentFxRates2 } = await Promise.resolve().then(() => (init_fxService(), fxService_exports));
+      let payoutsRefreshed = 0;
+      let payoutsDeleted = 0;
+      for (const deal of allDeals) {
+        const existingPayouts = await db.select().from(commissionPayouts).where(eq6(commissionPayouts.dealId, deal.id));
+        for (const p of existingPayouts) {
+          await db.delete(commissionPayouts).where(eq6(commissionPayouts.id, p.id));
+          payoutsDeleted++;
+        }
+        if (deal.isChurned) continue;
+        const arrUsd = Number(deal.arrUsd);
+        let fxRate = 1;
+        if (deal.fxRateLockedAtCreation) {
+          fxRate = Number(deal.fxRateLockedAtCreation);
+        } else {
+          const rates = await getCurrentFxRates2();
+          fxRate = rates.GBP;
+        }
+        const activeStructure = await getActiveCommissionStructure();
+        const bronzeRate = Number(activeStructure?.bronzeRate || 0.13);
+        const silverRate = Number(activeStructure?.silverRate || 0.16);
+        const goldRate = Number(activeStructure?.goldRate || 0.19);
+        const tierRate = deal.tierAtStart === "silver" ? silverRate : deal.tierAtStart === "gold" ? goldRate : bronzeRate;
+        const commissionResult = calculateCommission2({
+          arrUsd,
+          contractType: deal.contractType,
+          tier: deal.tierAtStart,
+          isReferral: deal.isReferral,
+          onboardingFeePaid: deal.onboardingFeePaid,
+          fxRateUsdToGbp: fxRate
+        });
+        const startYear = deal.startYear;
+        const startMonth = deal.startMonth;
+        for (let i = 0; i < commissionResult.payoutSchedule.length; i++) {
+          const payout = commissionResult.payoutSchedule[i];
+          const payoutMonthOffset = i + 1;
+          let payoutYear = startYear;
+          let payoutMonth = startMonth + payoutMonthOffset;
+          while (payoutMonth > 12) {
+            payoutMonth -= 12;
+            payoutYear += 1;
+          }
+          const netCommissionGbp = Number(payout) * fxRate;
+          const referralDeduction = deal.isReferral ? Number(payout) * 0.5 : 0;
+          const onboardingDeduction = deal.onboardingFeePaid ? 0 : 500 / fxRate;
+          await db.insert(commissionPayouts).values({
+            aeId,
+            dealId: deal.id,
+            payoutYear,
+            payoutMonth,
+            payoutNumber: i + 1,
+            grossCommissionUsd: payout.toString(),
+            referralDeductionUsd: referralDeduction.toString(),
+            onboardingDeductionGbp: onboardingDeduction.toString(),
+            netCommissionUsd: payout.toString(),
+            fxRateUsed: fxRate.toString(),
+            netCommissionGbp: netCommissionGbp.toString()
+          });
+          payoutsRefreshed++;
+        }
+      }
+      return { success: true, payoutsRefreshed, payoutsDeleted };
+    }),
     // Resync all payouts from scratch (team leader only)
     resyncAllPayouts: publicProcedure.mutation(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
@@ -6122,10 +6198,14 @@ var appRouter = router({
           demosPw: avgDemosPw,
           dialsPw: avgDialsPw
         },
-        ae.isTeamLeader,
-        0.05
+        last3Months,
+        ae.isTeamLeader
       );
-      return forecast;
+      const lastSyncedAt = last3Months.length > 0 ? new Date(last3Months[0].year, last3Months[0].month - 1, 1) : /* @__PURE__ */ new Date();
+      return {
+        ...forecast,
+        lastSyncedAt
+      };
     })
   }),
   // ─── Admin Utilities ─────────────────────────────────────────────────────

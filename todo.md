@@ -673,3 +673,14 @@
 - [x] Updated teamCommissions to prefer tier_snapshots over live calculation (falls back to live if no snapshot)
 - [x] Added Backfill Tier Snapshots card to PipedriveSyncPage (team leader only)
 - [x] 109 tests passing (12 test files)
+
+## Churn Logic, Payout Refresh & 3-Month Forecast Widget (Mar 21 2026)
+- [x] isChurned and churnedDate columns already exist in deals table schema
+- [x] deal.markChurned procedure already existed: sets isChurned=true, churnedDate=now, deletes all future monthly payouts
+- [x] Added payout.refreshAll procedure: iterates all deals, recomputes payouts (churn + contract type changes)
+- [x] Added refresh button to PayoutCalendarPage that calls payout.refreshAll mutation with loading state
+- [x] Rewrote tierForecastHelper.ts calculateTierForecast: shows 3-month degrading forecast (Apr/May/Jun if AE does nothing)
+- [x] Shows exact ARR/demos/dials needed each month to maintain current tier or reach Gold
+- [x] Updated TierForecastCard to display gapToGold per month + tier drop warnings
+- [x] Forecast uses same rolling-window logic as tier calculation (Dec/Jan/Feb for March, etc.)
+- [x] 109 tests passing (12 test files)

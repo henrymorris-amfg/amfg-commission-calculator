@@ -227,21 +227,21 @@ export function TierForecastCard() {
               <MetricRow
                 label="ARR / month"
                 current={`$${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()}`}
-                target={`$${at.thresholds.arrUsd.toLocaleString()}`}
+                target={`$${(forecast.currentMetrics.arrUsd + at.extraNeeded.arrUsd).toLocaleString()}`}
                 extra={at.extraNeeded.arrUsd > 0 ? `$${at.extraNeeded.arrUsd.toLocaleString()}` : null}
                 alreadyMeets={at.alreadyMeets.arr}
               />
               <MetricRow
                 label="Demos / week"
                 current={forecast.currentMetrics.demosPw.toFixed(1)}
-                target={at.thresholds.demosPw.toFixed(1)}
+                target={`${(forecast.currentMetrics.demosPw + at.extraNeeded.demosPw).toFixed(1)}`}
                 extra={at.extraNeeded.demosPw > 0 ? at.extraNeeded.demosPw.toFixed(1) : null}
                 alreadyMeets={at.alreadyMeets.demos}
               />
               <MetricRow
                 label="Dials / week"
                 current={Math.round(forecast.currentMetrics.dialsPw).toString()}
-                target={at.thresholds.dialsPw.toString()}
+                target={`${Math.round(forecast.currentMetrics.dialsPw + at.extraNeeded.dialsPw)}`}
                 extra={at.extraNeeded.dialsPw > 0 ? at.extraNeeded.dialsPw.toString() : null}
                 alreadyMeets={at.alreadyMeets.dials}
               />
@@ -265,9 +265,9 @@ export function TierForecastCard() {
             {forecast.forecastMonths.map((month) => {
               const mCfg = TIER_COLORS[month.projectedTier as keyof typeof TIER_COLORS] ?? TIER_COLORS.bronze;
               const hasGap =
-                month.gapToNextTier.arrUsd > 0 ||
-                month.gapToNextTier.demosPw > 0 ||
-                month.gapToNextTier.dialsPw > 0;
+                month.gapToGold.arrUsd > 0 ||
+                month.gapToGold.demosPw > 0 ||
+                month.gapToGold.dialsPw > 0;
               return (
                 <div
                   key={month.month}
@@ -276,34 +276,34 @@ export function TierForecastCard() {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground w-8">{month.month}</span>
                     <TierBadge tier={month.projectedTier} />
-                    {month.willUpgrade && (
-                      <span className="text-xs text-green-500 font-medium">↑ upgrade</span>
+                    {month.projectedTier !== forecast.currentTier && (
+                      <span className="text-xs text-orange-500 font-medium">↓ {month.projectedTier}</span>
                     )}
                   </div>
                   {hasGap ? (
                     <div className="text-right text-xs text-muted-foreground space-y-0.5">
-                      {month.gapToNextTier.arrUsd > 0 && (
+                      {month.gapToGold.arrUsd > 0 && (
                         <p>
                           <span className={`${mCfg.text} font-medium`}>
-                            ${month.gapToNextTier.arrUsd.toLocaleString()}
+                            ${month.gapToGold.arrUsd.toLocaleString()}
                           </span>{" "}
-                          ARR gap
+                          to Gold
                         </p>
                       )}
-                      {month.gapToNextTier.demosPw > 0 && (
+                      {month.gapToGold.demosPw > 0 && (
                         <p>
                           <span className={`${mCfg.text} font-medium`}>
-                            {month.gapToNextTier.demosPw.toFixed(1)}
+                            {month.gapToGold.demosPw.toFixed(1)}
                           </span>{" "}
-                          demos/wk gap
+                          demos/wk
                         </p>
                       )}
-                      {month.gapToNextTier.dialsPw > 0 && (
+                      {month.gapToGold.dialsPw > 0 && (
                         <p>
                           <span className={`${mCfg.text} font-medium`}>
-                            {month.gapToNextTier.dialsPw}
+                            {Math.round(month.gapToGold.dialsPw)}
                           </span>{" "}
-                          dials/wk gap
+                          dials/wk
                         </p>
                       )}
                     </div>
