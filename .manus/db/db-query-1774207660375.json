@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, customerName, arrUsd, originalCurrency, originalArr FROM deals WHERE originalCurrency IS NOT NULL LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, originalCurrency, originalArr FROM deals WHERE originalCurrency IS NOT NULL LIMIT 5",
+  "rows": [
+    {
+      "id": "90001",
+      "customerName": "UAB Protozauras deal",
+      "arrUsd": "4788.00",
+      "originalCurrency": "USD",
+      "originalArr": "NULL"
+    },
+    {
+      "id": "90002",
+      "customerName": "HLH Rapid deal",
+      "arrUsd": "8109.00",
+      "originalCurrency": "USD",
+      "originalArr": "NULL"
+    },
+    {
+      "id": "90003",
+      "customerName": "Stratos Precision Engineering deal",
+      "arrUsd": "7140.00",
+      "originalCurrency": "USD",
+      "originalArr": "NULL"
+    },
+    {
+      "id": "90004",
+      "customerName": "D&M Design & Fabrications deal",
+      "arrUsd": "6528.00",
+      "originalCurrency": "USD",
+      "originalArr": "NULL"
+    },
+    {
+      "id": "90006",
+      "customerName": "NTG Group Ltd deal",
+      "arrUsd": "15540.00",
+      "originalCurrency": "USD",
+      "originalArr": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\toriginalCurrency\toriginalArr\n90001\tUAB Protozauras deal\t4788.00\tUSD\tNULL\n90002\tHLH Rapid deal\t8109.00\tUSD\tNULL\n90003\tStratos Precision Engineering deal\t7140.00\tUSD\tNULL\n90004\tD&M Design & Fabrications deal\t6528.00\tUSD\tNULL\n90006\tNTG Group Ltd deal\t15540.00\tUSD\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

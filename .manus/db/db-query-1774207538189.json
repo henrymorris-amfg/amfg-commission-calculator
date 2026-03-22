@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, customerName, arrUsd, notes FROM deals WHERE originalCurrency IS NULL OR originalArr IS NULL LIMIT 10",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, notes FROM deals WHERE originalCurrency IS NULL OR originalArr IS NULL LIMIT 10",
+  "rows": [
+    {
+      "id": "90001",
+      "customerName": "UAB Protozauras deal",
+      "arrUsd": "4788.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.407Z"
+    },
+    {
+      "id": "90002",
+      "customerName": "HLH Rapid deal",
+      "arrUsd": "8109.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.474Z"
+    },
+    {
+      "id": "90003",
+      "customerName": "Stratos Precision Engineering deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.530Z"
+    },
+    {
+      "id": "90004",
+      "customerName": "D&M Design & Fabrications deal",
+      "arrUsd": "6528.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.585Z"
+    },
+    {
+      "id": "90006",
+      "customerName": "NTG Group Ltd deal",
+      "arrUsd": "15540.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.695Z"
+    },
+    {
+      "id": "90007",
+      "customerName": "Swope Design Solutions deal",
+      "arrUsd": "9324.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.750Z"
+    },
+    {
+      "id": "90008",
+      "customerName": "3D Smart Solutions (CNC Upsell) deal",
+      "arrUsd": "3000.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.807Z"
+    },
+    {
+      "id": "90009",
+      "customerName": "Proform Manufacturing deal",
+      "arrUsd": "9336.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.862Z"
+    },
+    {
+      "id": "90010",
+      "customerName": "Thes3D / Cavazos Facades (CNC Upsell) deal",
+      "arrUsd": "3564.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.917Z"
+    },
+    {
+      "id": "90011",
+      "customerName": "WB Machining & Mechanical deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.971Z"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tnotes\n90001\tUAB Protozauras deal\t4788.00\tImported from Pipedrive on 2026-02-25T12:38:05.407Z\n90002\tHLH Rapid deal\t8109.00\tImported from Pipedrive on 2026-02-25T12:38:05.474Z\n90003\tStratos Precision Engineering deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:05.530Z\n90004\tD&M Design & Fabrications deal\t6528.00\tImported from Pipedrive on 2026-02-25T12:38:05.585Z\n90006\tNTG Group Ltd deal\t15540.00\tImported from Pipedrive on 2026-02-25T12:38:05.695Z\n90007\tSwope Design Solutions deal\t9324.00\tImported from Pipedrive on 2026-02-25T12:38:05.750Z\n90008\t3D Smart Solutions (CNC Upsell) deal\t3000.00\tImported from Pipedrive on 2026-02-25T12:38:05.807Z\n90009\tProform Manufacturing deal\t9336.00\tImported from Pipedrive on 2026-02-25T12:38:05.862Z\n90010\tThes3D / Cavazos Facades (CNC Upsell) deal\t3564.00\tImported from Pipedrive on 2026-02-25T12:38:05.917Z\n90011\tWB Machining & Mechanical deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:05.971Z\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}

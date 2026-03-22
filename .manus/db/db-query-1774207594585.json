@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, customerName, arrUsd, notes FROM deals WHERE pipedriveId IS NOT NULL LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, notes FROM deals WHERE pipedriveId IS NOT NULL LIMIT 5",
+  "rows": [
+    {
+      "id": "90001",
+      "customerName": "UAB Protozauras deal",
+      "arrUsd": "4788.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.407Z"
+    },
+    {
+      "id": "90002",
+      "customerName": "HLH Rapid deal",
+      "arrUsd": "8109.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.474Z"
+    },
+    {
+      "id": "90003",
+      "customerName": "Stratos Precision Engineering deal",
+      "arrUsd": "7140.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.530Z"
+    },
+    {
+      "id": "90004",
+      "customerName": "D&M Design & Fabrications deal",
+      "arrUsd": "6528.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.585Z"
+    },
+    {
+      "id": "90006",
+      "customerName": "NTG Group Ltd deal",
+      "arrUsd": "15540.00",
+      "notes": "Imported from Pipedrive on 2026-02-25T12:38:05.695Z"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tnotes\n90001\tUAB Protozauras deal\t4788.00\tImported from Pipedrive on 2026-02-25T12:38:05.407Z\n90002\tHLH Rapid deal\t8109.00\tImported from Pipedrive on 2026-02-25T12:38:05.474Z\n90003\tStratos Precision Engineering deal\t7140.00\tImported from Pipedrive on 2026-02-25T12:38:05.530Z\n90004\tD&M Design & Fabrications deal\t6528.00\tImported from Pipedrive on 2026-02-25T12:38:05.585Z\n90006\tNTG Group Ltd deal\t15540.00\tImported from Pipedrive on 2026-02-25T12:38:05.695Z\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}
