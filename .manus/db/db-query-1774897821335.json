@@ -1,0 +1,21 @@
+{
+  "query": "SELECT id, customerName, aeId, arrUsd, startYear, startMonth, startDay, pipedriveWonTime, contractStartDate FROM deals WHERE customerName LIKE '%Recknagel%' OR customerName LIKE '%Recknagel%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, aeId, arrUsd, startYear, startMonth, startDay, pipedriveWonTime, contractStartDate FROM deals WHERE customerName LIKE '%Recknagel%' OR customerName LIKE '%Recknagel%'",
+  "rows": [
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "aeId": "30002",
+      "arrUsd": "14588.40",
+      "startYear": "2026",
+      "startMonth": "2",
+      "startDay": "20",
+      "pipedriveWonTime": "2026-02-20 16:25:46",
+      "contractStartDate": "2026-02-20 16:25:46"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\taeId\tarrUsd\tstartYear\tstartMonth\tstartDay\tpipedriveWonTime\tcontractStartDate\n90060\tRecknagel Präzisionsstahl\t30002\t14588.40\t2026\t2\t20\t2026-02-20 16:25:46\t2026-02-20 16:25:46\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

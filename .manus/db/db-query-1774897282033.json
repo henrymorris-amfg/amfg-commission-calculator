@@ -1,0 +1,21 @@
+{
+  "query": "SELECT id, customerName, aeId, arrUsd, startYear, startMonth, startDay, pipedriveWonTime, contractStartDate FROM deals WHERE customerName LIKE '%MSP Manufacturing%' LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, aeId, arrUsd, startYear, startMonth, startDay, pipedriveWonTime, contractStartDate FROM deals WHERE customerName LIKE '%MSP Manufacturing%' LIMIT 5",
+  "rows": [
+    {
+      "id": "90042",
+      "customerName": "MSP Manufacturing Inc. deal",
+      "aeId": "1",
+      "arrUsd": "22888.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "startDay": "3",
+      "pipedriveWonTime": "2026-02-03 08:43:18",
+      "contractStartDate": "2026-02-03 08:43:18"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\taeId\tarrUsd\tstartYear\tstartMonth\tstartDay\tpipedriveWonTime\tcontractStartDate\n90042\tMSP Manufacturing Inc. deal\t1\t22888.00\t2026\t2\t3\t2026-02-03 08:43:18\t2026-02-03 08:43:18\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

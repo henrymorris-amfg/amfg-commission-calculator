@@ -130,8 +130,8 @@ export function calculateTierForecast(
 
 
     const projectedArrUsd = totalArr / 3;
-    const projectedDemosPw = totalDemos / 3 / 4.33; // Approximate demos per week
-    const projectedDialsPw = totalDials / 3 / 4.33; // Approximate dials per week
+    const projectedDemosPw = totalDemos / (3 * 4.33); // Demos per week over 3-month period
+    const projectedDialsPw = totalDials / (3 * 4.33); // Dials per week over 3-month period
 
     // Determine projected tier using the same logic as calculateTier
     const tierResult = calculateTier({

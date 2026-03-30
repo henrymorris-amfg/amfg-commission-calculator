@@ -1,0 +1,90 @@
+{
+  "query": "SELECT year, month, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 12",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT year, month, arrUsd, demosTotal, dialsTotal, retentionRate FROM monthly_metrics WHERE aeId = 30002 ORDER BY year DESC, month DESC LIMIT 12",
+  "rows": [
+    {
+      "year": "2026",
+      "month": "3",
+      "arrUsd": "44959.00",
+      "demosTotal": "20",
+      "dialsTotal": "909",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "22651.00",
+      "demosTotal": "17",
+      "dialsTotal": "842",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "17",
+      "dialsTotal": "655",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "12",
+      "arrUsd": "42090.00",
+      "demosTotal": "7",
+      "dialsTotal": "385",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "11",
+      "arrUsd": "22847.00",
+      "demosTotal": "16",
+      "dialsTotal": "963",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "10",
+      "arrUsd": "12000.00",
+      "demosTotal": "26",
+      "dialsTotal": "779",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "9",
+      "arrUsd": "25255.00",
+      "demosTotal": "20",
+      "dialsTotal": "575",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "8",
+      "arrUsd": "0.00",
+      "demosTotal": "18",
+      "dialsTotal": "1220",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "7",
+      "arrUsd": "13000.00",
+      "demosTotal": "11",
+      "dialsTotal": "1308",
+      "retentionRate": "NULL"
+    },
+    {
+      "year": "2025",
+      "month": "6",
+      "arrUsd": "0.00",
+      "demosTotal": "7",
+      "dialsTotal": "455",
+      "retentionRate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "year\tmonth\tarrUsd\tdemosTotal\tdialsTotal\tretentionRate\n2026\t3\t44959.00\t20\t909\tNULL\n2026\t2\t22651.00\t17\t842\tNULL\n2026\t1\t0.00\t17\t655\tNULL\n2025\t12\t42090.00\t7\t385\tNULL\n2025\t11\t22847.00\t16\t963\tNULL\n2025\t10\t12000.00\t26\t779\tNULL\n2025\t9\t25255.00\t20\t575\tNULL\n2025\t8\t0.00\t18\t1220\tNULL\n2025\t7\t13000.00\t11\t1308\tNULL\n2025\t6\t0.00\t7\t455\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}

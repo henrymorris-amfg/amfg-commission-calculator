@@ -704,3 +704,22 @@
 - [ ] Fix Pipedrive sync to use contract start date instead of signature date (Recknagel showing Feb 20 instead of Mar 2)
 - [ ] Fix Pipedrive sync button - not importing new deals from March
 - [ ] Ensure all new deals won in March are pulled into the system
+
+## Deal Exclusion Filter Fix (Mar 30 2026)
+- [x] Debug missing "Roechling Plastics UK" deal from Pipedrive import
+- [x] Identify root cause: exclusion keyword "cs " was matching "plastics" (false positive)
+- [x] Fix isDealExcluded() to use word boundaries: " cs " instead of "cs "
+- [x] Add spaces to title before checking: " " + title.toLowerCase() + " "
+- [x] Add dealExclusion.test.ts with 9 comprehensive test cases
+- [x] Verify Roechling deal (ID: 29624) now correctly included in import
+- [x] Verify Five Star Plastics deals also now correctly included
+- [x] All 121 tests passing (up from 112)
+
+## Contract Start Date & Tier Forecast Fixes (Mar 30 2026)
+- [x] Fix Recknagel deal contract start date from Feb 20 to March 2, 2026
+- [x] Debug dashboard tier forecast showing incorrect Bronze tier in April
+- [x] Fix tierForecastHelper.ts: demos/dials per week calculation was dividing by 3 twice
+  - Changed: `totalDemos / 3 / 4.33` → `totalDemos / (3 * 4.33)`
+  - Changed: `totalDials / 3 / 4.33` → `totalDials / (3 * 4.33)`
+- [x] Verify Joe Payne now correctly shows Silver tier through May (not Bronze in April)
+- [x] All 121 tests passing
