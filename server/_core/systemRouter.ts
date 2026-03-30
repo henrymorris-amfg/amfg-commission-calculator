@@ -13,6 +13,21 @@ export const systemRouter = router({
       ok: true,
     })),
 
+  getSyncStatus: publicProcedure.query(async () => {
+    const { getLastSyncResult, getNextSyncTime } = await import("../weeklySync");
+    const lastResult = getLastSyncResult();
+    const nextTime = getNextSyncTime();
+    return {
+      lastSync: lastResult ? {
+        timestamp: lastResult.timestamp,
+        voip: { success: lastResult.voipSync.success, records: lastResult.voipSync.recordsUpdated },
+        spreadsheet: { success: lastResult.spreadsheetSync.success, records: lastResult.spreadsheetSync.recordsUpdated },
+        pipedrive: { success: lastResult.pipedriveSync.success, records: lastResult.pipedriveSync.recordsUpdated },
+      } : null,
+      nextSync: nextTime?.toISOString() ?? null,
+    };
+  }),
+
   notifyOwner: adminProcedure
     .input(
       z.object({
