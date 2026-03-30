@@ -9,6 +9,7 @@ import { TierForecastCard } from "@/components/TierForecastCard";
 import { EarningsHeroCard } from "@/components/EarningsHeroCard";
 import { NextPayoutsWidget } from "@/components/NextPayoutsWidget";
 import { WeeklyActivityStrip } from "@/components/WeeklyActivityStrip";
+import { DataQualityWidget } from "@/components/DataQualityWidget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
@@ -280,10 +281,11 @@ export default function DashboardPage() {
         {/* Weekly Activity Strip */}
         <WeeklyActivityStrip />
 
-        {/* Tier Forecast + Next Payouts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tier Forecast + Next Payouts + Data Quality */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <TierForecastCard />
           <NextPayoutsWidget />
+          <DataQualityWidget />
         </div>
 
         {/* ── Unified Tier Status Card ──────────────────────────────────────── */}
