@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, customerName, aeId, arrUsd, startYear, startMonth, isChurned FROM deals WHERE customerName LIKE '%Roechling%' OR customerName LIKE '%Plastics%' LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, aeId, arrUsd, startYear, startMonth, isChurned FROM deals WHERE customerName LIKE '%Roechling%' OR customerName LIKE '%Plastics%' LIMIT 20",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 62
+}

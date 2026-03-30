@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as deal_count FROM deals",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT COUNT(*) as deal_count FROM deals",
+  "rows": [
+    {
+      "deal_count": "74"
+    }
+  ],
+  "messages": [],
+  "stdout": "deal_count\n74\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

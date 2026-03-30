@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, isActive FROM ae_profiles WHERE name LIKE '%Henry%' OR name LIKE '%Morris%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, name, email, isActive FROM ae_profiles WHERE name LIKE '%Henry%' OR name LIKE '%Morris%'",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Henry Morris",
+      "email": "henry.morris@amfg.ai",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tisActive\n1\tHenry Morris\thenry.morris@amfg.ai\t1\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

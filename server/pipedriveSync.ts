@@ -214,17 +214,20 @@ async function toUsd(value: number, currency: string): Promise<number> {
  * Deal titles containing any of these keywords should be excluded from import.
  * These represent implementation, onboarding, or customer success engagements
  * that are not new ARR and should not generate commission.
+ * 
+ * Note: Keywords are matched as whole words or phrases to avoid false positives.
+ * For example, "cs " is replaced with " cs " to avoid matching "plastics".
  */
 const DEAL_EXCLUSION_KEYWORDS = [
   "implementation",
   "customer success",
+  " cs ", // Customer Success (with spaces to avoid matching "plastics")
   "onboarding",
-  "cs ",
   "- cs",
 ];
 
 function isDealExcluded(title: string): boolean {
-  const lower = title.toLowerCase();
+  const lower = " " + title.toLowerCase() + " "; // Add spaces to match word boundaries
   return DEAL_EXCLUSION_KEYWORDS.some((kw) => lower.includes(kw));
 }
 

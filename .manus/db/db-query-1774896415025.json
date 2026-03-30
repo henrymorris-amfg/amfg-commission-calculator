@@ -1,0 +1,170 @@
+{
+  "query": "SELECT id, customerName, aeId, arrUsd, startYear, startMonth FROM deals ORDER BY startYear DESC, startMonth DESC LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, aeId, arrUsd, startYear, startMonth FROM deals ORDER BY startYear DESC, startMonth DESC LIMIT 20",
+  "rows": [
+    {
+      "id": "150013",
+      "customerName": "Pflieger Solutions - Felix Pflieger",
+      "aeId": "30002",
+      "arrUsd": "6883.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "150012",
+      "customerName": "Eugene’s Engineering Solutions",
+      "aeId": "30002",
+      "arrUsd": "6708.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "150009",
+      "customerName": "Ultra Performance Engineering Ltd",
+      "aeId": "1",
+      "arrUsd": "6077.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "150011",
+      "customerName": "Stratos Precision Engineering (2026)",
+      "aeId": "1",
+      "arrUsd": "6623.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "90049",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "aeId": "30002",
+      "arrUsd": "14600.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "150008",
+      "customerName": "Laserhub deal",
+      "aeId": "1",
+      "arrUsd": "19269.00",
+      "startYear": "2026",
+      "startMonth": "3"
+    },
+    {
+      "id": "90066",
+      "customerName": "MAKEFAST LIMITED",
+      "aeId": "30002",
+      "arrUsd": "6289.00",
+      "startYear": "2026",
+      "startMonth": "2"
+    },
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "aeId": "30002",
+      "arrUsd": "14588.40",
+      "startYear": "2026",
+      "startMonth": "2"
+    },
+    {
+      "id": "90042",
+      "customerName": "MSP Manufacturing Inc. deal",
+      "aeId": "1",
+      "arrUsd": "22888.00",
+      "startYear": "2026",
+      "startMonth": "2"
+    },
+    {
+      "id": "90062",
+      "customerName": "C-axis",
+      "aeId": "30002",
+      "arrUsd": "14321.00",
+      "startYear": "2026",
+      "startMonth": "2"
+    },
+    {
+      "id": "90071",
+      "customerName": "Nutechnologies",
+      "aeId": "30004",
+      "arrUsd": "12995.00",
+      "startYear": "2026",
+      "startMonth": "2"
+    },
+    {
+      "id": "90057",
+      "customerName": "Stoba",
+      "aeId": "30002",
+      "arrUsd": "10064.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90034",
+      "customerName": "Aviary Studios deal",
+      "aeId": "1",
+      "arrUsd": "6648.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90069",
+      "customerName": "Printerior deal",
+      "aeId": "30004",
+      "arrUsd": "10296.79",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90065",
+      "customerName": "Apollo Precision deal",
+      "aeId": "30002",
+      "arrUsd": "2500.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90063",
+      "customerName": "KL Engineering, Inc.",
+      "aeId": "30002",
+      "arrUsd": "5708.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90048",
+      "customerName": "RBD Engineers PVT LTD",
+      "aeId": "1",
+      "arrUsd": "4000.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90039",
+      "customerName": "ActionPlas Group",
+      "aeId": "1",
+      "arrUsd": "5000.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90068",
+      "customerName": "JODDB deal",
+      "aeId": "30004",
+      "arrUsd": "16788.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    },
+    {
+      "id": "90046",
+      "customerName": "Pyxis Aero",
+      "aeId": "1",
+      "arrUsd": "5176.00",
+      "startYear": "2025",
+      "startMonth": "12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\taeId\tarrUsd\tstartYear\tstartMonth\n150013\tPflieger Solutions - Felix Pflieger\t30002\t6883.00\t2026\t3\n150012\tEugene’s Engineering Solutions\t30002\t6708.00\t2026\t3\n150009\tUltra Performance Engineering Ltd\t1\t6077.00\t2026\t3\n150011\tStratos Precision Engineering (2026)\t1\t6623.00\t2026\t3\n90049\tMachine Tool Engineering, Inc. lead\t30002\t14600.00\t2026\t3\n150008\tLaserhub deal\t1\t19269.00\t2026\t3\n90066\tMAKEFAST LIMITED\t30002\t6289.00\t2026\t2\n90060\tRecknagel Präzisionsstahl\t30002\t14588.40\t2026\t2\n90042\tMSP Manufacturing Inc. deal\t1\t22888.00\t2026\t2\n90062\tC-axis\t30002\t14321.00\t2026\t2\n90071\tNutechnologies\t30004\t12995.00\t2026\t2\n90057\tStoba\t30002\t10064.00\t2025\t12\n90034\tAviary Studios deal\t1\t6648.00\t2025\t12\n90069\tPrinterior deal\t30004\t10296.79\t2025\t12\n90065\tApollo Precision deal\t30002\t2500.00\t2025\t12\n90063\tKL Engineering, Inc.\t30002\t5708.00\t2025\t12\n90048\tRBD Engineers PVT LTD\t1\t4000.00\t2025\t12\n90039\tActionPlas Group\t1\t5000.00\t2025\t12\n90068\tJODDB deal\t30004\t16788.00\t2025\t12\n90046\tPyxis Aero\t1\t5176.00\t2025\t12\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
