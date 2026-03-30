@@ -866,8 +866,10 @@ export const pipedriveSyncRouter = router({
             const tier = tierResult.tier as Tier;
 
             // Get billing frequency from Pipedrive (monthly or annual)
-            const billingFrequencyField = pdDeal['8a8c3b2c5e8f9a1b2c3d4e5f6a7b8c9d'] || 'annual'; // Billing Frequency field
+            // Default to annual if field not found
+            const billingFrequencyField = pdDeal['8a8c3b2c5e8f9a1b2c3d4e5f6a7b8c9d']?.toString().toLowerCase() || 'annual';
             const contractType = billingFrequencyField === 'monthly' ? 'monthly' : 'annual';
+            console.log(`[Pipedrive Sync] Deal ${pdDeal.id} (${pdDeal.title}): Billing frequency = ${billingFrequencyField} -> ${contractType}`);
             
             // Calculate commission
             const commResult = calculateCommission({
@@ -931,7 +933,10 @@ export const pipedriveSyncRouter = router({
 
             imported.push(`${ae.name}: ${pdDeal.title} ($${Math.round(arrUsd).toLocaleString()} ARR, ${tier} tier)`);
           } catch (err) {
-            errors.push(`${ae.name}: ${pdDeal.title} — ${err instanceof Error ? err.message : String(err)}`);
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error(`[Pipedrive Sync] ERROR importing deal ${pdDeal.id} (${pdDeal.title}): ${errorMsg}`);
+            console.error(err);
+            errors.push(`${ae.name}: ${pdDeal.title} — ${errorMsg}`);
           }
         }
       }

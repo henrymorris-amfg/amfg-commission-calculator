@@ -868,6 +868,75 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Update contract start date and re-attribute ARR to correct month
+    updateContractStartDate: publicProcedure
+      .input(
+        z.object({
+          dealId: z.number().int(),
+          startYear: z.number().int(),
+          startMonth: z.number().int().min(1).max(12),
+          startDay: z.number().int().min(1).max(31),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const aeId = getAeIdFromCtx(ctx);
+        if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not logged in." });
+        const deal = await getDealById(input.dealId);
+        if (!deal || deal.aeId !== aeId) throw new TRPCError({ code: "FORBIDDEN" });
+
+        // Update contract start date
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await db
+          .update(deals)
+          .set({
+            startYear: input.startYear,
+            startMonth: input.startMonth,
+            startDay: input.startDay,
+          })
+          .where(eq(deals.id, input.dealId));
+
+        // Recalculate commission with new contract start date
+        const activeStructure = await getActiveCommissionStructure();
+        const commResult = calculateCommission({
+          contractType: deal.contractType,
+          arrUsd: Number(deal.arrUsd),
+          tier: deal.tierAtStart as Tier,
+          onboardingFeePaid: deal.onboardingFeePaid,
+          isReferral: deal.isReferral,
+          fxRateUsdToGbp: Number(deal.fxRateAtWon ?? deal.fxRateAtEntry ?? 0.7850),
+          monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
+          onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
+          onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
+        });
+
+        // Delete old payouts
+        await deletePayoutsForDeal(input.dealId);
+
+        // Create new payouts with new contract start date — payouts start 1 month AFTER contract start date
+        const payouts = commResult.payoutSchedule.map((p, i) => {
+          const payoutDate = addMonths(input.startYear, input.startMonth, i + 1);
+          return {
+            dealId: input.dealId,
+            aeId: aeId,
+            payoutYear: payoutDate.year,
+            payoutMonth: payoutDate.month,
+            payoutNumber: p.payoutNumber,
+            grossCommissionUsd: p.grossCommissionUsd.toString(),
+            referralDeductionUsd: p.referralDeductionUsd.toString(),
+            onboardingDeductionGbp: p.onboardingDeductionGbp.toString(),
+            netCommissionUsd: p.netCommissionUsd.toString(),
+            fxRateUsed: (deal.fxRateAtWon ?? deal.fxRateAtEntry).toString(),
+            netCommissionGbp: p.netCommissionGbp.toString(),
+          } as InsertCommissionPayout;
+        });
+        if (payouts.length > 0) {
+          await createPayoutsForDeal(payouts);
+        }
+
+        return { success: true };
+      }),
+
     // Delete a deal and its payouts
     delete: publicProcedure
       .input(z.object({ dealId: z.number().int() }))

@@ -47,6 +47,8 @@ export default function DealsPage() {
   const [expandedDeal, setExpandedDeal] = useState<number | null>(null);
   const [showChurnModal, setShowChurnModal] = useState(false);
   const [churnDealId, setChurnDealId] = useState<number | null>(null);
+  const [editingContractStartDate, setEditingContractStartDate] = useState<number | null>(null);
+  const [newContractStartDate, setNewContractStartDate] = useState("");
 
   const { data: deals = [], isLoading: dealsLoading } = trpc.deals.list.useQuery(
     undefined,
@@ -96,6 +98,19 @@ export default function DealsPage() {
       utils.commission.dashboardSummary.invalidate();
     },
     onError: (err) => toast.error(err.message),
+  });
+
+  const updateContractStartDateMutation = trpc.deals.updateContractStartDate.useMutation({
+    onSuccess: () => {
+      toast.success("Contract start date updated. ARR re-attributed to correct month.");
+      utils.deals.list.invalidate();
+      utils.deals.getPayouts.invalidate();
+      utils.commission.monthlySummary.invalidate();
+      utils.commission.payoutCalendar.invalidate();
+      utils.commission.dashboardSummary.invalidate();
+      utils.tier.calculate.invalidate();
+    },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const churnDealMutation = trpc.deals.markChurned.useMutation({
