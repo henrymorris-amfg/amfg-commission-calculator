@@ -1,0 +1,64 @@
+{
+  "query": "SELECT customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30002 AND startYear = 2026 AND startMonth IN (1,2,3) ORDER BY startMonth, customerName",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30002 AND startYear = 2026 AND startMonth IN (1,2,3) ORDER BY startMonth, customerName",
+  "rows": [
+    {
+      "customerName": "C-axis",
+      "arrUsd": "14321.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "customerName": "MAKEFAST LIMITED",
+      "arrUsd": "6289.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "customerName": "Eugene’s Engineering Solutions",
+      "arrUsd": "6708.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "arrUsd": "14600.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "customerName": "Pflieger Solutions - Felix Pflieger",
+      "arrUsd": "6883.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "customerName": "Recknagel Präzisionsstahl",
+      "arrUsd": "14588.40",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "customerName\tarrUsd\tstartYear\tstartMonth\tisChurned\tchurnYear\tchurnMonth\nC-axis\t14321.00\t2026\t2\t0\tNULL\tNULL\nMAKEFAST LIMITED\t6289.00\t2026\t2\t0\tNULL\tNULL\nEugene’s Engineering Solutions\t6708.00\t2026\t3\t0\tNULL\tNULL\nMachine Tool Engineering, Inc. lead\t14600.00\t2026\t3\t0\tNULL\tNULL\nPflieger Solutions - Felix Pflieger\t6883.00\t2026\t3\t0\tNULL\tNULL\nRecknagel Präzisionsstahl\t14588.40\t2026\t3\t0\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

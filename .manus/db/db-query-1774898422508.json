@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  COALESCE(SUM(CASE WHEN startMonth = 1 THEN arrUsd ELSE 0 END), 0) as jan_arr,\n  COALESCE(SUM(CASE WHEN startMonth = 2 THEN arrUsd ELSE 0 END), 0) as feb_arr,\n  COALESCE(SUM(CASE WHEN startMonth = 3 THEN arrUsd ELSE 0 END), 0) as mar_arr,\n  COALESCE(SUM(CASE WHEN startMonth IN (1,2,3) AND startYear = 2026 THEN arrUsd ELSE 0 END), 0) as q1_total\nFROM deals \nWHERE aeId = 30002 AND startYear = 2026 AND (isChurned = 0 OR (isChurned = 1 AND churnYear > 2026))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT \n  COALESCE(SUM(CASE WHEN startMonth = 1 THEN arrUsd ELSE 0 END), 0) as jan_arr,\n  COALESCE(SUM(CASE WHEN startMonth = 2 THEN arrUsd ELSE 0 END), 0) as feb_arr,\n  COALESCE(SUM(CASE WHEN startMonth = 3 THEN arrUsd ELSE 0 END), 0) as mar_arr,\n  COALESCE(SUM(CASE WHEN startMonth IN (1,2,3) AND startYear = 2026 THEN arrUsd ELSE 0 END), 0) as q1_total\nFROM deals \nWHERE aeId = 30002 AND startYear = 2026 AND (isChurned = 0 OR (isChurned = 1 AND churnYear > 2026))",
+  "rows": [
+    {
+      "jan_arr": "0.00",
+      "feb_arr": "20610.00",
+      "mar_arr": "42779.40",
+      "q1_total": "63389.40"
+    }
+  ],
+  "messages": [],
+  "stdout": "jan_arr\tfeb_arr\tmar_arr\tq1_total\n0.00\t20610.00\t42779.40\t63389.40\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

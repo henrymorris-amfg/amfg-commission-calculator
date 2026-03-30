@@ -1,0 +1,230 @@
+{
+  "query": "SELECT id, customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 1 AND isChurned = 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 1 AND isChurned = 1",
+  "rows": [
+    {
+      "id": "90002",
+      "customerName": "HLH Rapid deal",
+      "arrUsd": "8109.00",
+      "startYear": "2024",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "6"
+    },
+    {
+      "id": "90003",
+      "customerName": "Stratos Precision Engineering deal",
+      "arrUsd": "7140.00",
+      "startYear": "2025",
+      "startMonth": "4",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "12"
+    },
+    {
+      "id": "90004",
+      "customerName": "D&M Design & Fabrications deal",
+      "arrUsd": "6528.00",
+      "startYear": "2023",
+      "startMonth": "12",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "3"
+    },
+    {
+      "id": "90006",
+      "customerName": "NTG Group Ltd deal",
+      "arrUsd": "15540.00",
+      "startYear": "2024",
+      "startMonth": "11",
+      "isChurned": "1",
+      "churnYear": "2026",
+      "churnMonth": "2"
+    },
+    {
+      "id": "90008",
+      "customerName": "3D Smart Solutions (CNC Upsell) deal",
+      "arrUsd": "3000.00",
+      "startYear": "2024",
+      "startMonth": "1",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "6"
+    },
+    {
+      "id": "90009",
+      "customerName": "Proform Manufacturing deal",
+      "arrUsd": "9336.00",
+      "startYear": "2024",
+      "startMonth": "6",
+      "isChurned": "1",
+      "churnYear": "2026",
+      "churnMonth": "2"
+    },
+    {
+      "id": "90010",
+      "customerName": "Thes3D / Cavazos Facades (CNC Upsell) deal",
+      "arrUsd": "3564.00",
+      "startYear": "2024",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "10"
+    },
+    {
+      "id": "90011",
+      "customerName": "WB Machining & Mechanical deal",
+      "arrUsd": "7140.00",
+      "startYear": "2024",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90012",
+      "customerName": "Tallers Fontanet S.L",
+      "arrUsd": "3000.00",
+      "startYear": "2024",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "6"
+    },
+    {
+      "id": "90013",
+      "customerName": "OÜ Afterone",
+      "arrUsd": "4200.00",
+      "startYear": "2024",
+      "startMonth": "8",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90015",
+      "customerName": "Defi Laser Company",
+      "arrUsd": "1800.00",
+      "startYear": "2024",
+      "startMonth": "3",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90016",
+      "customerName": "Precizo Sp",
+      "arrUsd": "8100.00",
+      "startYear": "2024",
+      "startMonth": "3",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90017",
+      "customerName": "Monolution Limited deal",
+      "arrUsd": "5940.00",
+      "startYear": "2024",
+      "startMonth": "4",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90019",
+      "customerName": "Precision Molding & Machining Inc.",
+      "arrUsd": "16680.00",
+      "startYear": "2024",
+      "startMonth": "4",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90020",
+      "customerName": "PDQ Precision deal",
+      "arrUsd": "4740.00",
+      "startYear": "2024",
+      "startMonth": "9",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90023",
+      "customerName": "Cardic Machine Products deal",
+      "arrUsd": "10740.00",
+      "startYear": "2024",
+      "startMonth": "8",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "7"
+    },
+    {
+      "id": "90026",
+      "customerName": "Code CSR deal",
+      "arrUsd": "7140.00",
+      "startYear": "2024",
+      "startMonth": "9",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "9"
+    },
+    {
+      "id": "90028",
+      "customerName": "Mercier Creation Labs deal",
+      "arrUsd": "6240.00",
+      "startYear": "2025",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "10"
+    },
+    {
+      "id": "90031",
+      "customerName": "Paragon Rapid Technologies (CNC License)",
+      "arrUsd": "9540.00",
+      "startYear": "2025",
+      "startMonth": "3",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "8"
+    },
+    {
+      "id": "90032",
+      "customerName": "Motive Machine Works",
+      "arrUsd": "9540.00",
+      "startYear": "2025",
+      "startMonth": "2",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "11"
+    },
+    {
+      "id": "90033",
+      "customerName": "Frigate Manufacturing",
+      "arrUsd": "17100.00",
+      "startYear": "2025",
+      "startMonth": "6",
+      "isChurned": "1",
+      "churnYear": "2025",
+      "churnMonth": "11"
+    },
+    {
+      "id": "90047",
+      "customerName": "K+G Industrial Group",
+      "arrUsd": "4000.00",
+      "startYear": "2025",
+      "startMonth": "11",
+      "isChurned": "1",
+      "churnYear": "2026",
+      "churnMonth": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tstartYear\tstartMonth\tisChurned\tchurnYear\tchurnMonth\n90002\tHLH Rapid deal\t8109.00\t2024\t2\t1\t2025\t6\n90003\tStratos Precision Engineering deal\t7140.00\t2025\t4\t1\t2025\t12\n90004\tD&M Design & Fabrications deal\t6528.00\t2023\t12\t1\t2025\t3\n90006\tNTG Group Ltd deal\t15540.00\t2024\t11\t1\t2026\t2\n90008\t3D Smart Solutions (CNC Upsell) deal\t3000.00\t2024\t1\t1\t2025\t6\n90009\tProform Manufacturing deal\t9336.00\t2024\t6\t1\t2026\t2\n90010\tThes3D / Cavazos Facades (CNC Upsell) deal\t3564.00\t2024\t2\t1\t2025\t10\n90011\tWB Machining & Mechanical deal\t7140.00\t2024\t2\t1\t2025\t9\n90012\tTallers Fontanet S.L\t3000.00\t2024\t2\t1\t2025\t6\n90013\tOÜ Afterone\t4200.00\t2024\t8\t1\t2025\t9\n90015\tDefi Laser Company\t1800.00\t2024\t3\t1\t2025\t9\n90016\tPrecizo Sp\t8100.00\t2024\t3\t1\t2025\t9\n90017\tMonolution Limited deal\t5940.00\t2024\t4\t1\t2025\t9\n90019\tPrecision Molding & Machining Inc.\t16680.00\t2024\t4\t1\t2025\t9\n90020\tPDQ Precision deal\t4740.00\t2024\t9\t1\t2025\t9\n90023\tCardic Machine Products deal\t10740.00\t2024\t8\t1\t2025\t7\n90026\tCode CSR deal\t7140.00\t2024\t9\t1\t2025\t9\n90028\tMercier Creation Labs deal\t6240.00\t2025\t2\t1\t2025\t10\n90031\tParagon Rapid Technologies (CNC License)\t9540.00\t2025\t3\t1\t2025\t8\n90032\tMotive Machine Works\t9540.00\t2025\t2\t1\t2025\t11\n90033\tFrigate Manufacturing\t17100.00\t2025\t6\t1\t2025\t11\n90047\tK+G Industrial Group\t4000.00\t2025\t11\t1\t2026\t1\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

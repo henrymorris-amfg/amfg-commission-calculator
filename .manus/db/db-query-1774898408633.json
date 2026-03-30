@@ -1,0 +1,210 @@
+{
+  "query": "SELECT id, customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30002 ORDER BY startYear DESC, startMonth DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, arrUsd, startYear, startMonth, isChurned, churnYear, churnMonth FROM deals WHERE aeId = 30002 ORDER BY startYear DESC, startMonth DESC",
+  "rows": [
+    {
+      "id": "150013",
+      "customerName": "Pflieger Solutions - Felix Pflieger",
+      "arrUsd": "6883.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "150012",
+      "customerName": "Eugene’s Engineering Solutions",
+      "arrUsd": "6708.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90049",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "arrUsd": "14600.00",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90060",
+      "customerName": "Recknagel Präzisionsstahl",
+      "arrUsd": "14588.40",
+      "startYear": "2026",
+      "startMonth": "3",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90066",
+      "customerName": "MAKEFAST LIMITED",
+      "arrUsd": "6289.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90062",
+      "customerName": "C-axis",
+      "arrUsd": "14321.00",
+      "startYear": "2026",
+      "startMonth": "2",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90061",
+      "customerName": "Modern Aluminum",
+      "arrUsd": "8800.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90065",
+      "customerName": "Apollo Precision deal",
+      "arrUsd": "2500.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90064",
+      "customerName": "Tower Machining",
+      "arrUsd": "5708.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90063",
+      "customerName": "KL Engineering, Inc.",
+      "arrUsd": "5708.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90057",
+      "customerName": "Stoba",
+      "arrUsd": "10064.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90058",
+      "customerName": "ACME Machine & Weld",
+      "arrUsd": "6995.00",
+      "startYear": "2025",
+      "startMonth": "12",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90059",
+      "customerName": "Bridge - EU sro",
+      "arrUsd": "6000.00",
+      "startYear": "2025",
+      "startMonth": "11",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90056",
+      "customerName": "Technimetals",
+      "arrUsd": "15950.00",
+      "startYear": "2025",
+      "startMonth": "10",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90055",
+      "customerName": "Lowrance Machine Shop",
+      "arrUsd": "12000.00",
+      "startYear": "2025",
+      "startMonth": "10",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90054",
+      "customerName": "Keymet Ab Oy deal",
+      "arrUsd": "8400.00",
+      "startYear": "2025",
+      "startMonth": "9",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90051",
+      "customerName": "McAllister Tool & Machine deal",
+      "arrUsd": "7500.00",
+      "startYear": "2025",
+      "startMonth": "9",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90053",
+      "customerName": "AMERICAN VALMARK deal",
+      "arrUsd": "8100.00",
+      "startYear": "2025",
+      "startMonth": "8",
+      "isChurned": "1",
+      "churnYear": "2026",
+      "churnMonth": "11"
+    },
+    {
+      "id": "90052",
+      "customerName": "Air-lake Machine & Welding deal",
+      "arrUsd": "6500.00",
+      "startYear": "2025",
+      "startMonth": "7",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    },
+    {
+      "id": "90050",
+      "customerName": "Busch Brothers Machining lead",
+      "arrUsd": "6500.00",
+      "startYear": "2025",
+      "startMonth": "7",
+      "isChurned": "0",
+      "churnYear": "NULL",
+      "churnMonth": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tarrUsd\tstartYear\tstartMonth\tisChurned\tchurnYear\tchurnMonth\n150013\tPflieger Solutions - Felix Pflieger\t6883.00\t2026\t3\t0\tNULL\tNULL\n150012\tEugene’s Engineering Solutions\t6708.00\t2026\t3\t0\tNULL\tNULL\n90049\tMachine Tool Engineering, Inc. lead\t14600.00\t2026\t3\t0\tNULL\tNULL\n90060\tRecknagel Präzisionsstahl\t14588.40\t2026\t3\t0\tNULL\tNULL\n90066\tMAKEFAST LIMITED\t6289.00\t2026\t2\t0\tNULL\tNULL\n90062\tC-axis\t14321.00\t2026\t2\t0\tNULL\tNULL\n90061\tModern Aluminum\t8800.00\t2025\t12\t0\tNULL\tNULL\n90065\tApollo Precision deal\t2500.00\t2025\t12\t0\tNULL\tNULL\n90064\tTower Machining\t5708.00\t2025\t12\t0\tNULL\tNULL\n90063\tKL Engineering, Inc.\t5708.00\t2025\t12\t0\tNULL\tNULL\n90057\tStoba\t10064.00\t2025\t12\t0\tNULL\tNULL\n90058\tACME Machine & Weld\t6995.00\t2025\t12\t0\tNULL\tNULL\n90059\tBridge - EU sro\t6000.00\t2025\t11\t0\tNULL\tNULL\n90056\tTechnimetals\t15950.00\t2025\t10\t0\tNULL\tNULL\n90055\tLowrance Machine Shop\t12000.00\t2025\t10\t0\tNULL\tNULL\n90054\tKeymet Ab Oy deal\t8400.00\t2025\t9\t0\tNULL\tNULL\n90051\tMcAllister Tool & Machine deal\t7500.00\t2025\t9\t0\tNULL\tNULL\n90053\tAMERICAN VALMARK deal\t8100.00\t2025\t8\t1\t2026\t11\n90052\tAir-lake Machine & Welding deal\t6500.00\t2025\t7\t0\tNULL\tNULL\n90050\tBusch Brothers Machining lead\t6500.00\t2025\t7\t0\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

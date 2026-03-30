@@ -723,3 +723,18 @@
   - Changed: `totalDials / 3 / 4.33` → `totalDials / (3 * 4.33)`
 - [x] Verify Joe Payne now correctly shows Silver tier through May (not Bronze in April)
 - [x] All 121 tests passing
+
+
+## Payout Widget & Data Audit Fixes (Mar 30 2026)
+- [x] Fix NextPayoutsWidget to exclude churned deals from upcoming payouts
+  - Updated getPayoutsForAe() to filter out payouts for deals that have churned
+  - Churned deals now only show payouts before the churn month
+  - Example: Joe Payne's "American Valmark" (churned Nov 2026) won't show payouts from Nov onwards
+- [x] Audit contract start dates: Found 65 deals with contractStartDate = pipedriveWonTime
+  - Most deals were imported without proper contract start date from Pipedrive
+  - Recknagel already corrected to March 2, 2026
+  - Remaining 64 deals need review and correction in Pipedrive
+- [x] Verified Joe Payne Q1 2026 ARR: $63,389 (Feb: $20,610 + Mar: $42,779)
+  - Leaderboard showing correct $63k (not $68k as expected)
+  - All 6 Q1 deals accounted for and active (no churn issues)
+- [x] All 121 tests passing

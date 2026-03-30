@@ -299,7 +299,8 @@ export async function deletePayoutsForDeal(dealId: number): Promise<void> {
 export async function getPayoutsForAe(aeId: number): Promise<CommissionPayout[]> {
   const db = await getDb();
   if (!db) return [];
-  return db
+  
+  const payouts = await db
     .select()
     .from(commissionPayouts)
     .where(eq(commissionPayouts.aeId, aeId))
@@ -308,6 +309,19 @@ export async function getPayoutsForAe(aeId: number): Promise<CommissionPayout[]>
       desc(commissionPayouts.payoutMonth),
       commissionPayouts.dealId
     );
+  
+  const allDeals = await db.select().from(deals).where(eq(deals.aeId, aeId));
+  const dealMap = new Map(allDeals.map(d => [d.id, d]));
+  
+  return payouts.filter(p => {
+    const deal = dealMap.get(p.dealId);
+    if (!deal || !deal.isChurned) return true;
+    const churnYear = deal.churnYear ?? 0;
+    const churnMonth = deal.churnMonth ?? 0;
+    const payoutDate = p.payoutYear * 100 + p.payoutMonth;
+    const churnDate = churnYear * 100 + churnMonth;
+    return payoutDate < churnDate;
+  });
 }
 
 export async function getPayoutsForMonth(
