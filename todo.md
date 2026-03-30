@@ -698,3 +698,9 @@
 - [x] Updated calculateTierForecast to use projected metrics and show correct degradation (ARR/demos/dials decrease as old months roll off)
 - [x] Forecast now correctly shows degrading tier for Toby Greer: April/May/Jun shows decreasing ARR/demos/dials
 - [x] 109 tests passing (12 test files)
+
+
+## Pipedrive Sync Issues (Mar 22 2026)
+- [ ] Fix Pipedrive sync to use contract start date instead of signature date (Recknagel showing Feb 20 instead of Mar 2)
+- [ ] Fix Pipedrive sync button - not importing new deals from March
+- [ ] Ensure all new deals won in March are pulled into the system

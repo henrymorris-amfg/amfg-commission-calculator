@@ -98,12 +98,25 @@ export default function DashboardPage() {
 
   // Sync Now mutation (team leader only)
   const utils = trpc.useUtils();
-  const syncMutation = trpc.pipedriveSync.import.useMutation({
+  
+  // Then import individual deals
+  const importDealsMutation = trpc.pipedriveSync.importDeals.useMutation({
     onSuccess: (data) => {
-      toast.success(`Sync complete — ${data.totalImported} month records updated.`);
+      toast.success(`Sync complete — metrics updated and ${data.totalImported} deals imported.`);
       utils.tier.calculate.invalidate();
       utils.pipedriveSync.myDeals.invalidate();
       utils.commission.monthlySummary.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Deal import failed: ${err.message}`);
+    },
+  });
+  
+  // First sync monthly metrics
+  const syncMutation = trpc.pipedriveSync.import.useMutation({
+    onSuccess: (data) => {
+      // After syncing metrics, import individual deals
+      importDealsMutation.mutate({ months: 6, useJoinDate: true });
     },
     onError: (err) => {
       toast.error(`Sync failed: ${err.message}`);
@@ -112,7 +125,7 @@ export default function DashboardPage() {
 
   const handleSyncNow = useCallback(() => {
     syncMutation.mutate({ months: 4, mergeMode: "replace", useJoinDate: true });
-  }, [syncMutation]);
+  }, [syncMutation, importDealsMutation]);
 
   const { data: summary = [] } = trpc.commission.monthlySummary.useQuery(
     undefined,

@@ -245,12 +245,16 @@ const PIPELINE_NAMES: Record<number, string> = {
 export async function findPipedriveUserId(aeName: string): Promise<number | null> {
   const resp = (await pipedriveGet("users")) as { data: PipedriveUser[] | null };
   const users = resp.data || [];
+  console.log(`[Pipedrive Sync] Looking for user: "${aeName}" among ${users.length} Pipedrive users`);
 
   // Exact match first
   const exact = users.find(
     (u) => u.name.toLowerCase() === aeName.toLowerCase()
   );
-  if (exact) return exact.id;
+  if (exact) {
+    console.log(`[Pipedrive Sync] Found exact match: ${exact.name} (ID: ${exact.id})`);
+    return exact.id;
+  }
 
   // Partial match (first name + last name)
   const nameParts = aeName.toLowerCase().split(" ");
@@ -258,8 +262,12 @@ export async function findPipedriveUserId(aeName: string): Promise<number | null
     const uParts = u.name.toLowerCase().split(" ");
     return nameParts.every((part) => uParts.some((up) => up.includes(part)));
   });
-  if (partial) return partial.id;
+  if (partial) {
+    console.log(`[Pipedrive Sync] Found partial match: ${partial.name} (ID: ${partial.id})`);
+    return partial.id;
+  }
 
+  console.log(`[Pipedrive Sync] No user found for "${aeName}"`);
   return null;
 }
 
@@ -335,16 +343,26 @@ async function aggregateDealsToMonthlyArr(
   const map = new Map<string, MonthlyArrAggregate>();
 
   for (const deal of deals) {
-    const wonDate = deal.won_time || deal.close_time;
-    if (!wonDate) continue;
+    // Use contract start date if available, otherwise fall back to won_time
+    const contractStartDateStr = deal["39365abf109ea01960620ae35f468978ae611bc8"];
+    const attributionDateStr = contractStartDateStr || (deal.won_time || deal.close_time);
+    if (!attributionDateStr) continue;
 
-    const year = parseInt(wonDate.substring(0, 4), 10);
-    const month = parseInt(wonDate.substring(5, 7), 10);
+    const year = parseInt(attributionDateStr.substring(0, 4), 10);
+    const month = parseInt(attributionDateStr.substring(5, 7), 10);
     const key = `${year}-${month}`;
 
     const valueUsd = await toUsd(deal.value || 0, deal.currency || "USD");
     const pipelineName =
       PIPELINE_NAMES[deal.pipeline_id] || `Pipeline ${deal.pipeline_id}`;
+    
+    // Log for debugging
+    console.log(`[Pipedrive Sync] Deal ID: ${deal.id}, Title: ${deal.title}`);
+    console.log(`  Won Time: ${deal.won_time}`);
+    console.log(`  Contract Start Field (${"39365abf109ea01960620ae35f468978ae611bc8"}): ${contractStartDateStr || "NOT FOUND"}`);
+    console.log(`  Using for Attribution: ${attributionDateStr}`);
+    console.log(`  ARR USD: ${valueUsd}, Currency: ${deal.currency}`);
+    console.log(`  Assigned to Month: ${year}-${String(month).padStart(2, "0")}`);
 
     if (!map.has(key)) {
       map.set(key, {
@@ -368,10 +386,11 @@ async function aggregateDealsToMonthlyArr(
       valueUsd,
       originalValue: deal.value || 0,
       originalCurrency: deal.currency || "USD",
-      wonDate: wonDate.substring(0, 10),
+      wonDate: attributionDateStr.substring(0, 10),
       pipeline: pipelineName,
     });
-  }  return Array.from(map.values()).sort(
+  }
+  return Array.from(map.values()).sort(
     (a, b) => a.calYear * 100 + a.calMonth - (b.calYear * 100 + b.calMonth)
   );
 }
