@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, customerName, contractType, billingFrequency, startYear, startMonth, arrUsd FROM deals WHERE id = 90037",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, customerName, contractType, billingFrequency, startYear, startMonth, arrUsd FROM deals WHERE id = 90037",
+  "rows": [
+    {
+      "id": "90037",
+      "customerName": "Universal Machining & Engineering Ltd",
+      "contractType": "monthly",
+      "billingFrequency": "annual",
+      "startYear": "2025",
+      "startMonth": "6",
+      "arrUsd": "9000.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcustomerName\tcontractType\tbillingFrequency\tstartYear\tstartMonth\tarrUsd\n90037\tUniversal Machining & Engineering Ltd\tmonthly\tannual\t2025\t6\t9000.00\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

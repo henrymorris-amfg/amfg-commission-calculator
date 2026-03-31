@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, dealId, (SELECT customerName FROM deals WHERE id = commission_payouts.dealId) as customerName, month, amount FROM commission_payouts WHERE dealId = (SELECT id FROM deals WHERE customerName LIKE '%Universal Machining%' LIMIT 1) ORDER BY month",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, dealId, (SELECT customerName FROM deals WHERE id = commission_payouts.dealId) as customerName, month, amount FROM commission_payouts WHERE dealId = (SELECT id FROM deals WHERE customerName LIKE '%Universal Machining%' LIMIT 1) ORDER BY month",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'month' in 'field list'"
+  ]
+}

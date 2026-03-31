@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO deals (aeId, customerName, contractType, billingFrequency, startYear, startMonth, startDay, arrUsd, onboardingFeePaidGbp, isReferral, pipedriveId, tierAtStart, commissionStructureId) VALUES (60001, 'Kavera', 'annual', 'annual', 2026, 3, 31, 0, 0, 0, 0, 'Gold', 1)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute INSERT INTO deals (aeId, customerName, contractType, billingFrequency, startYear, startMonth, startDay, arrUsd, onboardingFeePaidGbp, isReferral, pipedriveId, tierAtStart, commissionStructureId) VALUES (60001, 'Kavera', 'annual', 'annual', 2026, 3, 31, 0, 0, 0, 0, 'Gold', 1)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'onboardingFeePaidGbp' in 'field list'"
+  ]
+}

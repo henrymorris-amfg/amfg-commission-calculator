@@ -1,0 +1,559 @@
+{
+  "query": "SELECT id, pipedriveId, customerName, aeId, (SELECT name FROM ae_profiles WHERE id = deals.aeId) as aeName, arrUsd, pipedriveWonTime FROM deals WHERE contractStartDate = pipedriveWonTime ORDER BY aeId, customerName",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, pipedriveId, customerName, aeId, (SELECT name FROM ae_profiles WHERE id = deals.aeId) as aeName, arrUsd, pipedriveWonTime FROM deals WHERE contractStartDate = pipedriveWonTime ORDER BY aeId, customerName",
+  "rows": [
+    {
+      "id": "90008",
+      "pipedriveId": "26396",
+      "customerName": "3D Smart Solutions (CNC Upsell) deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "3000.00",
+      "pipedriveWonTime": "2024-01-03 08:42:29"
+    },
+    {
+      "id": "90030",
+      "pipedriveId": "28472",
+      "customerName": "Accurate Tool & Die",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "12000.00",
+      "pipedriveWonTime": "2025-02-14 18:01:09"
+    },
+    {
+      "id": "90039",
+      "pipedriveId": "29204",
+      "customerName": "ActionPlas Group",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "5000.00",
+      "pipedriveWonTime": "2025-12-24 11:55:33"
+    },
+    {
+      "id": "90021",
+      "pipedriveId": "27613",
+      "customerName": "Adaero Precision Components deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "5000.00",
+      "pipedriveWonTime": "2025-06-17 17:01:37"
+    },
+    {
+      "id": "90034",
+      "pipedriveId": "28949",
+      "customerName": "Aviary Studios deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "6648.00",
+      "pipedriveWonTime": "2025-12-08 09:28:43"
+    },
+    {
+      "id": "90024",
+      "pipedriveId": "28028",
+      "customerName": "BetterCNC lead",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "3600.00",
+      "pipedriveWonTime": "2024-08-19 14:29:20"
+    },
+    {
+      "id": "90043",
+      "pipedriveId": "29479",
+      "customerName": "CNC Solutions deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4200.00",
+      "pipedriveWonTime": "2025-09-30 14:20:16"
+    },
+    {
+      "id": "90023",
+      "pipedriveId": "27978",
+      "customerName": "Cardic Machine Products deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "10740.00",
+      "pipedriveWonTime": "2024-08-07 18:49:49"
+    },
+    {
+      "id": "90026",
+      "pipedriveId": "28099",
+      "customerName": "Code CSR deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "7140.00",
+      "pipedriveWonTime": "2024-09-13 12:19:16"
+    },
+    {
+      "id": "90014",
+      "pipedriveId": "26673",
+      "customerName": "Craft Precision Engineering deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4212.00",
+      "pipedriveWonTime": "2024-05-30 15:22:19"
+    },
+    {
+      "id": "90004",
+      "pipedriveId": "26026",
+      "customerName": "D&M Design & Fabrications deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "6528.00",
+      "pipedriveWonTime": "2023-12-22 17:18:49"
+    },
+    {
+      "id": "90015",
+      "pipedriveId": "26677",
+      "customerName": "Defi Laser Company",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "1800.00",
+      "pipedriveWonTime": "2024-03-25 09:52:16"
+    },
+    {
+      "id": "90033",
+      "pipedriveId": "28904",
+      "customerName": "Frigate Manufacturing",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "17100.00",
+      "pipedriveWonTime": "2025-06-13 11:09:27"
+    },
+    {
+      "id": "90002",
+      "pipedriveId": "25964",
+      "customerName": "HLH Rapid deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "8109.00",
+      "pipedriveWonTime": "2024-02-08 10:13:13"
+    },
+    {
+      "id": "90047",
+      "pipedriveId": "29719",
+      "customerName": "K+G Industrial Group",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4000.00",
+      "pipedriveWonTime": "2025-11-24 16:41:45"
+    },
+    {
+      "id": "90042",
+      "pipedriveId": "29285",
+      "customerName": "MSP Manufacturing Inc. deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "22888.00",
+      "pipedriveWonTime": "2026-02-03 08:43:18"
+    },
+    {
+      "id": "90028",
+      "pipedriveId": "28356",
+      "customerName": "Mercier Creation Labs deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "6240.00",
+      "pipedriveWonTime": "2025-02-27 19:05:03"
+    },
+    {
+      "id": "90017",
+      "pipedriveId": "27314",
+      "customerName": "Monolution Limited deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "5940.00",
+      "pipedriveWonTime": "2024-04-24 12:19:13"
+    },
+    {
+      "id": "90032",
+      "pipedriveId": "28573",
+      "customerName": "Motive Machine Works",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "9540.00",
+      "pipedriveWonTime": "2025-02-07 17:21:12"
+    },
+    {
+      "id": "90006",
+      "pipedriveId": "26311",
+      "customerName": "NTG Group Ltd deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "15540.00",
+      "pipedriveWonTime": "2024-11-28 10:27:47"
+    },
+    {
+      "id": "90038",
+      "pipedriveId": "29112",
+      "customerName": "Oberg Industries",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "40000.00",
+      "pipedriveWonTime": "2025-09-29 13:44:24"
+    },
+    {
+      "id": "90013",
+      "pipedriveId": "26525",
+      "customerName": "OÜ Afterone",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4200.00",
+      "pipedriveWonTime": "2024-08-30 13:59:26"
+    },
+    {
+      "id": "90022",
+      "pipedriveId": "27800",
+      "customerName": "P&N Machine deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "14040.00",
+      "pipedriveWonTime": "2024-07-31 18:26:06"
+    },
+    {
+      "id": "90020",
+      "pipedriveId": "27577",
+      "customerName": "PDQ Precision deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4740.00",
+      "pipedriveWonTime": "2024-09-25 14:48:04"
+    },
+    {
+      "id": "90031",
+      "pipedriveId": "28505",
+      "customerName": "Paragon Rapid Technologies (CNC License)",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "9540.00",
+      "pipedriveWonTime": "2025-03-11 16:33:01"
+    },
+    {
+      "id": "90019",
+      "pipedriveId": "27490",
+      "customerName": "Precision Molding & Machining Inc.",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "16680.00",
+      "pipedriveWonTime": "2024-04-29 14:42:34"
+    },
+    {
+      "id": "90016",
+      "pipedriveId": "27264",
+      "customerName": "Precizo Sp",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "8100.00",
+      "pipedriveWonTime": "2024-03-27 09:21:17"
+    },
+    {
+      "id": "90009",
+      "pipedriveId": "26413",
+      "customerName": "Proform Manufacturing deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "9336.00",
+      "pipedriveWonTime": "2024-06-14 15:50:03"
+    },
+    {
+      "id": "90046",
+      "pipedriveId": "29712",
+      "customerName": "Pyxis Aero",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "5176.00",
+      "pipedriveWonTime": "2025-12-03 14:46:06"
+    },
+    {
+      "id": "90048",
+      "pipedriveId": "29793",
+      "customerName": "RBD Engineers PVT LTD",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4000.00",
+      "pipedriveWonTime": "2025-12-01 11:01:24"
+    },
+    {
+      "id": "90045",
+      "pipedriveId": "29647",
+      "customerName": "SOLMETO",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "5412.00",
+      "pipedriveWonTime": "2025-12-03 16:41:25"
+    },
+    {
+      "id": "90003",
+      "pipedriveId": "25971",
+      "customerName": "Stratos Precision Engineering deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "7140.00",
+      "pipedriveWonTime": "2025-04-10 14:35:58"
+    },
+    {
+      "id": "90007",
+      "pipedriveId": "26344",
+      "customerName": "Swope Design Solutions deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "9324.00",
+      "pipedriveWonTime": "2023-12-15 08:42:54"
+    },
+    {
+      "id": "90012",
+      "pipedriveId": "26499",
+      "customerName": "Tallers Fontanet S.L",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "3000.00",
+      "pipedriveWonTime": "2024-02-02 15:27:14"
+    },
+    {
+      "id": "90010",
+      "pipedriveId": "26485",
+      "customerName": "Thes3D / Cavazos Facades (CNC Upsell) deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "3564.00",
+      "pipedriveWonTime": "2024-02-14 13:49:07"
+    },
+    {
+      "id": "90001",
+      "pipedriveId": "25120",
+      "customerName": "UAB Protozauras deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "4788.00",
+      "pipedriveWonTime": "2024-08-30 08:53:40"
+    },
+    {
+      "id": "90037",
+      "pipedriveId": "29076",
+      "customerName": "Universal Machining & Engineering Ltd",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "9000.00",
+      "pipedriveWonTime": "2025-06-10 11:54:01"
+    },
+    {
+      "id": "90011",
+      "pipedriveId": "26497",
+      "customerName": "WB Machining & Mechanical deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "7140.00",
+      "pipedriveWonTime": "2024-02-29 18:35:52"
+    },
+    {
+      "id": "90044",
+      "pipedriveId": "29498",
+      "customerName": "West Tech Precision deal",
+      "aeId": "1",
+      "aeName": "Henry Morris",
+      "arrUsd": "3600.00",
+      "pipedriveWonTime": "2025-09-17 16:42:06"
+    },
+    {
+      "id": "90058",
+      "pipedriveId": "29576",
+      "customerName": "ACME Machine & Weld",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "6995.00",
+      "pipedriveWonTime": "2025-12-08 16:34:32"
+    },
+    {
+      "id": "90053",
+      "pipedriveId": "29297",
+      "customerName": "AMERICAN VALMARK deal",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "8100.00",
+      "pipedriveWonTime": "2025-08-21 08:48:25"
+    },
+    {
+      "id": "90052",
+      "pipedriveId": "29197",
+      "customerName": "Air-lake Machine & Welding deal",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "6500.00",
+      "pipedriveWonTime": "2025-07-18 09:08:12"
+    },
+    {
+      "id": "90065",
+      "pipedriveId": "29788",
+      "customerName": "Apollo Precision deal",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "2500.00",
+      "pipedriveWonTime": "2025-12-24 12:14:08"
+    },
+    {
+      "id": "90059",
+      "pipedriveId": "29623",
+      "customerName": "Bridge - EU sro",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "6000.00",
+      "pipedriveWonTime": "2025-11-20 14:47:17"
+    },
+    {
+      "id": "90050",
+      "pipedriveId": "29122",
+      "customerName": "Busch Brothers Machining lead",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "6500.00",
+      "pipedriveWonTime": "2025-07-18 09:08:08"
+    },
+    {
+      "id": "90062",
+      "pipedriveId": "29736",
+      "customerName": "C-axis",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "14321.00",
+      "pipedriveWonTime": "2026-01-30 09:24:49"
+    },
+    {
+      "id": "90063",
+      "pipedriveId": "29772",
+      "customerName": "KL Engineering, Inc.",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "5708.00",
+      "pipedriveWonTime": "2025-12-16 09:40:57"
+    },
+    {
+      "id": "90054",
+      "pipedriveId": "29436",
+      "customerName": "Keymet Ab Oy deal",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "8400.00",
+      "pipedriveWonTime": "2025-09-26 10:38:46"
+    },
+    {
+      "id": "90055",
+      "pipedriveId": "29450",
+      "customerName": "Lowrance Machine Shop",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "12000.00",
+      "pipedriveWonTime": "2025-10-10 16:04:33"
+    },
+    {
+      "id": "90066",
+      "pipedriveId": "29936",
+      "customerName": "MAKEFAST LIMITED",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "6289.00",
+      "pipedriveWonTime": "2026-02-19 16:21:49"
+    },
+    {
+      "id": "90049",
+      "pipedriveId": "29121",
+      "customerName": "Machine Tool Engineering, Inc. lead",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "14600.00",
+      "pipedriveWonTime": "2026-01-05 10:13:53"
+    },
+    {
+      "id": "90051",
+      "pipedriveId": "29171",
+      "customerName": "McAllister Tool & Machine deal",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "7500.00",
+      "pipedriveWonTime": "2025-09-30 17:37:06"
+    },
+    {
+      "id": "90061",
+      "pipedriveId": "29729",
+      "customerName": "Modern Aluminum",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "8800.00",
+      "pipedriveWonTime": "2025-12-02 08:58:40"
+    },
+    {
+      "id": "90057",
+      "pipedriveId": "29562",
+      "customerName": "Stoba",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "10064.00",
+      "pipedriveWonTime": "2025-12-18 11:01:37"
+    },
+    {
+      "id": "90056",
+      "pipedriveId": "29485",
+      "customerName": "Technimetals",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "15950.00",
+      "pipedriveWonTime": "2025-10-30 21:32:36"
+    },
+    {
+      "id": "90064",
+      "pipedriveId": "29777",
+      "customerName": "Tower Machining",
+      "aeId": "30002",
+      "aeName": "Joe Payne",
+      "arrUsd": "5708.00",
+      "pipedriveWonTime": "2025-12-19 15:14:30"
+    },
+    {
+      "id": "90070",
+      "pipedriveId": "29482",
+      "customerName": "Advanced 3D, Inc",
+      "aeId": "30004",
+      "aeName": "Toby Greer",
+      "arrUsd": "11292.60",
+      "pipedriveWonTime": "2025-10-10 16:00:43"
+    },
+    {
+      "id": "90067",
+      "pipedriveId": "29272",
+      "customerName": "Advantage Prototype Systems deal",
+      "aeId": "30004",
+      "aeName": "Toby Greer",
+      "arrUsd": "10907.40",
+      "pipedriveWonTime": "2025-08-27 14:33:25"
+    },
+    {
+      "id": "90068",
+      "pipedriveId": "29273",
+      "customerName": "JODDB deal",
+      "aeId": "30004",
+      "aeName": "Toby Greer",
+      "arrUsd": "16788.00",
+      "pipedriveWonTime": "2025-12-30 12:37:32"
+    },
+    {
+      "id": "90071",
+      "pipedriveId": "29774",
+      "customerName": "Nutechnologies",
+      "aeId": "30004",
+      "aeName": "Toby Greer",
+      "arrUsd": "12995.00",
+      "pipedriveWonTime": "2026-02-16 23:21:47"
+    },
+    {
+      "id": "90069",
+      "pipedriveId": "29374",
+      "customerName": "Printerior deal",
+      "aeId": "30004",
+      "aeName": "Toby Greer",
+      "arrUsd": "10296.79",
+      "pipedriveWonTime": "2025-12-05 08:16:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tpipedriveId\tcustomerName\taeId\taeName\tarrUsd\tpipedriveWonTime\n90008\t26396\t3D Smart Solutions (CNC Upsell) deal\t1\tHenry Morris\t3000.00\t2024-01-03 08:42:29\n90030\t28472\tAccurate Tool & Die\t1\tHenry Morris\t12000.00\t2025-02-14 18:01:09\n90039\t29204\tActionPlas Group\t1\tHenry Morris\t5000.00\t2025-12-24 11:55:33\n90021\t27613\tAdaero Precision Components deal\t1\tHenry Morris\t5000.00\t2025-06-17 17:01:37\n90034\t28949\tAviary Studios deal\t1\tHenry Morris\t6648.00\t2025-12-08 09:28:43\n90024\t28028\tBetterCNC lead\t1\tHenry Morris\t3600.00\t2024-08-19 14:29:20\n90043\t29479\tCNC Solutions deal\t1\tHenry Morris\t4200.00\t2025-09-30 14:20:16\n90023\t27978\tCardic Machine Products deal\t1\tHenry Morris\t10740.00\t2024-08-07 18:49:49\n90026\t28099\tCode CSR deal\t1\tHenry Morris\t7140.00\t2024-09-13 12:19:16\n90014\t26673\tCraft Precision Engineering deal\t1\tHenry Morris\t4212.00\t2024-05-30 15:22:19\n90004\t26026\tD&M Design & Fabrications deal\t1\tHenry Morris\t6528.00\t2023-12-22 17:18:49\n90015\t26677\tDefi Laser Company\t1\tHenry Morris\t1800.00\t2024-03-25 09:52:16\n90033\t28904\tFrigate Manufacturing\t1\tHenry Morris\t17100.00\t2025-06-13 11:09:27\n90002\t25964\tHLH Rapid deal\t1\tHenry Morris\t8109.00\t2024-02-08 10:13:13\n90047\t29719\tK+G Industrial Group\t1\tHenry Morris\t4000.00\t2025-11-24 16:41:45\n90042\t29285\tMSP Manufacturing Inc. deal\t1\tHenry Morris\t22888.00\t2026-02-03 08:43:18\n90028\t28356\tMercier Creation Labs deal\t1\tHenry Morris\t6240.00\t2025-02-27 19:05:03\n90017\t27314\tMonolution Limited deal\t1\tHenry Morris\t5940.00\t2024-04-24 12:19:13\n90032\t28573\tMotive Machine Works\t1\tHenry Morris\t9540.00\t2025-02-07 17:21:12\n90006\t26311\tNTG Group Ltd deal\t1\tHenry Morris\t15540.00\t2024-11-28 10:27:47\n90038\t29112\tOberg Industries\t1\tHenry Morris\t40000.00\t2025-09-29 13:44:24\n90013\t26525\tOÜ Afterone\t1\tHenry Morris\t4200.00\t2024-08-30 13:59:26\n90022\t27800\tP&N Machine deal\t1\tHenry Morris\t14040.00\t2024-07-31 18:26:06\n90020\t27577\tPDQ Precision deal\t1\tHenry Morris\t4740.00\t2024-09-25 14:48:04\n90031\t28505\tParagon Rapid Technologies (CNC License)\t1\tHenry Morris\t9540.00\t2025-03-11 16:33:01\n90019\t27490\tPrecision Molding & Machining Inc.\t1\tHenry Morris\t16680.00\t2024-04-29 14:42:34\n90016\t27264\tPrecizo Sp\t1\tHenry Morris\t8100.00\t2024-03-27 09:21:17\n90009\t26413\tProform Manufacturing deal\t1\tHenry Morris\t9336.00\t2024-06-14 15:50:03\n90046\t29712\tPyxis Aero\t1\tHenry Morris\t5176.00\t2025-12-03 14:46:06\n90048\t29793\tRBD Engineers PVT LTD\t1\tHenry Morris\t4000.00\t2025-12-01 11:01:24\n90045\t29647\tSOLMETO\t1\tHenry Morris\t5412.00\t2025-12-03 16:41:25\n90003\t25971\tStratos Precision Engineering deal\t1\tHenry Morris\t7140.00\t2025-04-10 14:35:58\n90007\t26344\tSwope Design Solutions deal\t1\tHenry Morris\t9324.00\t2023-12-15 08:42:54\n90012\t26499\tTallers Fontanet S.L\t1\tHenry Morris\t3000.00\t2024-02-02 15:27:14\n90010\t26485\tThes3D / Cavazos Facades (CNC Upsell) deal\t1\tHenry Morris\t3564.00\t2024-02-14 13:49:07\n90001\t25120\tUAB Protozauras deal\t1\tHenry Morris\t4788.00\t2024-08-30 08:53:40\n90037\t29076\tUniversal Machining & Engineering Ltd\t1\tHenry Morris\t9000.00\t2025-06-10 11:54:01\n90011\t26497\tWB Machining & Mechanical deal\t1\tHenry Morris\t7140.00\t2024-02-29 18:35:52\n90044\t29498\tWest Tech Precision deal\t1\tHenry Morris\t3600.00\t2025-09-17 16:42:06\n90058\t29576\tACME Machine & Weld\t30002\tJoe Payne\t6995.00\t2025-12-08 16:34:32\n90053\t29297\tAMERICAN VALMARK deal\t30002\tJoe Payne\t8100.00\t2025-08-21 08:48:25\n90052\t29197\tAir-lake Machine & Welding deal\t30002\tJoe Payne\t6500.00\t2025-07-18 09:08:12\n90065\t29788\tApollo Precision deal\t30002\tJoe Payne\t2500.00\t2025-12-24 12:14:08\n90059\t29623\tBridge - EU sro\t30002\tJoe Payne\t6000.00\t2025-11-20 14:47:17\n90050\t29122\tBusch Brothers Machining lead\t30002\tJoe Payne\t6500.00\t2025-07-18 09:08:08\n90062\t29736\tC-axis\t30002\tJoe Payne\t14321.00\t2026-01-30 09:24:49\n90063\t29772\tKL Engineering, Inc.\t30002\tJoe Payne\t5708.00\t2025-12-16 09:40:57\n90054\t29436\tKeymet Ab Oy deal\t30002\tJoe Payne\t8400.00\t2025-09-26 10:38:46\n90055\t29450\tLowrance Machine Shop\t30002\tJoe Payne\t12000.00\t2025-10-10 16:04:33\n90066\t29936\tMAKEFAST LIMITED\t30002\tJoe Payne\t6289.00\t2026-02-19 16:21:49\n90049\t29121\tMachine Tool Engineering, Inc. lead\t30002\tJoe Payne\t14600.00\t2026-01-05 10:13:53\n90051\t29171\tMcAllister Tool & Machine deal\t30002\tJoe Payne\t7500.00\t2025-09-30 17:37:06\n90061\t29729\tModern Aluminum\t30002\tJoe Payne\t8800.00\t2025-12-02 08:58:40\n90057\t29562\tStoba\t30002\tJoe Payne\t10064.00\t2025-12-18 11:01:37\n90056\t29485\tTechnimetals\t30002\tJoe Payne\t15950.00\t2025-10-30 21:32:36\n90064\t29777\tTower Machining\t30002\tJoe Payne\t5708.00\t2025-12-19 15:14:30\n90070\t29482\tAdvanced 3D, Inc\t30004\tToby Greer\t11292.60\t2025-10-10 16:00:43\n90067\t29272\tAdvantage Prototype Systems deal\t30004\tToby Greer\t10907.40\t2025-08-27 14:33:25\n90068\t29273\tJODDB deal\t30004\tToby Greer\t16788.00\t2025-12-30 12:37:32\n90071\t29774\tNutechnologies\t30004\tToby Greer\t12995.00\t2026-02-16 23:21:47\n90069\t29374\tPrinterior deal\t30004\tToby Greer\t10296.79\t2025-12-05 08:16:14\n",
+  "stderr": "",
+  "execution_time_ms": 206
+}

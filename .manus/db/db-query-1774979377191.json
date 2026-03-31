@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, pipedriveId, customerName, aeId, startYear, startMonth, startDay, arrUsd FROM deals WHERE aeId = 60001 AND customerName LIKE '%Kavera%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, pipedriveId, customerName, aeId, startYear, startMonth, startDay, arrUsd FROM deals WHERE aeId = 60001 AND customerName LIKE '%Kavera%'",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 55
+}

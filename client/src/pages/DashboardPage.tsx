@@ -9,7 +9,7 @@ import { TierForecastCard } from "@/components/TierForecastCard";
 import { EarningsHeroCard } from "@/components/EarningsHeroCard";
 import { NextPayoutsWidget } from "@/components/NextPayoutsWidget";
 import { WeeklyActivityStrip } from "@/components/WeeklyActivityStrip";
-import { DataQualityWidget } from "@/components/DataQualityWidget";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
@@ -238,17 +238,15 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 self-start">
-            {ae.isTeamLeader && (
-              <Button
-                variant="outline"
-                onClick={handleSyncNow}
-                disabled={syncMutation.isPending}
-                className="gap-2 border-border text-muted-foreground hover:text-foreground"
-              >
-                <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-                {syncMutation.isPending ? "Syncing…" : "Sync Now"}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={handleSyncNow}
+              disabled={syncMutation.isPending}
+              className="gap-2 border-border text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+              {syncMutation.isPending ? "Syncing…" : "Sync Now"}
+            </Button>
             <Button
               onClick={() => navigate("/deals")}
               className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
@@ -281,11 +279,10 @@ export default function DashboardPage() {
         {/* Weekly Activity Strip */}
         <WeeklyActivityStrip />
 
-        {/* Tier Forecast + Next Payouts + Data Quality */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Tier Forecast + Next Payouts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TierForecastCard />
           <NextPayoutsWidget />
-          <DataQualityWidget />
         </div>
 
         {/* ── Unified Tier Status Card ──────────────────────────────────────── */}

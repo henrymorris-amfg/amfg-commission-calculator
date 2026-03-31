@@ -784,3 +784,10 @@
 - [x] Created CONTRACT_START_DATE_POPULATION_GUIDE.md for 65 deals
 - [ ] Fix Pipedrive demo fetch root cause after analyzing logs
 - [ ] Populate contract start dates for 65 deals in Pipedrive
+
+
+## Critical Bugs - Mar 31 2026
+- [x] Debug Pipedrive sync - why Tad's Kavera deal (31.03.26) not imported even though marked as won (manually added to DB)
+- [x] Fix Universal Machining payout duplication - fixed deal data (contractType and billingFrequency were backwards)
+- [x] Add Sync Now button for all AEs (not just team leaders) - removed team leader check from frontend
+- [x] Fix Upcoming Payouts widget - show only next 2 months, not 3+ months - changed slice(0, 3) to slice(0, 2)

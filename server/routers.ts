@@ -1351,7 +1351,7 @@ export const appRouter = router({
       }
       const next3Months = Array.from(futureMap.values())
         .sort((a, b) => a.year * 100 + a.month - (b.year * 100 + b.month))
-        .slice(0, 3);
+        .slice(0, 2);
 
       // Streak: consecutive months at Silver or above (rolling 3-month avg meets Silver targets)
       // Walk backwards month by month from current month, check if tier was Silver or Gold

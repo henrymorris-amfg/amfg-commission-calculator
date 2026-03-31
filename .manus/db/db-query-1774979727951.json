@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO deals (aeId, customerName, contractType, billingFrequency, startYear, startMonth, startDay, arrUsd, tierAtStart, commissionStructureId, fxRateAtEntry, originalAmount) VALUES (60001, 'Kavera', 'annual', 'annual', 2026, 3, 31, 0, 'gold', 1, 0.738, 0)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute INSERT INTO deals (aeId, customerName, contractType, billingFrequency, startYear, startMonth, startDay, arrUsd, tierAtStart, commissionStructureId, fxRateAtEntry, originalAmount) VALUES (60001, 'Kavera', 'annual', 'annual', 2026, 3, 31, 0, 'gold', 1, 0.738, 0)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 136
+}
