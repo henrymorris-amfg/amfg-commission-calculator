@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE monthly_metrics SET demosTotal = 12 WHERE aeId = 60001 AND year = 2026 AND month = 3",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute UPDATE monthly_metrics SET demosTotal = 12 WHERE aeId = 60001 AND year = 2026 AND month = 3",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 66
+}

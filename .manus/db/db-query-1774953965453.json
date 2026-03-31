@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO pipedrive_demo_activities (aeId, pipedriveActivityId, subject, doneDate, year, month, isValid, flagReason) VALUES\n(60001, '331489', 'Demo', '2026-03-24 12:50:34', 2026, 3, 1, NULL),\n(60001, '331545', 'Demo', '2026-03-24 16:32:36', 2026, 3, 1, NULL),\n(60001, '331612', 'Demo', '2026-03-25 14:30:44', 2026, 3, 1, NULL),\n(60001, '331486', 'Demo', '2026-03-25 14:30:38', 2026, 3, 1, NULL),\n(60001, '331487', 'Demo', '2026-03-24 15:05:14', 2026, 3, 1, NULL),\n(60001, '331488', 'Demo', '2026-03-26 10:33:56', 2026, 3, 1, NULL),\n(60001, '331520', 'Demo', '2026-03-26 10:33:48', 2026, 3, 1, NULL),\n(60001, '331551', 'Demo', '2026-03-26 13:50:20', 2026, 3, 1, NULL),\n(60001, '331754', 'Demo', '2026-03-26 10:33:41', 2026, 3, 1, NULL),\n(60001, '331558', 'Demo', '2026-03-24 16:33:13', 2026, 3, 1, NULL)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute INSERT INTO pipedrive_demo_activities (aeId, pipedriveActivityId, subject, doneDate, year, month, isValid, flagReason) VALUES\n(60001, '331489', 'Demo', '2026-03-24 12:50:34', 2026, 3, 1, NULL),\n(60001, '331545', 'Demo', '2026-03-24 16:32:36', 2026, 3, 1, NULL),\n(60001, '331612', 'Demo', '2026-03-25 14:30:44', 2026, 3, 1, NULL),\n(60001, '331486', 'Demo', '2026-03-25 14:30:38', 2026, 3, 1, NULL),\n(60001, '331487', 'Demo', '2026-03-24 15:05:14', 2026, 3, 1, NULL),\n(60001, '331488', 'Demo', '2026-03-26 10:33:56', 2026, 3, 1, NULL),\n(60001, '331520', 'Demo', '2026-03-26 10:33:48', 2026, 3, 1, NULL),\n(60001, '331551', 'Demo', '2026-03-26 13:50:20', 2026, 3, 1, NULL),\n(60001, '331754', 'Demo', '2026-03-26 10:33:41', 2026, 3, 1, NULL),\n(60001, '331558', 'Demo', '2026-03-24 16:33:13', 2026, 3, 1, NULL)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 70
+}

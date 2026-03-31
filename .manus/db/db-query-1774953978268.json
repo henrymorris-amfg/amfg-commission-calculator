@@ -1,0 +1,34 @@
+{
+  "query": "SELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 60001 AND year = 2026 ORDER BY month",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, year, month, arrUsd, demosTotal, dialsTotal FROM monthly_metrics WHERE aeId = 60001 AND year = 2026 ORDER BY month",
+  "rows": [
+    {
+      "aeId": "60001",
+      "year": "2026",
+      "month": "1",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "60001",
+      "year": "2026",
+      "month": "2",
+      "arrUsd": "0.00",
+      "demosTotal": "0",
+      "dialsTotal": "0"
+    },
+    {
+      "aeId": "60001",
+      "year": "2026",
+      "month": "3",
+      "arrUsd": "0.00",
+      "demosTotal": "12",
+      "dialsTotal": "510"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tyear\tmonth\tarrUsd\tdemosTotal\tdialsTotal\n60001\t2026\t1\t0.00\t0\t0\n60001\t2026\t2\t0.00\t0\t0\n60001\t2026\t3\t0.00\t12\t510\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}

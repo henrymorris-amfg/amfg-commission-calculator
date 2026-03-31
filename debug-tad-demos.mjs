@@ -1,62 +1,79 @@
-import mysql from 'mysql2/promise';
+import fetch from "node-fetch";
 
+const PIPEDRIVE_API_KEY = process.env.PIPEDRIVE_API_KEY;
 const PIPEDRIVE_BASE = "https://api.pipedrive.com/v1";
 
-async function pipedriveGet(endpoint, params = {}) {
-  const url = new URL(`${PIPEDRIVE_BASE}/${endpoint}`);
-  url.searchParams.set("api_token", process.env.PIPEDRIVE_API_KEY);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+async function pipedriveGet(endpoint) {
+  const url = `${PIPEDRIVE_BASE}/${endpoint}?api_token=${PIPEDRIVE_API_KEY}`;
+  const resp = await fetch(url);
+  return resp.json();
+}
+
+async function findPipedriveUserId(aeName) {
+  const resp = await pipedriveGet("users");
+  const users = resp.data || [];
+  console.log(`Looking for user: "${aeName}" among ${users.length} Pipedrive users`);
   
-  const res = await fetch(url.toString());
-  const data = await res.json();
-  return data.data || [];
+  // Exact match first
+  const exact = users.find(u => u.name.toLowerCase() === aeName.toLowerCase());
+  if (exact) {
+    console.log(`Found exact match: ${exact.name} (ID: ${exact.id})`);
+    return exact.id;
+  }
+  
+  // Partial match
+  const nameParts = aeName.toLowerCase().split(" ");
+  const partial = users.find(u => {
+    const uParts = u.name.toLowerCase().split(" ");
+    return nameParts.every(part => uParts.some(up => up.includes(part)));
+  });
+  if (partial) {
+    console.log(`Found partial match: ${partial.name} (ID: ${partial.id})`);
+    return partial.id;
+  }
+  
+  console.log(`No user found for "${aeName}"`);
+  console.log("Available users:", users.map(u => `${u.name} (${u.id})`).join(", "));
+  return null;
+}
+
+async function fetchCompletedDemosForUser(pdUserId, fromDate, toDate) {
+  console.log(`Fetching demos for user ${pdUserId} from ${fromDate} to ${toDate}`);
+  
+  const resp = await pipedriveGet(
+    `activities?user_id=${pdUserId}&type=demo&done=1&limit=500&start=0`
+  );
+  
+  const activities = resp.data || [];
+  console.log(`Found ${activities.length} demo activities`);
+  
+  const filtered = activities.filter(d => {
+    if (!d.marked_as_done_time) return false;
+    const doneDate = d.marked_as_done_time.substring(0, 10);
+    return doneDate >= fromDate && doneDate <= toDate;
+  });
+  
+  console.log(`Filtered to ${filtered.length} demos in date range`);
+  
+  filtered.forEach((d, i) => {
+    console.log(`  ${i+1}. ${d.subject || "(no subject)"} - ${d.marked_as_done_time}`);
+  });
+  
+  return filtered;
 }
 
 async function main() {
-  const pool = mysql.createPool(process.env.DATABASE_URL);
-  const conn = await pool.getConnection();
-  
-  // Get Tad's profile
-  const [tadRows] = await conn.execute('SELECT id, name FROM ae_profiles WHERE name = "Tad Tamulevicius"');
-  const tad = tadRows[0];
-  console.log('Tad:', tad);
-  
-  // Try to find Tad's Pipedrive user ID
-  const users = await pipedriveGet("users");
-  const tadUser = users.find(u => u.name === "Tad Tamulevicius");
-  console.log('Tad Pipedrive User:', tadUser);
-  
-  if (!tadUser) {
-    console.log('ERROR: Tad not found in Pipedrive users');
-    console.log('Available users:', users.map(u => u.name).join(', '));
-    conn.release();
-    pool.end();
+  const pdUserId = await findPipedriveUserId("Tad Tamulevicius");
+  if (!pdUserId) {
+    console.log("Could not find Tad's Pipedrive user ID");
     return;
   }
   
-  // Fetch Tad's completed demos
-  const activities = await pipedriveGet("activities", {
-    user_id: tadUser.id,
-    type: "demo",
-    done: 1,
-  });
+  const fromDate = "2026-01-01";
+  const toDate = "2026-03-31";
+  const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
   
-  console.log(`Found ${activities.length} completed demos for Tad in Pipedrive`);
-  
-  // Filter for March 2026
-  const marchDemos = activities.filter(a => {
-    if (!a.marked_as_done_time) return false;
-    const doneDate = a.marked_as_done_time.substring(0, 10);
-    return doneDate >= "2026-03-01" && doneDate <= "2026-03-31";
-  });
-  
-  console.log(`March 2026 demos: ${marchDemos.length}`);
-  marchDemos.forEach(d => {
-    console.log(`  - ${d.subject} (${d.marked_as_done_time})`);
-  });
-  
-  conn.release();
-  pool.end();
+  console.log(`\nTotal demos found: ${demos.length}`);
 }
 
 main().catch(console.error);

@@ -771,3 +771,12 @@
 - [x] Fix demo aggregation sync to use database instead of Pipedrive fetch
 - [ ] Verify all AEs have correct demo counts after sync fix
 - [ ] Complete contract start date population in Pipedrive for 65 deals
+
+
+## Tad's Demo Sync Issue (Mar 31 2026)
+- [x] Debug why Tad has only 2 demos in DB when Pipedrive shows 12 - root cause: Pipedrive fetch only returning 2
+- [x] Manually added 10 missing demos to database
+- [x] Updated Tad's March metrics to show 12 demos
+- [x] Corrected Tad's join date to March 16, 2026
+- [ ] Fix Pipedrive demo fetch to capture all 12 demos in future syncs
+- [ ] Populate contract start dates for 65 deals in Pipedrive
