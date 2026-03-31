@@ -791,3 +791,18 @@
 - [x] Fix Universal Machining payout duplication - fixed deal data (contractType and billingFrequency were backwards)
 - [x] Add Sync Now button for all AEs (not just team leaders) - removed team leader check from frontend
 - [x] Fix Upcoming Payouts widget - show only next 2 months, not 3+ months - changed slice(0, 3) to slice(0, 2)
+
+## Pipedrive Contract Start Date Import (Mar 31 2026)
+- [x] Updated pipedriveGetAll to use generic type <T> for better type safety
+- [x] Added detailed logging to pipedriveGetAll for debugging pagination issues
+- [x] Updated fetchCompletedDemosForUser to use generic type and improved logging
+- [x] Verified importDeals already reads CONTRACT_START_DATE field from Pipedrive (field: 39365abf109ea01960620ae35f468978ae611bc8)
+- [x] Code is ready to import all deals with their contract start dates from Pipedrive
+- [ ] User to trigger full Pipedrive sync from dashboard to import all deals with CONTRACT_START_DATE
+- [ ] Verify all 65 deals now have correct contract start dates populated
+
+## Demo Fetch Debugging (Mar 31 2026)
+- [x] Added enhanced logging to fetchCompletedDemosForUser to debug why demos aren't syncing
+- [x] Logging now shows: total activities fetched, sample activities, filtered count, and date range filtering
+- [x] pipedriveGetAll now logs pagination details to help debug API response issues
+- [ ] Monitor logs during next sync to identify why Tad's demos (and others) are partially syncing

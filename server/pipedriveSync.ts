@@ -151,11 +151,11 @@ async function pipedriveGet(
   return res.json();
 }
 
-async function pipedriveGetAll(
+async function pipedriveGetAll<T = PipedriveDeal>(
   endpoint: string,
   params: Record<string, string | number> = {}
-): Promise<PipedriveDeal[]> {
-  const all: PipedriveDeal[] = [];
+): Promise<T[]> {
+  const all: T[] = [];
   let start = 0;
   const limit = 500;
 
@@ -165,11 +165,12 @@ async function pipedriveGetAll(
       limit,
       start,
     })) as {
-      data: PipedriveDeal[] | null;
+      data: T[] | null;
       additional_data?: { pagination?: { more_items_in_collection?: boolean } };
     };
 
     const data = resp.data || [];
+    console.log(`[pipedriveGetAll] ${endpoint}: Got ${data.length} items (start=${start}, limit=${limit})`);
     all.push(...data);
 
     const more = resp.additional_data?.pagination?.more_items_in_collection;
@@ -177,6 +178,7 @@ async function pipedriveGetAll(
     start += limit;
   }
 
+  console.log(`[pipedriveGetAll] ${endpoint}: Total ${all.length} items fetched`);
   return all;
 }
 
@@ -322,11 +324,11 @@ export async function fetchCompletedDemosForUser(
   fromDate: string, // YYYY-MM-DD
   toDate: string    // YYYY-MM-DD
 ): Promise<PipedriveActivity[]> {
-  const activities = await pipedriveGetAll("activities", {
+  const activities = await pipedriveGetAll<PipedriveActivity>("activities", {
     user_id: pipedriveUserId,
     type: "demo",
     done: 1,
-  }) as unknown as PipedriveActivity[];
+  });
 
   console.log(`[fetchCompletedDemosForUser] User ${pipedriveUserId}: Got ${activities.length} total activities`);
 
