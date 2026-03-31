@@ -778,5 +778,9 @@
 - [x] Manually added 10 missing demos to database
 - [x] Updated Tad's March metrics to show 12 demos
 - [x] Corrected Tad's join date to March 16, 2026
-- [ ] Fix Pipedrive demo fetch to capture all 12 demos in future syncs
+- [x] Verified Tad qualifies for Gold tier: 5.66 demos/week (requires 4+), 240.67 dials/week (requires 100+)
+- [x] Added logging to fetchCompletedDemosForUser to debug future issues
+- [x] Verified new joiner prorated demo/dial calculation logic is correct
+- [x] Created CONTRACT_START_DATE_POPULATION_GUIDE.md for 65 deals
+- [ ] Fix Pipedrive demo fetch root cause after analyzing logs
 - [ ] Populate contract start dates for 65 deals in Pipedrive

@@ -328,14 +328,19 @@ export async function fetchCompletedDemosForUser(
     done: 1,
   }) as unknown as PipedriveActivity[];
 
+  console.log(`[fetchCompletedDemosForUser] User ${pipedriveUserId}: Got ${activities.length} total activities`);
+
   // The API doesn't filter activities by date, so we do it manually.
   // We use `marked_as_done_time` as the source of truth for completion date.
-  return activities.filter(a => {
+  const filtered = activities.filter(a => {
     const doneTime = a.marked_as_done_time;
     if (!doneTime) return false;
     const doneDate = doneTime.substring(0, 10);
     return doneDate >= fromDate && doneDate <= toDate;
   });
+  
+  console.log(`[fetchCompletedDemosForUser] User ${pipedriveUserId}: Filtered to ${filtered.length} demos in range [${fromDate}, ${toDate}]`);
+  return filtered;
 }
 
 /**
