@@ -1,0 +1,15 @@
+{
+  "query": "SELECT year, month, COUNT(*) as demoCount FROM pipedrive_demo_activities WHERE aeId = 60001 AND isValid = 1 GROUP BY year, month ORDER BY year DESC, month DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT year, month, COUNT(*) as demoCount FROM pipedrive_demo_activities WHERE aeId = 60001 AND isValid = 1 GROUP BY year, month ORDER BY year DESC, month DESC",
+  "rows": [
+    {
+      "year": "2026",
+      "month": "3",
+      "demoCount": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "year\tmonth\tdemoCount\n2026\t3\t2\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

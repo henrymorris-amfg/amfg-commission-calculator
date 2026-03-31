@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, aeId, subject, doneDate, isValid, flagReason FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(doneDate) = 2026 AND MONTH(doneDate) = 3",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT id, aeId, subject, doneDate, isValid, flagReason FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(doneDate) = 2026 AND MONTH(doneDate) = 3",
+  "rows": [
+    {
+      "id": "637",
+      "aeId": "60001",
+      "subject": "Demo",
+      "doneDate": "2026-03-19 18:20:54",
+      "isValid": "1",
+      "flagReason": "NULL"
+    },
+    {
+      "id": "638",
+      "aeId": "60001",
+      "subject": "Demo",
+      "doneDate": "2026-03-19 18:20:50",
+      "isValid": "1",
+      "flagReason": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\taeId\tsubject\tdoneDate\tisValid\tflagReason\n637\t60001\tDemo\t2026-03-19 18:20:54\t1\tNULL\n638\t60001\tDemo\t2026-03-19 18:20:50\t1\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

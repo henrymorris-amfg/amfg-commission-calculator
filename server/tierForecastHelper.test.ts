@@ -1,7 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { calculateTierForecast } from "./tierForecastHelper";
 
 describe("tierForecastHelper", () => {
+  beforeEach(() => {
+    // Mock current date to March 31, 2026 for consistent testing
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 2, 31)); // March 31, 2026
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   describe("calculateTierForecast", () => {
     it("should correctly degrade forecast as old high-ARR months roll off", () => {
       // Simulate Toby Greer's data:

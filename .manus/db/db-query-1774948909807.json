@@ -1,0 +1,16 @@
+{
+  "query": "SELECT aeId, COUNT(*) as demoCount, MIN(doneDate) as firstDemo, MAX(doneDate) as lastDemo FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(doneDate) = 2026 AND MONTH(doneDate) = 3 GROUP BY aeId",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, COUNT(*) as demoCount, MIN(doneDate) as firstDemo, MAX(doneDate) as lastDemo FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(doneDate) = 2026 AND MONTH(doneDate) = 3 GROUP BY aeId",
+  "rows": [
+    {
+      "aeId": "60001",
+      "demoCount": "2",
+      "firstDemo": "2026-03-19 18:20:50",
+      "lastDemo": "2026-03-19 18:20:54"
+    }
+  ],
+  "messages": [],
+  "stdout": "aeId\tdemoCount\tfirstDemo\tlastDemo\n60001\t2\t2026-03-19 18:20:50\t2026-03-19 18:20:54\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

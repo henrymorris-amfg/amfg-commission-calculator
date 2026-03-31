@@ -1,0 +1,8 @@
+{
+  "query": "SELECT aeId, COUNT(*) as demoCount, MIN(demoDate) as firstDemo, MAX(demoDate) as lastDemo FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(demoDate) = 2026 AND MONTH(demoDate) = 3 GROUP BY aeId",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4ELZY9nPkashd2p.root --database gAuoMoig6vkmXbQaeq6Bo3 --execute SELECT aeId, COUNT(*) as demoCount, MIN(demoDate) as firstDemo, MAX(demoDate) as lastDemo FROM pipedrive_demo_activities WHERE aeId = 60001 AND YEAR(demoDate) = 2026 AND MONTH(demoDate) = 3 GROUP BY aeId",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'demodate' in 'where clause'"
+  ]
+}

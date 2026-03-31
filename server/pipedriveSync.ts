@@ -21,6 +21,9 @@ import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { getAeIdFromCtx } from "./aeTokenUtils";
+import { and, eq, gte, lte } from "drizzle-orm";
+import { getDb } from "./db";
+import { pipedriveDemoActivities } from "../drizzle/schema";
 import {
   getAllAeProfiles,
   getAeProfileById,
@@ -336,6 +339,58 @@ export async function fetchCompletedDemosForUser(
 }
 
 /**
+ * Aggregate valid demos from the database for a single AE by month.
+ * This ensures we count all demos that have been saved, not just ones fetched from Pipedrive.
+ */
+async function aggregateDemosFromDatabase(
+  aeId: number,
+  aeName: string,
+  fromDate: string,
+  toDate: string
+): Promise<MonthlyArrAggregate[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const demos = await db
+    .select()
+    .from(pipedriveDemoActivities)
+    .where(
+      and(
+        eq(pipedriveDemoActivities.aeId, aeId),
+        eq(pipedriveDemoActivities.isValid, true),
+        gte(pipedriveDemoActivities.doneDate, new Date(fromDate)),
+        lte(pipedriveDemoActivities.doneDate, new Date(toDate + " 23:59:59"))
+      )
+    );
+
+  const map = new Map<string, MonthlyArrAggregate>();
+
+  for (const demo of demos) {
+    const key = `${demo.year}-${demo.month}`;
+
+    if (!map.has(key)) {
+      map.set(key, {
+        aeId,
+        aeName,
+        calYear: demo.year,
+        calMonth: demo.month,
+        totalArrUsd: 0,
+        dealCount: 0,
+        deals: [],
+        totalDemos: 0,
+      });
+    }
+
+    const entry = map.get(key)!;
+    entry.totalDemos += 1;
+  }
+
+  return Array.from(map.values()).sort(
+    (a, b) => a.calYear * 100 + a.calMonth - (b.calYear * 100 + b.calMonth)
+  );
+}
+
+/**
  * Aggregate won deals into monthly ARR totals for a single AE.
  */
 async function aggregateDealsToMonthlyArr(
@@ -602,7 +657,6 @@ export const pipedriveSyncRouter = router({
         const deals = await fetchWonDealsForUser(pdUserId, fromDate, toDate);
         const monthlyArr = await aggregateDealsToMonthlyArr(ae.id, ae.name, deals);
         const demos = await fetchCompletedDemosForUser(pdUserId, fromDate, toDate);
-        const monthlyDemos = await aggregateDemosToMonthly(ae.id, ae.name, demos);
 
         // Persist individual demo activity records for the Demo Audit page
         const demoActivityRecords: import("../drizzle/schema").InsertPipedriveDemoActivity[] = demos
@@ -626,6 +680,10 @@ export const pipedriveSyncRouter = router({
             };
           });
         await upsertDemoActivities(demoActivityRecords);
+
+        // IMPORTANT: Aggregate demos from the database instead of relying on Pipedrive fetch.
+        // This ensures we count all demos that have been saved, including those from previous syncs.
+        const monthlyDemos = await aggregateDemosFromDatabase(ae.id, ae.name, fromDate, toDate);
 
                 const allMonthlyData = new Map<string, { arr: MonthlyArrAggregate | null, demos: MonthlyArrAggregate | null }>();
 

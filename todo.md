@@ -749,3 +749,16 @@
 - [ ] User to populate contract start dates in Pipedrive for 65 deals
 - [ ] User to trigger full Pipedrive sync
 - [ ] Verify all deals now have correct contract start dates
+
+
+## Demo Aggregation Sync Fix (Mar 31 2026)
+- [ ] Fix demo aggregation in pipedriveSync.ts - demos not being counted in monthly_metrics
+- [ ] Recalculate all AEs' monthly metrics with correct demo counts from pipedrive_demo_activities
+- [ ] Verify Tad has correct demo count for March (likely more than 2)
+- [ ] Test sync to ensure demos are properly aggregated going forward
+
+## Contract Start Date Population (Mar 31 2026)
+- [ ] Create Pipedrive population guide for 65 deals
+- [ ] Create helper script to validate contract start dates
+- [ ] Document which deals need correction by AE
+- [ ] Provide one-click Pipedrive links for bulk updates
