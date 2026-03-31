@@ -82,6 +82,7 @@ export function calculateTierForecast(
   // Project next 3 months with degrading metrics (0% growth, just rolling window)
   const forecastMonths: MonthProjection[] = [];
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  console.log("[calculateTierForecast] now=", now.toISOString(), "currentMonth=", currentMonth, "currentYear=", currentYear);
 
   // Create a map of (year, month) -> metrics for fast lookup
   const monthMap = new Map<string, { arrUsd: number; demosTotal: number; dialsTotal: number }>();
@@ -113,8 +114,9 @@ export function calculateTierForecast(
 
   // For each of the next 3 months, calculate the rolling window and projected tier
   for (let i = 1; i <= 3; i++) {
-    const projectionDate = new Date(now);
-    projectionDate.setMonth(projectionDate.getMonth() + i);
+    // Create a date on the 1st of the target month to avoid day-of-month overflow
+    // (e.g., March 31 + 1 month would become May 1 instead of April 1)
+    const projectionDate = new Date(currentYear, currentMonth - 1 + i, 1);
     const projectionMonth = projectionDate.getMonth() + 1;
     const projectionYear = projectionDate.getFullYear();
     const monthName = monthNames[projectionDate.getMonth()];

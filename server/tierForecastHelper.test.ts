@@ -5,7 +5,8 @@ describe("tierForecastHelper", () => {
   beforeEach(() => {
     // Mock current date to March 31, 2026 for consistent testing
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 2, 31)); // March 31, 2026
+    const mockDate = new Date(2026, 2, 31); // March 31, 2026
+    vi.setSystemTime(mockDate);
   });
 
   afterEach(() => {

@@ -762,3 +762,12 @@
 - [ ] Create helper script to validate contract start dates
 - [ ] Document which deals need correction by AE
 - [ ] Provide one-click Pipedrive links for bulk updates
+
+
+## Demo Sync & New AE Calculation (Mar 31 2026)
+- [x] Investigate new AE demo calculation methodology - demos are prorated from join date, not averaged from first week
+- [x] Fix test month key format issue in tierForecastHelper.test.ts - was month overflow bug (March 31 + 1 month = May 1)
+- [x] Fix tier forecast month projection calculation - create date on 1st of month to avoid day-of-month overflow
+- [x] Fix demo aggregation sync to use database instead of Pipedrive fetch
+- [ ] Verify all AEs have correct demo counts after sync fix
+- [ ] Complete contract start date population in Pipedrive for 65 deals
