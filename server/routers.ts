@@ -2116,6 +2116,41 @@ export const appRouter = router({
       
       return { success: true, message: `Recalculated ${updated} deal tiers` };
     }),
+
+    addAe: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(2).max(128),
+          pin: z.string().length(4).regex(/^\d{4}$/, "PIN must be 4 digits"),
+          joinDate: z.string(),
+          isTeamLeader: z.boolean().default(false),
+          pipedriveUserName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const existing = await getAeProfileByName(input.name);
+        if (existing) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "An AE with this name already exists.",
+          });
+        }
+
+        const pinHash = await bcrypt.hash(input.pin, 10);
+        const id = await createAeProfile({
+          name: input.name,
+          pinHash,
+          joinDate: new Date(input.joinDate),
+          isTeamLeader: input.isTeamLeader,
+        });
+
+        return { id, name: input.name };
+      }),
   }),
 
   // ─── Leaderboard ──────────────────────────────────────────────────────────

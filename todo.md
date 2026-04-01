@@ -823,3 +823,11 @@
 - [x] Added AdminEditContractStartDate component with automatic payout recalculation
 - [x] Debugged Pipedrive contract start date import — field ID is correct but data not populated in Pipedrive for many deals
 - [x] Added route /deals-management for team leaders to manage deal contract start dates
+
+
+## Urgent Tasks - Apr 1 2026
+- [x] Investigate Joe's Q1 leaderboard discrepancy ($63k vs $68k expected) - leaderboard shows ARR Signed, not commission
+- [x] Create admin-only Deals Management page with contract start date editing at /admin/deals-management
+- [x] Implement automatic recalculation of AE metrics when contract start date changes (updateContractStartDate procedure)
+- [x] Add Ben Sears profile (join date: April 1, 2026, Pipedrive username: "Ben") - added admin.addAe procedure
+- [x] Add admin.addAe procedure for team leaders to add new AEs directly
