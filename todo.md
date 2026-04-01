@@ -831,3 +831,10 @@
 - [x] Implement automatic recalculation of AE metrics when contract start date changes (updateContractStartDate procedure)
 - [x] Add Ben Sears profile (join date: April 1, 2026, Pipedrive username: "Ben") - added admin.addAe procedure
 - [x] Add admin.addAe procedure for team leaders to add new AEs directly
+
+
+## Implementation Tasks - Apr 1 2026
+- [x] Add Ben Sears profile via admin.addAe procedure (PIN: 1234, join date: 2026-04-01) - ID: 90001
+- [x] Fix contract start dates for all deals missing them using Deals Management page - Only 2 deals missing (Kavera, Method Manufacturing Portal)
+- [x] Investigate Joe's Q1 discrepancies - Q1 commission is $9,950 (not $63k which is ARR Signed)
+- [ ] Send Ben Sears activation email with PIN 1234 to ben.sears@amfg.ai
