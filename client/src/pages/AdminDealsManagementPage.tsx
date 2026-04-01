@@ -23,8 +23,8 @@ export default function AdminDealsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterChurned, setFilterChurned] = useState<"all" | "active" | "churned">("all");
 
-  // Check if user is admin (owner)
-  const isAdmin = ae && ae.id === 1; // Assuming owner has ID 1
+  // Check if user is admin (team leader)
+  const isAdmin = ae && ae.isTeamLeader;
 
   // Get all AEs for dropdown
   const { data: allAes, isLoading: aesLoading } = trpc.ae.listNames.useQuery();
@@ -55,7 +55,8 @@ export default function AdminDealsManagementPage() {
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
             <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
             <h2 className="text-xl font-semibold text-red-500 mb-2">Access Denied</h2>
-            <p className="text-red-500/80">This page is only available to administrators.</p>
+            <p className="text-red-500/80">This page is only available to team leaders.</p>
+            <Button onClick={() => navigate("/dashboard")} className="mt-4">Back to Dashboard</Button>
           </div>
         </div>
       </AppLayout>

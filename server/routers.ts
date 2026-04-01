@@ -58,7 +58,7 @@ import {
   getDb,
 } from "./db";
 import { deals, commissionPayouts, aeProfiles, monthlyMetrics, tierSnapshots } from "../drizzle/schema";
-import { eq, like, and, inArray, or, gt, lt, gte, lte } from "drizzle-orm";
+import { eq, like, and, inArray, or, gt, lt, gte, lte, sql } from "drizzle-orm";
 
 // Seed the initial commission structure on first startup
 seedInitialCommissionStructure().catch(console.error);
@@ -2356,11 +2356,13 @@ export const appRouter = router({
           );
 
         // Get deals for all AEs in the period (for ARR signed)
+        // ONLY include deals where contractStartDate is in the period and NOT churned
         const dealsRows = await db
           .select()
           .from(deals)
           .where(
             and(
+              eq(deals.isChurned, false),
               or(
                 and(
                   eq(deals.startYear, fromYear),
@@ -2416,7 +2418,7 @@ export const appRouter = router({
             name: profile.name,
             isTeamLeader: profile.isTeamLeader,
             tier: tierResult.tier,
-            totalArrUsd,
+            newArrUsd: totalArrUsd,
             totalDials,
             totalDemos,
             dealCount,
@@ -2424,9 +2426,9 @@ export const appRouter = router({
           };
         });
 
-        // Sort by ARR descending
+        // Sort by new ARR descending
         const ranked = entries
-          .sort((a, b) => b.totalArrUsd - a.totalArrUsd)
+          .sort((a, b) => b.newArrUsd - a.newArrUsd)
           .map((e, idx) => ({ ...e, rank: idx + 1 }));
 
         return {

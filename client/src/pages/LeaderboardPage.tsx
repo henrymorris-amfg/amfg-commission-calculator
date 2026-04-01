@@ -191,7 +191,7 @@ export default function LeaderboardPage() {
                       className={`font-bold ${podiumSlot === 1 ? "text-xl" : "text-base"}`}
                       style={{ color: rankColor }}
                     >
-                      {fmtArr(entry.totalArrUsd)}
+                      {fmtArr(entry.newArrUsd)}
                     </p>
 
                     {/* Podium block */}
@@ -322,7 +322,7 @@ export default function LeaderboardPage() {
 
                       {/* ARR */}
                       <div className="col-span-2 text-right">
-                        <p className="font-semibold text-foreground">{fmtArr(entry.totalArrUsd)}</p>
+                        <p className="text-xs text-muted-foreground">{fmtArr(entry.newArrUsd)}</p>
                         <p className="text-xs text-muted-foreground">{entry.dealCount} deal{entry.dealCount !== 1 ? "s" : ""}</p>
                       </div>
 

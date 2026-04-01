@@ -838,3 +838,10 @@
 - [x] Fix contract start dates for all deals missing them using Deals Management page - Only 2 deals missing (Kavera, Method Manufacturing Portal)
 - [x] Investigate Joe's Q1 discrepancies - Q1 commission is $9,950 (not $63k which is ARR Signed)
 - [ ] Send Ben Sears activation email with PIN 1234 to ben.sears@amfg.ai
+
+
+## Critical Bugs - Apr 1 2026 (Round 2)
+- [x] Deals Management page not visible - fixed admin check to use isTeamLeader role
+- [x] Leaderboard showing $63k for Joe Payne Q1 but should be $68k - fixed to show only new ARR with contract start date in that quarter
+- [x] Leaderboard Q2 2026 showing same numbers as Q1 - fixed by filtering to only deals with contract start date in period
+- [x] Leaderboard showing commission instead of only new ARR by quarter - removed commission, now shows newArrUsd only
