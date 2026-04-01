@@ -1682,6 +1682,10 @@ export const appRouter = router({
           const ae = allAes.find((m) => m.id === payout.aeId);
           if (!ae) continue;
 
+          // Skip payouts for churned deals
+          const deal = dealMap.get(payout.dealId) as any;
+          if (deal?.isChurned) continue;
+
           if (!commissionsByAe.has(payout.aeId)) {
             commissionsByAe.set(payout.aeId, {
               aeId: payout.aeId,
@@ -1695,7 +1699,6 @@ export const appRouter = router({
           }
 
           const entry = commissionsByAe.get(payout.aeId)!;
-          const deal = dealMap.get(payout.dealId) as any;
           const netGbp = Number(payout.netCommissionGbp);
           const netUsd = Number(payout.netCommissionUsd);
 

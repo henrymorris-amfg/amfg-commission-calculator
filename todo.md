@@ -806,3 +806,20 @@
 - [x] Logging now shows: total activities fetched, sample activities, filtered count, and date range filtering
 - [x] pipedriveGetAll now logs pagination details to help debug API response issues
 - [ ] Monitor logs during next sync to identify why Tad's demos (and others) are partially syncing
+
+
+## Critical Issues - Apr 1 2026
+- [ ] Debug contract start date import - Pipedrive field not being read correctly (MSP Manufacturing Inc. should be 31st March)
+- [ ] Add admin UI to manually edit contract start dates with automatic payout recalculation
+- [ ] Remove Upcoming Payouts widget from dashboard - not working reliably
+- [ ] Fix Team Commission tab - showing churned deals (Paragon Rapid Technologies, American Valmark) that should be excluded
+- [ ] Debug tier forecast error - "Unexpected token 'S': 'Service Unavailable' is not valid JSON"
+
+
+## Critical Fixes - Apr 1 2026
+- [x] Removed Upcoming Payouts widget from dashboard (was showing incorrect data)
+- [x] Fixed Team Commission tab to exclude churned deals (Paragon Rapid Technologies, American Valmark no longer shown)
+- [x] Created DealsManagementPage for team leaders to manually edit contract start dates
+- [x] Added AdminEditContractStartDate component with automatic payout recalculation
+- [x] Debugged Pipedrive contract start date import — field ID is correct but data not populated in Pipedrive for many deals
+- [x] Added route /deals-management for team leaders to manage deal contract start dates

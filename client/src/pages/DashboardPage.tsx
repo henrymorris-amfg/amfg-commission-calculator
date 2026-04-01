@@ -7,7 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import { FlaggedDemosAlert } from "@/components/FlaggedDemosAlert";
 import { TierForecastCard } from "@/components/TierForecastCard";
 import { EarningsHeroCard } from "@/components/EarningsHeroCard";
-import { NextPayoutsWidget } from "@/components/NextPayoutsWidget";
+
 import { WeeklyActivityStrip } from "@/components/WeeklyActivityStrip";
 
 import { Button } from "@/components/ui/button";
@@ -279,10 +279,9 @@ export default function DashboardPage() {
         {/* Weekly Activity Strip */}
         <WeeklyActivityStrip />
 
-        {/* Tier Forecast + Next Payouts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tier Forecast */}
+        <div className="grid grid-cols-1 gap-6">
           <TierForecastCard />
-          <NextPayoutsWidget />
         </div>
 
         {/* ── Unified Tier Status Card ──────────────────────────────────────── */}
