@@ -845,3 +845,9 @@
 - [x] Leaderboard showing $63k for Joe Payne Q1 but should be $68k - fixed to show only new ARR with contract start date in that quarter
 - [x] Leaderboard Q2 2026 showing same numbers as Q1 - fixed by filtering to only deals with contract start date in period
 - [x] Leaderboard showing commission instead of only new ARR by quarter - removed commission, now shows newArrUsd only
+
+
+## Urgent Fixes - Apr 13 2026
+- [ ] Fix Tad's Kavera deal - update $0 ARR to correct value
+- [ ] Fix Tad's demos not importing from Pipedrive - check for user ID mismatch
+- [ ] Verify Tad shows Gold tier after fixes

@@ -2117,6 +2117,35 @@ export const appRouter = router({
       return { success: true, message: `Recalculated ${updated} deal tiers` };
     }),
 
+    updateDealValue: publicProcedure
+      .input(
+        z.object({
+          dealId: z.number().int(),
+          arrUsd: z.number().positive(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const callerId = getAeIdFromCtx(ctx);
+        if (!callerId) throw new TRPCError({ code: "UNAUTHORIZED" });
+        const caller = await getAeProfileById(callerId);
+        if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        const deal = await getDealById(input.dealId);
+        if (!deal) throw new TRPCError({ code: "NOT_FOUND", message: "Deal not found" });
+
+        await db
+          .update(deals)
+          .set({
+            arrUsd: String(input.arrUsd),
+          })
+          .where(eq(deals.id, input.dealId));
+
+        return { success: true, message: `Updated deal ARR to $${input.arrUsd.toFixed(2)} USD` };
+      }),
+
     addAe: publicProcedure
       .input(
         z.object({
