@@ -244,7 +244,18 @@ async function pipedriveGetAll(
   return all;
 }
 
+// Known Pipedrive user ID overrides for AEs whose display name in Pipedrive
+// does not match their full name in the commission calculator.
+const PIPEDRIVE_USER_ID_OVERRIDES: Record<string, number> = {
+  "Tad Tamulevicius": 25357905, // Pipedrive display name is just "Tad"
+};
+
 async function findPipedriveUserId(aeName: string): Promise<number | null> {
+  // Check hardcoded overrides first — handles name mismatches (e.g. Tad)
+  if (PIPEDRIVE_USER_ID_OVERRIDES[aeName] !== undefined) {
+    return PIPEDRIVE_USER_ID_OVERRIDES[aeName];
+  }
+
   const apiKey = process.env.PIPEDRIVE_API_KEY;
   if (!apiKey) return null;
 

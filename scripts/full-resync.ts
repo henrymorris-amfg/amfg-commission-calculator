@@ -176,6 +176,7 @@ const AE_CONFIG = [
   { aeId: 30001, name: "Joe Payne", joinDateStr: "2025-06-16", pipedriveId: 23861740 },
   { aeId: 30002, name: "Toby Greer", joinDateStr: "2025-07-28", pipedriveId: 24052953 },
   { aeId: 30003, name: "Julian Earl", joinDateStr: "2026-02-04", pipedriveId: 25094488 },
+  { aeId: 60001, name: "Tad Tamulevicius", joinDateStr: "2026-03-15", pipedriveId: 25357905 }, // Pipedrive display name is "Tad"
 ];
 
 const today = new Date().toISOString().substring(0, 10);

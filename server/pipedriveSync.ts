@@ -247,10 +247,27 @@ const PIPELINE_NAMES: Record<number, string> = {
 // ─── Core sync logic ──────────────────────────────────────────────────────────
 
 /**
+ * Known Pipedrive user ID overrides for AEs whose display name in Pipedrive
+ * does not match their full name in the commission calculator.
+ * Key: full name as stored in ae_profiles, Value: Pipedrive user ID.
+ */
+const PIPEDRIVE_USER_ID_OVERRIDES: Record<string, number> = {
+  "Tad Tamulevicius": 25357905, // Pipedrive display name is just "Tad"
+};
+
+/**
  * Find the Pipedrive user ID for an AE by matching their name.
  * Returns null if no match found.
  */
 export async function findPipedriveUserId(aeName: string): Promise<number | null> {
+  // Check hardcoded overrides first — handles cases where Pipedrive display name
+  // differs from the full name stored in the commission calculator (e.g. Tad).
+  if (PIPEDRIVE_USER_ID_OVERRIDES[aeName] !== undefined) {
+    const overrideId = PIPEDRIVE_USER_ID_OVERRIDES[aeName];
+    console.log(`[Pipedrive Sync] Using ID override for "${aeName}": ${overrideId}`);
+    return overrideId;
+  }
+
   const resp = (await pipedriveGet("users")) as { data: PipedriveUser[] | null };
   const users = resp.data || [];
   console.log(`[Pipedrive Sync] Looking for user: "${aeName}" among ${users.length} Pipedrive users`);
