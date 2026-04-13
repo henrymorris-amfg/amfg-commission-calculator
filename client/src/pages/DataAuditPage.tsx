@@ -199,6 +199,14 @@ export default function DataAuditPage() {
             <p className="text-sm text-muted-foreground mt-1">
               Monthly metrics for all AEs — spot missing ARR, demos, or dials at a glance.
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/admin/deals-management")}
+              className="mt-2"
+            >
+              Manage Deal Dates →
+            </Button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {!auditQuery.isLoading && (

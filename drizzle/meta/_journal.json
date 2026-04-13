@@ -134,6 +134,13 @@
       "when": 1774207100035,
       "tag": "0018_grey_raza",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1776106003403,
+      "tag": "0019_careless_invaders",
+      "breakpoints": true
     }
   ]
 }
