@@ -35,6 +35,7 @@ function Router() {
       <Route path="/pipedrive-sync" component={PipedriveSyncPage} />
       <Route path="/voip-sync" component={VoipSyncPage} />
       <Route path="/data-audit" component={DataAuditPage} />
+      <Route path="/deals-management" component={AdminDealsManagementPage} />
       <Route path="/admin/deals-management" component={AdminDealsManagementPage} />
       <Route path="/payout-calendar" component={PayoutCalendarPage} />
       <Route path="/team-commissions" component={TeamCommissionPage} />

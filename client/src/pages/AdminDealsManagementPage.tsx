@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircle, Edit2, Save, X, Loader2, CheckCircle } from "lucide-react";
+import { useState, useMemo } from "react";
 
 export default function AdminDealsManagementPage() {
   const [, navigate] = useLocation();
@@ -23,8 +23,9 @@ export default function AdminDealsManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterChurned, setFilterChurned] = useState<"all" | "active" | "churned">("all");
 
-  // Check if user is admin (team leader)
-  const isAdmin = ae && ae.isTeamLeader;
+  // Check if user is admin (team leader or Henry Morris specifically)
+  // Henry Morris (ID 2) is the owner and should have access
+  const isAdmin = ae && (ae.isTeamLeader || ae.id === 2);
 
   // Get all AEs for dropdown
   const { data: allAes, isLoading: aesLoading } = trpc.ae.listNames.useQuery();
