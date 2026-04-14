@@ -2331,7 +2331,7 @@ export const appRouter = router({
         if (input.period === "current_quarter") {
           fromMonth = (currentQuarter - 1) * 3 + 1;
           fromYear = currentYear;
-          toMonth = currentMonth;
+          toMonth = currentQuarter * 3;  // Full quarter, not just current month
           toYear = currentYear;
         } else if (input.period === "last_quarter") {
           const lq = currentQuarter === 1 ? 4 : currentQuarter - 1;

@@ -67,6 +67,7 @@ export function calculateTier(inputs: TierInputs): TierResult {
   const retentionAvailable = inputs.avgRetentionRate != null;
 
   // Check each criterion at gold level
+  // New joiners get $25k ARR counted per month (grace period) - they only need to hit dials/demos targets
   const meetsArrGold = inputs.isNewJoiner || inputs.avgArrUsd >= targets.gold.arrUsd;
   const meetsDemosGold = inputs.avgDemosPw >= targets.gold.demosPw;
   const meetsDialsGold = inputs.avgDialsPw >= targets.gold.dialsPw;
@@ -74,6 +75,7 @@ export function calculateTier(inputs: TierInputs): TierResult {
     !retentionAvailable || inputs.isNewJoiner || (inputs.avgRetentionRate ?? 0) >= RETENTION_GOLD_MIN;
 
   // Check each criterion at silver level
+  // New joiners with $25k ARR can also qualify for silver if they hit silver dials/demos targets
   const meetsArrSilver = inputs.isNewJoiner || inputs.avgArrUsd >= targets.silver.arrUsd;
   const meetsDemosSilver = inputs.avgDemosPw >= targets.silver.demosPw;
   const meetsDialsSilver = inputs.avgDialsPw >= targets.silver.dialsPw;

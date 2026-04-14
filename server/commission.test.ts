@@ -82,7 +82,7 @@ describe("calculateTier", () => {
     expect(result.tier).toBe("gold");
   });
 
-  it("new joiner still needs activity metrics for gold", () => {
+  it("new joiner still needs demos target for gold", () => {
     const result = calculateTier({
       avgArrUsd: 0,
       avgDemosPw: 3, // Only silver level demos
@@ -105,6 +105,8 @@ describe("calculateTier", () => {
     });
     expect(result.tier).toBe("bronze");
   });
+
+
 
   // Team Leader Tests
   it("team leader gold requires halved ARR ($12,500)", () => {

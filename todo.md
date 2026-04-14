@@ -848,6 +848,11 @@
 
 
 ## Urgent Fixes - Apr 13 2026
-- [ ] Fix Tad's Kavera deal - update $0 ARR to correct value
-- [ ] Fix Tad's demos not importing from Pipedrive - check for user ID mismatch
-- [ ] Verify Tad shows Gold tier after fixes
+- [x] Fix Tad's Kavera deal - updated to €4,588 EUR ($5,046.80 USD)
+- [x] Fix Tad's demos not importing from Pipedrive - populated pipedriveUserId for all AEs
+- [x] Verify Tad shows Gold tier after fixes - FIXED: new joiner grace period logic corrected
+- [x] Fix grace period logic - new joiners get $25k ARR counted but still need to hit dials/demos targets
+- [x] Update calculateTier to only waive ARR check for new joiners (not dials/demos)
+- [x] Update tests to reflect correct new joiner logic
+- [x] Clean up temporary migration files (fix-tad-kavera.ts, check-tad-pipedrive.ts)
+- [x] All 121 tests passing
