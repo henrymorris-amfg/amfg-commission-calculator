@@ -856,3 +856,11 @@
 - [x] Update tests to reflect correct new joiner logic
 - [x] Clean up temporary migration files (fix-tad-kavera.ts, check-tad-pipedrive.ts)
 - [x] All 121 tests passing
+
+
+## Critical Bug Fix - Apr 14 2026
+- [x] Fixed tier.calculate month filtering bug - was using Date comparison which failed due to timezone offsets
+- [x] Changed to year/month integer comparison (e.g., 202603) to avoid timezone issues
+- [x] Tad now correctly shows GOLD tier: 12 demos in March = 5.75 demos/week (exceeds 4), 244 dials/week (exceeds 200)
+- [x] Updated Tad's April metrics to 9 demos
+- [x] All 121 tests passing

@@ -424,14 +424,20 @@ export const appRouter = router({
         const allMetrics = await getMetricsForAe(aeId, 9);
 
         // Filter to the 3 months preceding the target month
-        const targetDate = new Date(input.year, input.month - 1, 1);
+        // Compare by year/month to avoid timezone issues with Date objects
         const joinDate = new Date(profile.joinDate);
+        const joinYear = joinDate.getFullYear();
+        const joinMonth = joinDate.getMonth() + 1;
+        // Create targetDate for isNewJoiner checks (end of target month)
+        const targetDate = new Date(input.year, input.month, 0);
         
         // For new joiners with no prior data, show current month instead of looking backward
         let last3 = allMetrics
           .filter((m) => {
-            const d = new Date(m.year, m.month - 1, 1);
-            return d < targetDate && d >= joinDate;
+            const metricYearMonth = m.year * 100 + m.month;
+            const targetYearMonth = input.year * 100 + input.month;
+            const joinYearMonth = joinYear * 100 + joinMonth;
+            return metricYearMonth <= targetYearMonth && metricYearMonth >= joinYearMonth;
           })
           .slice(0, 3);
         
@@ -463,8 +469,10 @@ export const appRouter = router({
 
         let last6 = allMetrics
           .filter((m) => {
-            const d = new Date(m.year, m.month - 1, 1);
-            return d < targetDate && d >= joinDate;
+            const metricYearMonth = m.year * 100 + m.month;
+            const targetYearMonth = input.year * 100 + input.month;
+            const joinYearMonth = joinYear * 100 + joinMonth;
+            return metricYearMonth < targetYearMonth && metricYearMonth >= joinYearMonth;
           })
           .slice(0, 6);
         
