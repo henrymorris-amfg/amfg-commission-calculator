@@ -1763,12 +1763,14 @@ export const appRouter = router({
                   })),
                   new Date(aeProfile.joinDate)
                 );
+                // Create targetDate for isNewJoiner check (end of target month)
+                const targetDate = new Date(input.year, input.month, 0);
                 const tierResult = calculateTier({
                   avgArrUsd,
                   avgDemosPw,
                   avgDialsPw,
                   avgRetentionRate: null,
-                  isNewJoiner: false,
+                  isNewJoiner: isNewJoiner(new Date(aeProfile.joinDate), targetDate),
                   isTeamLeader: aeProfile.isTeamLeader,
                 });
                 currentTier = tierResult.tier;

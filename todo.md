@@ -875,3 +875,11 @@
   - Julian Earl (joined Feb 4): 0 deals, has metrics (5 demos Feb, 12 demos Mar, 5 demos Apr)
   - Ben Sears (joined Apr 1): 0 deals, has metrics (0 demos Apr, 198 dials Apr)
   - Tad Tamulevicius: 1 deal (Kavera) with payouts created
+
+
+## Overall Tier Calculation Fix - Apr 14 2026
+- [x] Fixed hardcoded isNewJoiner: false in dashboard tier calculation
+- [x] Now correctly evaluates isNewJoiner based on join date and target month
+- [x] Tad should now show GOLD tier (was showing Silver due to hardcoded false)
+- [x] Updated Kavera deal tierAtStart to gold
+- [x] All 121 tests passing
