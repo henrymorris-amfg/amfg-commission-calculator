@@ -864,3 +864,14 @@
 - [x] Tad now correctly shows GOLD tier: 12 demos in March = 5.75 demos/week (exceeds 4), 244 dials/week (exceeds 200)
 - [x] Updated Tad's April metrics to 9 demos
 - [x] All 121 tests passing
+
+
+## Kavera Deal Issues - Apr 14 2026
+- [x] Fix Kavera deal: missing dealName field (will be fixed in UI)
+- [x] Regenerate Kavera deal payouts with GOLD tier (Tad was new joiner in March)
+  - March: $30.93 USD (1/31 prorated at 19% gold rate)
+  - April: $958.89 USD (full month at 19% gold rate)
+- [x] Verify other new joiners' deals have correct payouts
+  - Julian Earl (joined Feb 4): 0 deals, has metrics (5 demos Feb, 12 demos Mar, 5 demos Apr)
+  - Ben Sears (joined Apr 1): 0 deals, has metrics (0 demos Apr, 198 dials Apr)
+  - Tad Tamulevicius: 1 deal (Kavera) with payouts created
