@@ -183,7 +183,8 @@ export function computeActiveWeeks(
 
 /**
  * Compute 3-month rolling averages for ARR, demos pw, dials pw.
- * Dials and demos are divided by actual weeks worked since join date (capped at 12).
+ * For new starters (< 3 months tenure): divide by actual weeks worked since join date.
+ * For established AEs (>= 3 months tenure): divide by 12 weeks (standard 3-month average).
  * Pass joinDate to correctly prorate the first partial month for new joiners.
  */
 export function computeRollingAverages(
@@ -201,10 +202,21 @@ export function computeRollingAverages(
   const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
   const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
   const n = last3Months.length;
-  // Use actual weeks worked when joinDate is provided, otherwise default to 12
-  const weeks = joinDate != null
-    ? computeActiveWeeks(last3Months, joinDate)
-    : Math.min(n * 4, 12);
+  
+  // For new starters with less than 3 months of data, use actual weeks worked
+  // For established AEs with 3+ months of data, use standard 12 weeks (3 months)
+  let weeks = 12; // default for 3 months of data
+  if (joinDate != null && n < 3) {
+    // New starter with less than 3 months of data: use actual weeks worked
+    weeks = computeActiveWeeks(last3Months, joinDate);
+  } else if (joinDate != null && n >= 3) {
+    // Established AE with 3+ months of data: always use 12 weeks for rolling average
+    weeks = 12;
+  } else if (joinDate == null) {
+    // No join date provided: default to n * 4 weeks, capped at 12
+    weeks = Math.min(n * 4, 12);
+  }
+  
   return {
     avgArrUsd: totalArr / n,
     avgDemosPw: totalDemos / weeks,

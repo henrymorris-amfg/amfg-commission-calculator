@@ -883,3 +883,29 @@
 - [x] Tad should now show GOLD tier (was showing Silver due to hardcoded false)
 - [x] Updated Kavera deal tierAtStart to gold
 - [x] All 121 tests passing
+
+
+## VOIP Studio Dials Sync Investigation - Apr 14 2026
+- [ ] Investigate why Tad's dials are showing as manual entry (0 from VOIP Studio)
+  - Tad has 526 dials in March (manual), should be from VOIP Studio
+  - Tad has 263 dials in April (manual), should be from VOIP Studio
+  - Pipedrive demos ARE syncing correctly (12 demos in March)
+  - VOIP API connection test failed - need to check if API is accessible
+  - Tad's name in system: "Tad Tamulevicius" - should match VOIP user
+- [ ] Check if VOIP sync has ever run for Tad
+- [ ] Manually trigger VOIP sync to pull correct dial data
+- [ ] Verify dials are properly attributed to Tad after sync
+
+
+## New Starter Tier Calculation Fix - Apr 14 2026
+- [x] Fix tier calculation for new starters (less than 3 months tenure)
+  - Uses weeks-since-join for dividing dials/demos, NOT 3-month rolling average
+  - Example: Tad joined March 15, so March tier uses only March data / 2.09 weeks
+  - Does NOT include April/May data in March tier calculation
+- [x] Update computeRollingAverages to detect new starter status
+  - If n < 3 months: divide by actual weeks worked
+  - If n >= 3 months: divide by 12 weeks (standard 3-month average)
+- [x] Applied to tier.calculate endpoint for all AEs
+- [x] Applied to dashboard tier calculation
+- [x] Test with Tad (joined March 15): March shows GOLD (5.75 demos/week, 252 dials/week) ✓
+- [x] Verify all 121 tests still pass ✓
