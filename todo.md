@@ -907,5 +907,7 @@
   - If n >= 3 months: divide by 12 weeks (standard 3-month average)
 - [x] Applied to tier.calculate endpoint for all AEs
 - [x] Applied to dashboard tier calculation
+  - Fixed: dashboard was using getMetricsForAeBefore (excludes current month)
+  - Now uses getMetricsForAe with filtering to include current month
 - [x] Test with Tad (joined March 15): March shows GOLD (5.75 demos/week, 252 dials/week) ✓
 - [x] Verify all 121 tests still pass ✓

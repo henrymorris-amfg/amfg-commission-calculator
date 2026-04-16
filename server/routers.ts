@@ -1746,12 +1746,17 @@ export const appRouter = router({
                 currentTier = snapshot;
               } else if (aeProfile) {
                 // 2. Fall back to live rolling-average calculation
-                const last3Months = await getMetricsForAeBefore(
-                  c.aeId,
-                  input.year,
-                  input.month,
-                  3
-                );
+                // Get all recent metrics and filter to the 3 months up to and including the target month
+                const allMetrics = await getMetricsForAe(c.aeId, 9);
+                const targetYearMonth = input.year * 100 + input.month;
+                const joinYearMonth = aeProfile.joinDate.getFullYear() * 100 + (aeProfile.joinDate.getMonth() + 1);
+                
+                const last3Months = allMetrics
+                  .filter((m) => {
+                    const metricYearMonth = m.year * 100 + m.month;
+                    return metricYearMonth <= targetYearMonth && metricYearMonth >= joinYearMonth;
+                  })
+                  .slice(0, 3);
                 const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
                   last3Months.map((m) => ({
                     year: m.year,
