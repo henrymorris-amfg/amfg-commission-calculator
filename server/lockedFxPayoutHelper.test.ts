@@ -88,7 +88,7 @@ describe("Locked FX Payout Helper", () => {
     expect(result.commResult.payoutSchedule.length).toBeGreaterThan(1); // Monthly = 13 payouts
   });
 
-  it("should apply onboarding deduction to first payout only", () => {
+  it("should not apply onboarding deduction (removed policy)", () => {
     const dealWithoutOnboarding = {
       ...mockDeal,
       onboardingFeePaid: false,
@@ -104,10 +104,10 @@ describe("Locked FX Payout Helper", () => {
     });
 
     const firstPayout = result.commResult.payoutSchedule[0];
-    expect(firstPayout.onboardingDeductionGbp).toBe(500);
+    expect(firstPayout.onboardingDeductionGbp).toBe(0); // No deduction applied
   });
 
-  it("should format payout info correctly", () => {
+  it("should format payout info correctly (no onboarding deduction)", () => {
     const formatted = formatPayoutInfo(mockDeal, 0.78, 0.80);
 
     expect(formatted.dealId).toBe(1);

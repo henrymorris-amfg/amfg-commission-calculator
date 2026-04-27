@@ -1061,3 +1061,9 @@
 - [x] Added "Or reach [NEXT_TIER]" toggle for non-Gold AEs to show upgrade targets
 - [x] Added live progress bars showing current month demos/dials/ARR vs targets
 - [x] All 121 tests passing
+
+## Remove Onboarding Fee ARR Reduction - Apr 27 2026
+- [ ] Remove $5k ARR reduction logic from calculateCommission function (onboardingFeePaid check)
+- [ ] Recalculate all active deal commission payouts with full ARR (no reduction)
+- [ ] Verify all AE YTD earnings are updated correctly
+- [ ] All 121 tests passing

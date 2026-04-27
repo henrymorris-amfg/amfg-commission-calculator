@@ -300,10 +300,8 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
   const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
   const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
 
-  // If onboarding fee not paid, ARR is reduced for commission calculation
-  const effectiveArrUsd = input.onboardingFeePaid
-    ? input.arrUsd
-    : Math.max(0, input.arrUsd - arrReductionUsd);
+  // Use full ARR for commission calculation (no reduction based on onboarding fee status)
+  const effectiveArrUsd = input.arrUsd;
 
   const numPayouts =
     input.contractType === "annual"
@@ -325,9 +323,8 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     // Referral: 50% reduction on commission
     const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
 
-    // Onboarding deduction: on first payout only (uses versioned amount)
-    const onboardingDeductionGbp =
-      !input.onboardingFeePaid && i === 1 ? deductionGbp : 0;
+    // No onboarding deduction applied
+    const onboardingDeductionGbp = 0;
 
     const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
     const netCommissionGbp =

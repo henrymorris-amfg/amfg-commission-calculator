@@ -196,7 +196,7 @@ describe("calculateCommission", () => {
     expect(result.payoutSchedule[0].netCommissionUsd).toBeCloseTo(gross * 0.5);
   });
 
-  it("missing onboarding fee: ARR reduced by $5k and £500 deducted from first payout", () => {
+  it("missing onboarding fee: no ARR reduction, no deduction", () => {
     const result = calculateCommission({
       contractType: "annual",
       arrUsd: 24_000,
@@ -205,15 +205,15 @@ describe("calculateCommission", () => {
       isReferral: false,
       fxRateUsdToGbp: fxRate,
     });
-    // Effective ARR = 24000 - 5000 = 19000
-    expect(result.effectiveArrUsd).toBe(19_000);
-    const grossUsd = 19_000 * 0.19;
-    const netGbp = grossUsd * fxRate - 500;
-    expect(result.payoutSchedule[0].onboardingDeductionGbp).toBe(500);
+    // Effective ARR = 24000 (no reduction)
+    expect(result.effectiveArrUsd).toBe(24_000);
+    const grossUsd = 24_000 * 0.19;
+    const netGbp = grossUsd * fxRate; // No £500 deduction
+    expect(result.payoutSchedule[0].onboardingDeductionGbp).toBe(0);
     expect(result.payoutSchedule[0].netCommissionGbp).toBeCloseTo(netGbp);
   });
 
-  it("missing onboarding fee on monthly: £500 deducted only on first payout", () => {
+  it("missing onboarding fee on monthly: no ARR reduction, no deduction", () => {
     const result = calculateCommission({
       contractType: "monthly",
       arrUsd: 12_000,
@@ -222,9 +222,8 @@ describe("calculateCommission", () => {
       isReferral: false,
       fxRateUsdToGbp: fxRate,
     });
-    expect(result.payoutSchedule[0].onboardingDeductionGbp).toBe(500);
-    // All subsequent payouts should have no onboarding deduction
-    for (let i = 1; i < result.payoutSchedule.length; i++) {
+    // No onboarding deduction applied
+    for (let i = 0; i < result.payoutSchedule.length; i++) {
       expect(result.payoutSchedule[i].onboardingDeductionGbp).toBe(0);
     }
   });
