@@ -1053,3 +1053,11 @@
 - [x] Ben: BRONZE (3.71 weeks active: Apr 1-Apr 27) — 1.56 demos/wk, 69 dials/wk, $0 ARR (waived)
 - [x] All three now use weeks-since-join for rolling average divisor (not calendar months)
 - [x] All 121 tests passing
+
+## Tad YTD Earnings & Tier Outlook Simplification - Apr 27 2026
+- [x] Fixed Tad's missing YTD earnings: Kavera deal had onboardingFeePaid=false, reducing ARR by $5k; corrected to true
+- [x] Generated missing commission payout for Kavera deal: £1,217.79 (Gold tier, $5,046.80 × 19%)
+- [x] Simplified Tier Outlook: removed multi-month accordion, now shows only current month targets
+- [x] Added "Or reach [NEXT_TIER]" toggle for non-Gold AEs to show upgrade targets
+- [x] Added live progress bars showing current month demos/dials/ARR vs targets
+- [x] All 121 tests passing
