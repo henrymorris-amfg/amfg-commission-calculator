@@ -1941,27 +1941,30 @@ export const appRouter = router({
       const ae = await getAeProfileById(aeId);
       if (!ae) throw new TRPCError({ code: "NOT_FOUND", message: "AE not found" });
 
-      // Get current tier and metrics (join-date-bounded months)
-      const last3MonthsRaw = await getMetricsForAe(aeId, 3);
+      // Tier is always based on the 3 months BEFORE the current month (not including current month)
+      const now2 = new Date();
+      const cy = now2.getFullYear();
+      const cm = now2.getMonth() + 1;
       const joinDate = new Date(ae.joinDate);
 
-      // Convert decimal strings from MySQL to numbers (arrUsd is a DECIMAL column)
-      const last3Months = last3MonthsRaw.map((m) => {
+      const prev3Raw = await getMetricsForAeBefore(aeId, cy, cm, 3);
+
+      const applyGrace = (m: { year: number; month: number; arrUsd: string | number }) => {
         const monthDate = new Date(m.year, m.month - 1, 1);
         const monthsSinceJoin =
           (monthDate.getFullYear() - joinDate.getFullYear()) * 12 +
           (monthDate.getMonth() - joinDate.getMonth());
-        // Apply grace period: within 6 months of join, assume $25k ARR
-        const arrUsd = monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
-        return {
-          year: m.year,
-          month: m.month,
-          arrUsd,
-          demosTotal: m.demosTotal,
-          dialsTotal: m.dialsTotal,
-          retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
-        };
-      });
+        return monthsSinceJoin >= 0 && monthsSinceJoin < 6 ? 25000 : Number(m.arrUsd);
+      };
+
+      const last3Months = prev3Raw.map((m) => ({
+        year: m.year,
+        month: m.month,
+        arrUsd: applyGrace(m),
+        demosTotal: m.demosTotal,
+        dialsTotal: m.dialsTotal,
+        retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+      }));
 
       const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(last3Months, joinDate);
       const tierResult = calculateTier({
@@ -1973,57 +1976,53 @@ export const appRouter = router({
         isTeamLeader: ae.isTeamLeader,
       });
 
+      // Fetch current month data for "how are you tracking" display
+      const currentMonthRaw = await getMetricsForMonth(aeId, cy, cm);
+      const currentMonthArr = currentMonthRaw ? applyGrace(currentMonthRaw) : 0;
+      const currentMonthDemos = currentMonthRaw?.demosTotal ?? 0;
+      const currentMonthDials = currentMonthRaw?.dialsTotal ?? 0;
+
+      // Compute rolling averages including current month (for tracking display only)
+      const last3WithCurrent = [
+        ...(currentMonthRaw ? [{
+          year: cy, month: cm,
+          arrUsd: currentMonthArr,
+          demosTotal: currentMonthDemos,
+          dialsTotal: currentMonthDials,
+        }] : []),
+        ...last3Months.slice(0, 2),
+      ];
+      const trackingRolling = computeRollingAverages(last3WithCurrent, joinDate);
+      const trackingTier = calculateTier({
+        avgArrUsd: trackingRolling.avgArrUsd,
+        avgDemosPw: trackingRolling.avgDemosPw,
+        avgDialsPw: trackingRolling.avgDialsPw,
+        avgRetentionRate: null,
+        isNewJoiner: isNewJoiner(ae.joinDate),
+        isTeamLeader: ae.isTeamLeader,
+      });
+
       // Fetch all deals to calculate projected monthly metrics
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
       const allDeals = await db.select().from(deals).where(eq(deals.aeId, aeId));
 
-      // Helper: check if a deal is active in a given month
-      const isDealActiveInMonth = (deal: typeof deals.$inferSelect, year: number, month: number): boolean => {
-        if (!deal.contractStartDate) return false;
-        const startDate = new Date(deal.contractStartDate);
-        const startYear = startDate.getFullYear();
-        const startMonth = startDate.getMonth() + 1;
-        const isChurned = deal.isChurned && deal.churnYear && deal.churnMonth;
-        const churnYear = deal.churnYear ?? 0;
-        const churnMonth = deal.churnMonth ?? 0;
-        const startedByMonth = startYear < year || (startYear === year && startMonth <= month);
-        const notChurnedByMonth = !isChurned || churnYear > year || (churnYear === year && churnMonth > month);
-        return startedByMonth && notChurnedByMonth;
-      };
-
-      // Build projected months: last 3 actual months + next 3 projected months
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
+      // Build projected months from prev-3 months (grace-period ARR already applied)
       const projectedMonths: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }> = [];
-
-      // Add last 3 months + current month from monthly_metrics (for rolling average calculation)
       for (const m of last3Months) {
         projectedMonths.push({
           year: m.year,
           month: m.month,
-          arrUsd: Number(m.arrUsd),
+          arrUsd: m.arrUsd, // grace-period ARR already applied
           demosTotal: m.demosTotal,
           dialsTotal: m.dialsTotal,
-        });
-      }
-      // Also add current month if not already in last3Months
-      const currentMonthInMetrics = last3Months.find(m => m.year === currentYear && m.month === currentMonth);
-      if (!currentMonthInMetrics) {
-        projectedMonths.push({
-          year: currentYear,
-          month: currentMonth,
-          arrUsd: 0, // Assume $0 for current month if not yet recorded
-          demosTotal: 0,
-          dialsTotal: 0,
         });
       }
 
       // Add next 3 months (include deals with future contract start dates)
       for (let i = 1; i <= 3; i++) {
-        let projYear = currentYear;
-        let projMonth = currentMonth + i;
+        let projYear = cy;
+        let projMonth = cm + i;
         if (projMonth > 12) {
           projMonth -= 12;
           projYear += 1;
@@ -2055,9 +2054,24 @@ export const appRouter = router({
 
       // Add lastSyncedAt from the most recent month's data
       const lastSyncedAt = last3Months.length > 0 ? new Date(last3Months[0].year, last3Months[0].month - 1, 1) : new Date();
+
+      // Current month tracking: how the AE is performing right now
+      const currentMonthTracking = {
+        year: cy,
+        month: cm,
+        demosTotal: currentMonthDemos,
+        dialsTotal: currentMonthDials,
+        arrUsd: currentMonthArr,
+        trackingTier: trackingTier.tier,
+        trackingAvgDemosPw: trackingRolling.avgDemosPw,
+        trackingAvgDialsPw: trackingRolling.avgDialsPw,
+        trackingAvgArrUsd: trackingRolling.avgArrUsd,
+      };
+
       return {
         ...forecast,
         lastSyncedAt,
+        currentMonthTracking,
       };
     }),
   }),

@@ -1024,3 +1024,12 @@
      - Green "already met" badges when rolling window already covers the threshold
 - [x] Updated tierForecastHelper.test.ts to match new MonthTarget structure
 - [x] All 121 tests passing
+
+## Tad Tier Fix & Current Month Tracking - Apr 27 2026
+- [x] Fix computeRollingAverages: use activeN (not n) for weeks branch — pre-join empty months (Jan/Feb) were inflating divisor to 12 weeks even with only 1 active month
+- [x] Fix tierForecast procedure: use getMetricsForAeBefore (prev-3 excl. current month) for tier; apply grace-period ARR consistently in projectedMonths
+- [x] Remove isDealActiveInMonth dead code that caused esbuild syntax error
+- [x] Add currentMonthTracking to tierForecast response: demos/dials/ARR so far + tracking tier
+- [x] Add "April — Live Tracking" section to TierForecastCard showing current month progress and on-track tier
+- [x] Tad now correctly shows GOLD (5.20 demos/wk, 227.75 dials/wk over 2.31 active weeks in March)
+- [x] All 121 tests passing

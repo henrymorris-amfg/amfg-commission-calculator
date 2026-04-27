@@ -211,15 +211,16 @@ export function computeRollingAverages(
   const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
   const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
   const n = last3Months.length;
-  
-  // For new starters with less than 3 months of data, use actual weeks worked
-  // For established AEs with 3+ months of data, use standard 12 weeks (3 months)
-  let weeks = 12; // default for 3 months of data
-  if (joinDate != null && n < 3) {
-    // New starter with less than 3 months of data: use actual weeks worked
-    weeks = computeActiveWeeks(last3Months, joinDate);
-  } else if (joinDate != null && n >= 3) {
-    // Established AE with 3+ months of data: always use 12 weeks for rolling average
+
+  // Use activeN (post-join months only) to decide whether to use exact weeks.
+  // This prevents pre-join empty months (e.g. Jan/Feb for someone who joined March 16)
+  // from inflating the divisor: if activeN < 3, we use actual weeks worked, not 12.
+  let weeks = 12; // default for 3 full months of data
+  if (joinDate != null && activeN < 3) {
+    // New starter with fewer than 3 active months: use exact weeks worked since join date
+    weeks = computeActiveWeeks(activeMths.length > 0 ? activeMths : last3Months, joinDate);
+  } else if (joinDate != null && activeN >= 3) {
+    // Established AE with 3+ active months: use standard 12 weeks
     weeks = 12;
   } else if (joinDate == null) {
     // No join date provided: default to n * 4 weeks, capped at 12

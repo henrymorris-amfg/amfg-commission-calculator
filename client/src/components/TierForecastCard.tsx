@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAeAuth } from "@/contexts/AeAuthContext";
 import {
   TrendingUp, AlertCircle, CheckCircle2, ChevronDown, ChevronUp,
-  Target, Phone, BarChart2, DollarSign, ArrowRight
+  Phone, BarChart2, DollarSign, ArrowRight, Activity
 } from "lucide-react";
+import { MONTH_NAMES } from "../../../shared/commission";
 
 const TIER_COLORS = {
   bronze: { text: "text-amber-600", bg: "bg-amber-500/10", border: "border-amber-500/30", badge: "bg-amber-500/20 text-amber-700" },
@@ -96,6 +97,8 @@ export function TierForecastCard() {
 
   const tierCfg = TIER_COLORS[forecast.currentTier as keyof typeof TIER_COLORS] ?? TIER_COLORS.bronze;
   const isGold = forecast.currentTier === "gold";
+  const tracking = (forecast as any).currentMonthTracking;
+  const trackingTierCfg = tracking ? (TIER_COLORS[tracking.trackingTier as keyof typeof TIER_COLORS] ?? TIER_COLORS.bronze) : null;
 
   // Check if any month has a tier drop on "do nothing"
   const willDegrade = forecast.forecastMonths.some(
@@ -128,9 +131,48 @@ export function TierForecastCard() {
         </div>
       )}
 
-      {/* Current metrics summary */}
+      {/* Current month live tracking */}
+      {tracking && (
+        <div className="px-5 py-3 border-b border-border/40 bg-muted/10">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5 text-blue-400" />
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                {MONTH_NAMES[tracking.month - 1]} {tracking.year} — Live Tracking
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">on track for:</span>
+              {trackingTierCfg && (
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${trackingTierCfg.badge}`}>
+                  {tracking.trackingTier.toUpperCase()}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-base font-bold text-foreground">{tracking.demosTotal}</p>
+              <p className="text-xs text-muted-foreground">demos so far</p>
+            </div>
+            <div>
+              <p className="text-base font-bold text-foreground">{tracking.dialsTotal.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">dials so far</p>
+            </div>
+            <div>
+              <p className="text-base font-bold text-foreground">${Math.round(tracking.arrUsd).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">ARR this month</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            Rolling avg (incl. this month): {tracking.trackingAvgDemosPw.toFixed(1)} demos/wk · {Math.round(tracking.trackingAvgDialsPw)} dials/wk · ${Math.round(tracking.trackingAvgArrUsd).toLocaleString()} ARR/mo
+          </p>
+        </div>
+      )}
+
+      {/* Previous 3-month rolling average */}
       <div className="px-5 py-3 border-b border-border/40 bg-muted/20">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Current 3-Month Rolling Average</p>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Prev 3-Month Rolling Average (tier basis)</p>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <p className="text-base font-bold text-foreground">${Math.round(forecast.currentMetrics.arrUsd).toLocaleString()}</p>
