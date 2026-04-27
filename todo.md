@@ -996,3 +996,7 @@
 - [x] Verified Ben Sears April tier: BRONZE (1.56 demos/wk, 68.70 dials/wk — both below Silver threshold)
 - [x] Deleted phantom March 2026 row for Ben Sears (he joined April 1, March row had 0/0/0 data)
 - [x] All 121 tests passing
+
+## Missing Pipedrive ID Notification & Joe Tier Verification - Apr 27 2026
+- [x] Notify owner when Pipedrive sync skips an AE due to missing pipedriveUserId (notifyOwner call added to findPipedriveUserId)
+- [x] Verify Joe Payne April tier with corrected 11 demos — GOLD (4.50 demos/wk, 203.67 dials/wk, $27,613 ARR/month)

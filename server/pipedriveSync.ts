@@ -18,6 +18,7 @@
 
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
+import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { getAeIdFromCtx } from "./aeTokenUtils";
@@ -283,10 +284,18 @@ export async function findPipedriveUserId(aeName: string, storedId?: number | nu
 
   // No stored ID and no override — skip this AE rather than guess via name-matching.
   // This prevents wrong data from being attributed to the wrong AE.
-  console.warn(
+  const warnMsg =
     `[Pipedrive Sync] WARNING: No pipedriveUserId stored for "${aeName}" and no override defined. ` +
-    `Skipping Pipedrive sync for this AE. Set pipedriveUserId in ae_profiles to fix.`
-  );
+    `Skipping Pipedrive sync for this AE. Set pipedriveUserId in ae_profiles to fix.`;
+  console.warn(warnMsg);
+  // Notify the owner so the gap is surfaced immediately rather than silently missed.
+  notifyOwner({
+    title: `⚠️ Pipedrive sync skipped: ${aeName}`,
+    content:
+      `The Pipedrive sync skipped **${aeName}** because no \`pipedriveUserId\` is stored in the database and no hardcoded override exists.\n\n` +
+      `Their demos and deals will NOT be updated until this is fixed.\n\n` +
+      `**To fix:** Open the Admin panel → AE Profiles → edit ${aeName} and enter their Pipedrive user ID.`,
+  }).catch((e) => console.warn("[Pipedrive Sync] Failed to send owner notification:", e));
   return null;
 }
 
