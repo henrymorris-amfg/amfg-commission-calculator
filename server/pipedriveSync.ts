@@ -256,11 +256,21 @@ const PIPEDRIVE_USER_ID_OVERRIDES: Record<string, number> = {
 };
 
 /**
- * Find the Pipedrive user ID for an AE by matching their name.
+ * Find the Pipedrive user ID for an AE.
+ * Priority order:
+ *  1. Stored pipedriveUserId in the database (most reliable)
+ *  2. Hardcoded overrides (for display name mismatches)
+ *  3. Live name-matching against Pipedrive API (fallback only)
  * Returns null if no match found.
  */
-export async function findPipedriveUserId(aeName: string): Promise<number | null> {
-  // Check hardcoded overrides first — handles cases where Pipedrive display name
+export async function findPipedriveUserId(aeName: string, storedId?: number | null): Promise<number | null> {
+  // 1. Use stored ID from database — most reliable, avoids name-matching failures
+  if (storedId) {
+    console.log(`[Pipedrive Sync] Using stored pipedriveUserId for "${aeName}": ${storedId}`);
+    return storedId;
+  }
+
+  // 2. Check hardcoded overrides — handles cases where Pipedrive display name
   // differs from the full name stored in the commission calculator (e.g. Tad).
   if (PIPEDRIVE_USER_ID_OVERRIDES[aeName] !== undefined) {
     const overrideId = PIPEDRIVE_USER_ID_OVERRIDES[aeName];
@@ -268,9 +278,10 @@ export async function findPipedriveUserId(aeName: string): Promise<number | null
     return overrideId;
   }
 
+  // 3. Fall back to live name-matching (only if no stored ID or override)
   const resp = (await pipedriveGet("users")) as { data: PipedriveUser[] | null };
   const users = resp.data || [];
-  console.log(`[Pipedrive Sync] Looking for user: "${aeName}" among ${users.length} Pipedrive users`);
+  console.log(`[Pipedrive Sync] Looking for user: "${aeName}" among ${users.length} Pipedrive users (no stored ID)`);
 
   // Exact match first
   const exact = users.find(
@@ -570,7 +581,7 @@ export const pipedriveSyncRouter = router({
       }> = [];
 
       for (const ae of allProfiles) {
-        const pdUserId = await findPipedriveUserId(ae.name);
+        const pdUserId = await findPipedriveUserId(ae.name, ae.pipedriveUserId);
 
         // Use join date as fromDate when useJoinDate=true
         const aeFromDate = input.useJoinDate
@@ -667,7 +678,7 @@ export const pipedriveSyncRouter = router({
       const skippedAes: string[] = [];
 
       for (const ae of allProfiles) {
-        const pdUserId = await findPipedriveUserId(ae.name);
+        const pdUserId = await findPipedriveUserId(ae.name, ae.pipedriveUserId);
         if (!pdUserId) {
           skippedAes.push(ae.name);
           continue;
@@ -782,7 +793,7 @@ export const pipedriveSyncRouter = router({
       const profile = await getAeProfileById(aeId);
       if (!profile) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const pdUserId = await findPipedriveUserId(profile.name);
+      const pdUserId = await findPipedriveUserId(profile.name, profile.pipedriveUserId);
       if (!pdUserId) {
         return {
           deals: [],
@@ -875,7 +886,7 @@ export const pipedriveSyncRouter = router({
       const errors: string[] = [];
 
       for (const ae of allProfiles) {
-        const pdUserId = await findPipedriveUserId(ae.name);
+        const pdUserId = await findPipedriveUserId(ae.name, ae.pipedriveUserId);
         if (!pdUserId) {
           skipped.push(`${ae.name} (not found in Pipedrive)`);
           continue;

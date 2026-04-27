@@ -976,3 +976,12 @@
 - [x] Fixed Julian's Pipedrive user ID to 25094488 (was 25357908)
 - [x] Found and imported McQuillen deal from Pipedrive
 - [x] All 121 tests passing
+
+## Pipedrive ID Audit & Auto-Sync Fix - Apr 27 2026
+- [x] Audit all AE Pipedrive user IDs against live Pipedrive API
+- [x] Fix any mismatched user IDs (Ben: null→25468180, Henry: 25357906→15871239, Joe: 25357907→23861740, Toby: 25357910→24052953)
+- [x] Fix findPipedriveUserId() to use stored DB ID as first priority (not live name-matching)
+- [x] Updated all 4 call sites in pipedriveSync.ts to pass stored pipedriveUserId
+- [x] Pull Ben Sears April demos from Pipedrive (6 demos found and imported)
+- [x] Ensure sync is fully automatic and seamless
+- [x] All 121 tests passing
