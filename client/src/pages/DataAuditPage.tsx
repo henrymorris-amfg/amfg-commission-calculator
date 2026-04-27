@@ -14,6 +14,9 @@ import {
   ShieldAlert,
   TrendingUp,
   XCircle,
+  Wifi,
+  WifiOff,
+  Bell,
 } from "lucide-react";
 import { computeActiveWeeks } from "../../../shared/commission";
 
@@ -134,6 +137,16 @@ export default function DataAuditPage() {
     errors: string[];
     totalImported: number;
   } | null>(null);
+
+  const pdHealthQuery = trpc.pipedriveSync.pipedriveIdHealth.useQuery(undefined, {
+    retry: false,
+    enabled: !!ae && ae.isTeamLeader,
+  });
+
+  const testNotifMutation = trpc.pipedriveSync.testSkipNotification.useMutation({
+    onSuccess: () => toast.success("Test notification sent — check your Manus notifications"),
+    onError: (err) => toast.error(`Failed: ${err.message}`),
+  });
 
   const reimportMutation = trpc.pipedriveSync.importDeals.useMutation({
     onSuccess: (data) => {
@@ -529,6 +542,80 @@ export default function DataAuditPage() {
             </div>
           </>
         )}
+
+        {/* ─── Pipedrive ID Health Check ─────────────────────────────────────── */}
+        <div className="rounded-2xl bg-card border border-border p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Wifi className="w-4 h-4 text-primary" />
+                Pipedrive User ID Health
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Every active AE must have a stored Pipedrive user ID. Missing IDs cause the daily sync to skip that AE and send you a notification.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => testNotifMutation.mutate()}
+              disabled={testNotifMutation.isPending}
+              className="gap-2 shrink-0"
+            >
+              {testNotifMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Bell className="w-3.5 h-3.5" />
+              )}
+              Test Skip Notification
+            </Button>
+          </div>
+
+          {pdHealthQuery.isLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Loading Pipedrive ID status…
+            </div>
+          )}
+
+          {pdHealthQuery.data && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {pdHealthQuery.data.map((ae) => (
+                <div
+                  key={ae.id}
+                  className={`rounded-xl border p-3 flex items-center gap-2.5 ${
+                    ae.hasId
+                      ? "border-emerald-500/30 bg-emerald-500/8"
+                      : "border-red-500/40 bg-red-500/10"
+                  }`}
+                >
+                  {ae.hasId ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ) : (
+                    <WifiOff className="w-4 h-4 text-red-400 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{ae.name}</p>
+                    <p className={`text-xs mt-0.5 font-mono ${
+                      ae.hasId ? "text-emerald-400" : "text-red-400"
+                    }`}>
+                      {ae.hasId ? `ID: ${ae.pipedriveUserId}` : "⚠ No ID set"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pdHealthQuery.data && pdHealthQuery.data.some((a) => !a.hasId) && (
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-400 flex items-start gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>
+                <strong>Action required:</strong> One or more AEs have no Pipedrive user ID. The daily sync will skip them and send you a notification. Fix by going to Admin → AE Profiles and setting their Pipedrive user ID.
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

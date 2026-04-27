@@ -24,7 +24,7 @@ import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { getAeIdFromCtx } from "./aeTokenUtils";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { getDb } from "./db";
-import { pipedriveDemoActivities } from "../drizzle/schema";
+import { pipedriveDemoActivities, aeProfiles } from "../drizzle/schema";
 import {
   getAllAeProfiles,
   getAeProfileById,
@@ -319,9 +319,13 @@ async function fetchWonDealsForUser(
       status: "won",
     });
 
-    // Filter by date range, exclude implementation/CS deals, and deduplicate by deal ID
+    // Filter by date range, exclude implementation/CS deals, and deduplicate by deal ID.
+    // IMPORTANT: Also validate pipeline_id on each deal — Pipedrive's API sometimes returns
+    // deals from other pipelines regardless of the pipeline_id query param. This was the root
+    // cause of Julian Earl's implementation deal (pipeline 24) appearing in target pipeline queries.
     for (const d of deals) {
       if (dealsById.has(d.id)) continue; // already counted from another pipeline
+      if (!TARGET_PIPELINE_IDS.includes(d.pipeline_id)) continue; // reject deals from non-target pipelines
       if (isDealExcluded(d.title)) continue; // skip implementation/CS/onboarding deals
       const wonDate = d.won_time || d.close_time;
       if (!wonDate) continue;
@@ -1037,6 +1041,51 @@ export const pipedriveSyncRouter = router({
         totalImported: imported.length,
       };
     }),
+
+  /**
+   * Health check: returns all active AEs with their Pipedrive user ID status.
+   * Green = ID is set, Red = ID is missing (sync will skip this AE and notify owner).
+   * Team leader only.
+   */
+  pipedriveIdHealth: publicProcedure.query(async ({ ctx }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    // Only team leaders can view this
+    const [caller] = await db.select().from(aeProfiles).where(eq(aeProfiles.id, aeId)).limit(1);
+    if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
+
+    const profiles = await db.select().from(aeProfiles).where(eq(aeProfiles.isActive, true));
+    return profiles.map((p) => ({
+      id: p.id,
+      name: p.name,
+      pipedriveUserId: p.pipedriveUserId,
+      hasId: p.pipedriveUserId != null,
+      isTeamLeader: p.isTeamLeader,
+    }));
+  }),
+
+  /**
+   * Test the missing Pipedrive ID notification by firing a fake skip notification.
+   * Team leader only — for verifying the notification channel is working.
+   */
+  testSkipNotification: publicProcedure.mutation(async ({ ctx }) => {
+    const aeId = getAeIdFromCtx(ctx);
+    if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const [caller] = await db.select().from(aeProfiles).where(eq(aeProfiles.id, aeId)).limit(1);
+    if (!caller?.isTeamLeader) throw new TRPCError({ code: "FORBIDDEN", message: "Team leader only" });
+
+    await notifyOwner({
+      title: "⚠️ [TEST] Pipedrive sync skip notification",
+      content: `This is a test notification confirming that the Pipedrive sync skip alert is working correctly.\n\nIn a real scenario, this notification fires when an AE has no stored pipedriveUserId and is skipped during the daily sync. To fix: go to Admin → AE Profiles and set the Pipedrive user ID for the affected AE.\n\nTriggered by: ${caller.name} at ${new Date().toISOString()}`,
+    });
+    return { sent: true };
+  }),
 
   /**
    * Check if the Pipedrive API key is configured and working.

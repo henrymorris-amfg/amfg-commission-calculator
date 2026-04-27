@@ -1000,3 +1000,14 @@
 ## Missing Pipedrive ID Notification & Joe Tier Verification - Apr 27 2026
 - [x] Notify owner when Pipedrive sync skips an AE due to missing pipedriveUserId (notifyOwner call added to findPipedriveUserId)
 - [x] Verify Joe Payne April tier with corrected 11 demos — GOLD (4.50 demos/wk, 203.67 dials/wk, $27,613 ARR/month)
+
+## Leaderboard Fix, Julian ARR Fix, Admin Health Check, Robustness - Apr 27 2026
+- [x] Fix leaderboard showing all AEs as Bronze — root cause: tier used period-filtered metrics (only April in Q2), now uses all-time last-3-months
+- [x] Fix Julian Earl's incorrect March 2026 ARR — $5k from implementation deal (pipeline 24) that leaked through; DB corrected to $0
+- [x] Add pipeline_id validation to pipedriveSync.ts AND weeklySync.ts — Pipedrive API ignores pipeline_id filter and returns deals from all pipelines
+- [x] Add isDealExcluded filter to weeklySync.ts (was missing from the daily automated sync)
+- [x] Fix weeklySync.ts findPipedriveUserId to use stored DB ID first (was still using old name-matching)
+- [x] Add notifyOwner to weeklySync.ts when AE is skipped due to missing Pipedrive ID
+- [x] Add Pipedrive ID health check table to Data Audit page (green/red per AE)
+- [x] Add Test Skip Notification button to Data Audit page
+- [x] All 121 tests passing

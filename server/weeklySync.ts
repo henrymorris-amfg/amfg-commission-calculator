@@ -15,6 +15,7 @@
 
 import cron from "node-cron";
 import { getAllAeProfiles, getAeProfileById, getMetricsForMonth, upsertMonthlyMetric } from "./db";
+import { notifyOwner } from "./_core/notification";
 
 // ─── Shared helpers (duplicated here to avoid circular imports) ───────────────
 
@@ -22,6 +23,19 @@ const SPREADSHEET_ID = "11HPOZ7mkkN-OwhlALdGWicQUzCI0Fkuq_tz9tl1N1qc";
 const SHEET_GID = "321906789";
 const PIPEDRIVE_BASE = "https://api.pipedrive.com/v1";
 const TARGET_PIPELINE_IDS = [20, 12, 10]; // Machining, Closing SMB, Closing Enterprise
+
+// Deal titles containing these keywords are implementation/CS deals and must NOT generate commission.
+const DEAL_EXCLUSION_KEYWORDS = [
+  "implementation",
+  "customer success",
+  " cs ", // with spaces to avoid matching "plastics"
+  "onboarding",
+  "- cs",
+];
+function isDealExcluded(title: string): boolean {
+  const lower = " " + (title || "").toLowerCase() + " ";
+  return DEAL_EXCLUSION_KEYWORDS.some((kw) => lower.includes(kw));
+}
 
 // ─── Google token reader ──────────────────────────────────────────────────────
 
@@ -246,36 +260,46 @@ async function pipedriveGetAll(
 
 // Known Pipedrive user ID overrides for AEs whose display name in Pipedrive
 // does not match their full name in the commission calculator.
+// NOTE: These overrides are only a last-resort fallback. The stored pipedriveUserId
+// in the database is always used first (see findPipedriveUserId below).
 const PIPEDRIVE_USER_ID_OVERRIDES: Record<string, number> = {
   "Tad Tamulevicius": 25357905, // Pipedrive display name is just "Tad"
 };
 
-async function findPipedriveUserId(aeName: string): Promise<number | null> {
-  // Check hardcoded overrides first — handles name mismatches (e.g. Tad)
+/**
+ * Resolve the Pipedrive user ID for an AE.
+ * Priority order:
+ *   1. Stored pipedriveUserId in the database (set via Admin panel)
+ *   2. Hardcoded PIPEDRIVE_USER_ID_OVERRIDES (for known name mismatches)
+ *   3. SKIP — name-matching has been permanently removed to prevent wrong-ID bugs.
+ *      If neither source has an ID, the AE is skipped and the owner is notified.
+ */
+async function findPipedriveUserId(
+  aeName: string,
+  storedId?: number | null
+): Promise<number | null> {
+  // 1. Stored DB ID is always authoritative
+  if (storedId != null) return storedId;
+
+  // 2. Hardcoded overrides for known name mismatches
   if (PIPEDRIVE_USER_ID_OVERRIDES[aeName] !== undefined) {
     return PIPEDRIVE_USER_ID_OVERRIDES[aeName];
   }
 
-  const apiKey = process.env.PIPEDRIVE_API_KEY;
-  if (!apiKey) return null;
-
-  const url = new URL(`${PIPEDRIVE_BASE}/users`);
-  url.searchParams.set("api_token", apiKey);
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
-
-  const resp = (await res.json()) as { data: PipedriveUser[] | null };
-  const users = resp.data || [];
-
-  const exact = users.find((u) => u.name.toLowerCase() === aeName.toLowerCase());
-  if (exact) return exact.id;
-
-  const nameParts = aeName.toLowerCase().split(" ");
-  const partial = users.find((u) => {
-    const uParts = u.name.toLowerCase().split(" ");
-    return nameParts.every((part) => uParts.some((up) => up.includes(part)));
+  // 3. No ID found — log loudly and notify owner
+  console.warn(
+    `[WeeklySync] WARNING: No Pipedrive user ID found for AE "${aeName}". ` +
+    `This AE will be SKIPPED in today's sync. ` +
+    `Fix: go to Admin → AE Profiles and set their Pipedrive user ID.`
+  );
+  await notifyOwner({
+    title: `⚠️ Pipedrive sync skipped: ${aeName}`,
+    content:
+      `The daily Pipedrive sync skipped "${aeName}" because no Pipedrive user ID is stored for them.\n\n` +
+      `Their demo and ARR data will NOT be updated until this is fixed.\n\n` +
+      `To fix: go to Admin → AE Profiles → set the Pipedrive user ID for ${aeName}.`,
   });
-  return partial?.id ?? null;
+  return null;
 }
 
 // ─── Sync operations ──────────────────────────────────────────────────────────
@@ -372,7 +396,7 @@ async function runPipedriveSync(months = 2): Promise<SyncResult["pipedriveSync"]
     let recordsUpdated = 0;
 
     for (const ae of allProfiles) {
-      const pdUserId = await findPipedriveUserId(ae.name);
+      const pdUserId = await findPipedriveUserId(ae.name, ae.pipedriveUserId);
       if (!pdUserId) {
         skippedAes.push(ae.name);
         continue;
@@ -394,6 +418,11 @@ async function runPipedriveSync(months = 2): Promise<SyncResult["pipedriveSync"]
         });
         for (const d of deals) {
           if (dealMap.has(d.id)) continue; // already seen from another pipeline
+          // Validate pipeline_id: Pipedrive API sometimes returns deals from other pipelines
+          // regardless of the pipeline_id query param (confirmed with deal #29845, pipeline 24).
+          if (!TARGET_PIPELINE_IDS.includes(d.pipeline_id)) continue;
+          // Skip implementation/CS/onboarding deals — they are not new ARR
+          if (isDealExcluded(d.title)) continue;
           const wonDate = (d.won_time || d.close_time || "").substring(0, 10);
           if (wonDate >= fromDate && wonDate <= toDate) {
             dealMap.set(d.id, d);

@@ -2376,8 +2376,7 @@ export const appRouter = router({
           .from(aeProfiles)
           .where(eq(aeProfiles.isActive, true));
 
-        // Get metrics for all AEs in the period
-        // Use year*100+month integer comparison to avoid cross-year edge cases
+        // Get metrics for the selected period (for leaderboard stats: dials, demos, deals)
         const fromYearMonth = fromYear * 100 + fromMonth;
         const toYearMonth = toYear * 100 + toMonth;
         const metricsRows = await db
@@ -2389,6 +2388,13 @@ export const appRouter = router({
               lte(sql`${monthlyMetrics.year} * 100 + ${monthlyMetrics.month}`, toYearMonth)
             )
           );
+
+        // Get ALL metrics for tier calculation (need last 3 months of all-time data, not just period)
+        // BUG FIX: Using period-filtered metrics for tier was causing everyone to show Bronze
+        // because e.g. current_quarter only has April data (1 month), giving too-low rolling averages.
+        const allMetricsRows = await db
+          .select()
+          .from(monthlyMetrics);
 
         // Get deals for all AEs in the period (for ARR signed)
         // ONLY include deals where contractStartDate is in the period and NOT churned
@@ -2413,18 +2419,26 @@ export const appRouter = router({
           const totalArrUsd = myDeals.reduce((s, d) => s + Number(d.arrUsd), 0);
           const dealCount = myDeals.length;
 
-          // Current tier (based on most recent 3 months)
-          const recentMetrics = myMetrics
-            .sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month)
+          // Tier: always based on the PREVIOUS 3 calendar months (all-time data, not period-filtered).
+          // The tier determines commission rate and should reflect current performance, not the
+          // leaderboard period. Using period-filtered data caused everyone to show Bronze when
+          // the selected period only had 1-2 months of data (e.g. current quarter in April).
+          const allMyMetrics = allMetricsRows
+            .filter((m) => m.aeId === profile.id)
+            .sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
+          // Use the 3 months before the current month (same logic as individual AE dashboard)
+          const prev3 = allMyMetrics
+            .filter((m) => m.year * 100 + m.month < now.getFullYear() * 100 + (now.getMonth() + 1))
             .slice(0, 3);
           const { avgArrUsd, avgDemosPw, avgDialsPw } = computeRollingAverages(
-            recentMetrics.map((m) => ({
+            prev3.map((m) => ({
               year: m.year,
               month: m.month,
               arrUsd: Number(m.arrUsd),
               demosTotal: m.demosTotal,
               dialsTotal: m.dialsTotal,
-            })) as any,
+              retentionRate: m.retentionRate != null ? Number(m.retentionRate) : null,
+            })),
             new Date(profile.joinDate)
           );
           const tierResult = calculateTier({
