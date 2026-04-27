@@ -1,32 +1,71 @@
 /**
- * Tier Forecast Helper — Degrading Forecast
- * Shows what happens to tier if AE does NOTHING for the next 3 months.
+ * Tier Forecast Helper — Actionable Month-by-Month Targets
+ *
+ * For each of the next 3 months, answers:
+ *   "What do I need to hit THIS month to maintain/improve my tier?"
  *
  * Key design:
- * - Assumes 0 new deals/activities for the next 3 months
- * - Rolling 3-month window shifts, old high-ARR months roll off
- * - Shows projected tier for each month + exact activities needed to stay at current tier or reach Gold
+ * - The rolling 3-month average shifts each month: the oldest month drops off,
+ *   the new month's activity is added.
+ * - For each future month we solve backwards: given the 2 months that will remain
+ *   in the window, what does the new month need to contribute so the average
+ *   meets the target tier threshold?
+ * - "Do nothing" projection is shown alongside the target so the AE can see
+ *   the gap clearly.
  */
-import { STANDARD_TARGETS, TEAM_LEADER_TARGETS, Tier, calculateTier } from "../shared/commission";
+import {
+  STANDARD_TARGETS,
+  TEAM_LEADER_TARGETS,
+  Tier,
+  calculateTier,
+  computeRollingAverages,
+  MONTH_NAMES,
+} from "../shared/commission";
 
+/** @deprecated use MonthTarget instead */
 export interface MonthProjection {
-  month: string; // "April", "May", "June"
+  month: string;
   projectedTier: Tier;
-  projectedMetrics: {
-    arrUsd: number;
-    demosPw: number;
-    dialsPw: number;
+  projectedMetrics: { arrUsd: number; demosPw: number; dialsPw: number };
+  gapToCurrentTier: { arrUsd: number; demosPw: number; dialsPw: number };
+  gapToGold: { arrUsd: number; demosPw: number; dialsPw: number };
+}
+
+export interface MonthTarget {
+  /** e.g. "May 2026" */
+  label: string;
+  year: number;
+  month: number; // 1-12
+
+  /** What happens if the AE does nothing (0 new activity) */
+  doNothing: {
+    projectedTier: Tier;
+    avgArrUsd: number;
+    avgDemosPw: number;
+    avgDialsPw: number;
   };
-  gapToCurrentTier: {
-    arrUsd: number;
-    demosPw: number;
-    dialsPw: number;
+
+  /** Minimum targets to MAINTAIN current tier this month */
+  maintainCurrent: {
+    tier: Tier;
+    /** Minimum demos to do in this calendar month */
+    demosNeeded: number;
+    /** Minimum dials to do in this calendar month */
+    dialsNeeded: number;
+    /** Minimum new ARR to close in this calendar month */
+    arrNeeded: number;
+    /** Whether each metric is already covered by the rolling window */
+    alreadyMet: { demos: boolean; dials: boolean; arr: boolean };
   };
-  gapToGold: {
-    arrUsd: number;
-    demosPw: number;
-    dialsPw: number;
-  };
+
+  /** Targets to IMPROVE to the next tier this month (null if already at Gold) */
+  improveTo: {
+    tier: Tier;
+    demosNeeded: number;
+    dialsNeeded: number;
+    arrNeeded: number;
+    alreadyMet: { demos: boolean; dials: boolean; arr: boolean };
+  } | null;
 }
 
 export interface TierForecast {
@@ -36,170 +75,159 @@ export interface TierForecast {
     demosPw: number;
     dialsPw: number;
   };
-  weeksLeftInQuarter: number;
-  forecastMonths: MonthProjection[];
-  /** What the AE needs to do to stay at current tier or reach Gold */
+  forecastMonths: MonthTarget[];
   actionableTargets: {
     targetTier: Tier;
-    /** Extra effort needed per month on top of current performance */
-    extraNeeded: {
-      arrUsd: number;
-      demosPw: number;
-      dialsPw: number;
-    };
-    /** Whether the AE is already meeting each threshold */
-    alreadyMeets: {
-      arr: boolean;
-      demos: boolean;
-      dials: boolean;
-    };
+    extraNeeded: { arrUsd: number; demosPw: number; dialsPw: number };
+    alreadyMeets: { arr: boolean; demos: boolean; dials: boolean };
   };
+}
+
+/** Solve: what does month N need to contribute so the 3-month average meets the threshold? */
+function solveNeeded(sumOfOther2: number, targetAvg: number, divisor: number): number {
+  return Math.max(0, targetAvg * divisor - sumOfOther2);
 }
 
 export function calculateTierForecast(
   currentTier: Tier,
   currentMetrics: { arrUsd: number; demosPw: number; dialsPw: number },
   allMonthsData: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }>,
-  isTeamLeader: boolean = false
+  isTeamLeader: boolean = false,
+  joinDate?: Date | null
 ): TierForecast {
   const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
   const tierOrder: Tier[] = ["bronze", "silver", "gold"];
-  const currentTierIndex = tierOrder.indexOf(currentTier);
+  const currentTierIdx = tierOrder.indexOf(currentTier);
+  const nextTier: Tier = currentTierIdx < 2 ? tierOrder[currentTierIdx + 1] : "gold";
 
-  // Determine next tier
-  const nextTier: Tier = currentTierIndex < 2 ? tierOrder[currentTierIndex + 1] : "gold";
-  const nextTierTargets = targets[nextTier as "silver" | "gold"];
-
-  // Calculate weeks left in quarter
   const now = new Date();
-  const currentMonth = now.getMonth() + 1; // 1-12
+  const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
-  const quarterStart = Math.floor((currentMonth - 1) / 3) * 3 + 1; // 1, 4, 7, 10
-  const quarterEnd = quarterStart + 2;
-  const daysLeftInQuarter = new Date(currentYear, quarterEnd, 0).getDate() - now.getDate();
-  const weeksLeftInQuarter = Math.ceil(daysLeftInQuarter / 7);
 
-  // Project next 3 months with degrading metrics (0% growth, just rolling window)
-  const forecastMonths: MonthProjection[] = [];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  console.log("[calculateTierForecast] now=", now.toISOString(), "currentMonth=", currentMonth, "currentYear=", currentYear);
-
-  // Create a map of (year, month) -> metrics for fast lookup
+  // Build a fast lookup map
   const monthMap = new Map<string, { arrUsd: number; demosTotal: number; dialsTotal: number }>();
   for (const m of allMonthsData) {
-    const key = `${m.year}-${String(m.month).padStart(2, "0")}`;
-    monthMap.set(key, { arrUsd: m.arrUsd, demosTotal: m.demosTotal, dialsTotal: m.dialsTotal });
+    monthMap.set(`${m.year}-${String(m.month).padStart(2, "0")}`, {
+      arrUsd: m.arrUsd, demosTotal: m.demosTotal, dialsTotal: m.dialsTotal,
+    });
   }
 
-
-  // Helper: get the 3-month rolling window ending in a given month
-  const getRollingWindow = (
-    year: number,
-    month: number
-  ): { arrUsd: number; demosTotal: number; dialsTotal: number }[] => {
-    const window = [];
-    for (let i = 2; i >= 0; i--) {
+  /** Get the 3-month window [month-2, month-1, month] for a given target month */
+  const getWindow = (year: number, month: number) => {
+    const result: Array<{ year: number; month: number; arrUsd: number; demosTotal: number; dialsTotal: number }> = [];
+    for (let offset = 2; offset >= 0; offset--) {
+      let m = month - offset;
       let y = year;
-      let m = month - i;
-      while (m < 1) {
-        m += 12;
-        y -= 1;
-      }
+      while (m < 1) { m += 12; y -= 1; }
       const key = `${y}-${String(m).padStart(2, "0")}`;
-      const data = monthMap.get(key) || { arrUsd: 0, demosTotal: 0, dialsTotal: 0 };
-      window.push(data);
+      const data = monthMap.get(key) ?? { arrUsd: 0, demosTotal: 0, dialsTotal: 0 };
+      result.push({ year: y, month: m, ...data });
     }
-    return window;
+    return result;
   };
 
-  // For each of the next 3 months, calculate the rolling window and projected tier
+  const forecastMonths: MonthTarget[] = [];
+
   for (let i = 1; i <= 3; i++) {
-    // Create a date on the 1st of the target month to avoid day-of-month overflow
-    // (e.g., March 31 + 1 month would become May 1 instead of April 1)
-    const projectionDate = new Date(currentYear, currentMonth - 1 + i, 1);
-    const projectionMonth = projectionDate.getMonth() + 1;
-    const projectionYear = projectionDate.getFullYear();
-    const monthName = monthNames[projectionDate.getMonth()];
+    let projYear = currentYear;
+    let projMonth = currentMonth + i;
+    if (projMonth > 12) { projMonth -= 12; projYear += 1; }
 
-    // Get the 3-month rolling window ending in this projection month
-    const window = getRollingWindow(projectionYear, projectionMonth);
+    const label = `${MONTH_NAMES[projMonth - 1]} ${projYear}`;
+    const window = getWindow(projYear, projMonth);
+    const other2 = window.slice(0, 2);
+    const sumOther2Arr = other2.reduce((s, m) => s + m.arrUsd, 0);
+    const sumOther2Demos = other2.reduce((s, m) => s + m.demosTotal, 0);
+    const sumOther2Dials = other2.reduce((s, m) => s + m.dialsTotal, 0);
 
-
-    // Calculate rolling averages from the window
-    const totalArr = window.reduce((sum, m) => sum + m.arrUsd, 0);
-    const totalDemos = window.reduce((sum, m) => sum + m.demosTotal, 0);
-    const totalDials = window.reduce((sum, m) => sum + m.dialsTotal, 0);
-
-
-    const projectedArrUsd = totalArr / 3;
-    const projectedDemosPw = totalDemos / (3 * 4.33); // Demos per week over 3-month period
-    const projectedDialsPw = totalDials / (3 * 4.33); // Dials per week over 3-month period
-
-    // Determine projected tier using the same logic as calculateTier
-    const tierResult = calculateTier({
-      avgArrUsd: projectedArrUsd,
-      avgDemosPw: projectedDemosPw,
-      avgDialsPw: projectedDialsPw,
+    // "Do nothing" projection: 0 new activity in projMonth
+    const doNothingWindow = [...other2, { year: projYear, month: projMonth, arrUsd: 0, demosTotal: 0, dialsTotal: 0 }];
+    const doNothingRolling = computeRollingAverages(
+      doNothingWindow.map(m => ({ year: m.year, month: m.month, arrUsd: m.arrUsd, demosTotal: m.demosTotal, dialsTotal: m.dialsTotal })),
+      joinDate
+    );
+    const doNothingTierResult = calculateTier({
+      avgArrUsd: doNothingRolling.avgArrUsd,
+      avgDemosPw: doNothingRolling.avgDemosPw,
+      avgDialsPw: doNothingRolling.avgDialsPw,
       avgRetentionRate: null,
       isNewJoiner: false,
       isTeamLeader,
     });
-    const projectedTier = tierResult.tier;
 
-    // Get the targets for the current tier (for gap calculation)
-    const bronzeTargets = { arrUsd: 15000, demosPw: 2, dialsPw: 100, retentionMin: 0 };
-    const currentTierTargets =
-      currentTier === "silver" ? targets.silver : currentTier === "gold" ? targets.gold : bronzeTargets;
+    // Solve for MAINTAIN current tier
+    const maintainTierTargets = currentTier === "gold" ? targets.gold : currentTier === "silver" ? targets.silver : null;
+    let maintainDemosNeeded = 0;
+    let maintainDialsNeeded = 0;
+    let maintainArrNeeded = 0;
+    if (maintainTierTargets) {
+      maintainDemosNeeded = Math.ceil(solveNeeded(sumOther2Demos, maintainTierTargets.demosPw, 12));
+      maintainDialsNeeded = Math.ceil(solveNeeded(sumOther2Dials, maintainTierTargets.dialsPw, 12));
+      maintainArrNeeded = Math.ceil(solveNeeded(sumOther2Arr, maintainTierTargets.arrUsd, 3));
+    }
 
-    // Calculate gaps
-    const gapToCurrentTier = {
-      arrUsd: Math.max(0, currentTierTargets.arrUsd - projectedArrUsd),
-      demosPw: Math.max(0, currentTierTargets.demosPw - projectedDemosPw),
-      dialsPw: Math.max(0, currentTierTargets.dialsPw - projectedDialsPw),
-    };
-
-    const gapToGold = {
-      arrUsd: Math.max(0, targets.gold.arrUsd - projectedArrUsd),
-      demosPw: Math.max(0, targets.gold.demosPw - projectedDemosPw),
-      dialsPw: Math.max(0, targets.gold.dialsPw - projectedDialsPw),
-    };
+    // Solve for IMPROVE to next tier
+    let improveTo: MonthTarget["improveTo"] = null;
+    if (currentTier !== "gold") {
+      const improveTierTargets = targets[nextTier as "silver" | "gold"];
+      const improveDemosNeeded = Math.ceil(solveNeeded(sumOther2Demos, improveTierTargets.demosPw, 12));
+      const improveDialsNeeded = Math.ceil(solveNeeded(sumOther2Dials, improveTierTargets.dialsPw, 12));
+      const improveArrNeeded = Math.ceil(solveNeeded(sumOther2Arr, improveTierTargets.arrUsd, 3));
+      improveTo = {
+        tier: nextTier,
+        demosNeeded: improveDemosNeeded,
+        dialsNeeded: improveDialsNeeded,
+        arrNeeded: improveArrNeeded,
+        alreadyMet: {
+          demos: improveDemosNeeded === 0,
+          dials: improveDialsNeeded === 0,
+          arr: improveArrNeeded === 0,
+        },
+      };
+    }
 
     forecastMonths.push({
-      month: monthName,
-      projectedTier,
-      projectedMetrics: {
-        arrUsd: Math.round(projectedArrUsd),
-        demosPw: Math.round(projectedDemosPw * 100) / 100,
-        dialsPw: Math.round(projectedDialsPw),
+      label,
+      year: projYear,
+      month: projMonth,
+      doNothing: {
+        projectedTier: doNothingTierResult.tier,
+        avgArrUsd: doNothingRolling.avgArrUsd,
+        avgDemosPw: doNothingRolling.avgDemosPw,
+        avgDialsPw: doNothingRolling.avgDialsPw,
       },
-      gapToCurrentTier,
-      gapToGold,
+      maintainCurrent: {
+        tier: currentTier,
+        demosNeeded: maintainDemosNeeded,
+        dialsNeeded: maintainDialsNeeded,
+        arrNeeded: maintainArrNeeded,
+        alreadyMet: {
+          demos: maintainDemosNeeded === 0,
+          dials: maintainDialsNeeded === 0,
+          arr: maintainArrNeeded === 0,
+        },
+      },
+      improveTo,
     });
   }
 
-  // Calculate actionable targets
-  const bronzeTargets = { arrUsd: 15000, demosPw: 2, dialsPw: 100, retentionMin: 0 };
-  const currentTierTargets =
-    currentTier === "silver" ? targets.silver : currentTier === "gold" ? targets.gold : bronzeTargets;
+  // Legacy actionableTargets
+  const legacyNextTierTargets = targets[nextTier as "silver" | "gold"];
   const actionableTargets = {
     targetTier: nextTier,
     extraNeeded: {
-      arrUsd: Math.max(0, nextTierTargets.arrUsd - currentMetrics.arrUsd),
-      demosPw: Math.max(0, nextTierTargets.demosPw - currentMetrics.demosPw),
-      dialsPw: Math.max(0, nextTierTargets.dialsPw - currentMetrics.dialsPw),
+      arrUsd: Math.max(0, legacyNextTierTargets.arrUsd - currentMetrics.arrUsd),
+      demosPw: Math.max(0, legacyNextTierTargets.demosPw - currentMetrics.demosPw),
+      dialsPw: Math.max(0, legacyNextTierTargets.dialsPw - currentMetrics.dialsPw),
     },
     alreadyMeets: {
-      arr: currentMetrics.arrUsd >= nextTierTargets.arrUsd,
-      demos: currentMetrics.demosPw >= nextTierTargets.demosPw,
-      dials: currentMetrics.dialsPw >= nextTierTargets.dialsPw,
+      arr: currentMetrics.arrUsd >= legacyNextTierTargets.arrUsd,
+      demos: currentMetrics.demosPw >= legacyNextTierTargets.demosPw,
+      dials: currentMetrics.dialsPw >= legacyNextTierTargets.dialsPw,
     },
   };
 
-  return {
-    currentTier,
-    currentMetrics,
-    weeksLeftInQuarter,
-    forecastMonths,
-    actionableTargets,
-  };
+  return { currentTier, currentMetrics, forecastMonths, actionableTargets };
 }
+
+

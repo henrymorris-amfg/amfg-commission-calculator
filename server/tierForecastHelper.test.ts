@@ -47,22 +47,25 @@ describe("tierForecastHelper", () => {
       // Verify the forecast shows degradation
       expect(forecast.forecastMonths).toHaveLength(3);
 
-      // April: Feb/Mar/Apr rolling window = ($15,006 + $0 + $0) / 3 = $5,002
-      expect(forecast.forecastMonths[0].month).toBe("Apr");
-      expect(forecast.forecastMonths[0].projectedMetrics.arrUsd).toBe(5002);
+      // April: label should be "April 2026"
+      expect(forecast.forecastMonths[0].label).toBe("April 2026");
+      // April do-nothing: window is Feb/Mar/Apr = ($15,006 + $0 + $0) / 3 = $5,002
+      expect(forecast.forecastMonths[0].doNothing.avgArrUsd).toBeCloseTo(5002, 0);
 
-      // May: Mar/Apr/May rolling window = ($0 + $0 + $0) / 3 = $0
-      expect(forecast.forecastMonths[1].month).toBe("May");
-      expect(forecast.forecastMonths[1].projectedMetrics.arrUsd).toBe(0);
+      // May: label should be "May 2026"
+      expect(forecast.forecastMonths[1].label).toBe("May 2026");
+      // May do-nothing: window is Mar/Apr/May = ($0 + $0 + $0) / 3 = $0
+      expect(forecast.forecastMonths[1].doNothing.avgArrUsd).toBe(0);
 
-      // June: Apr/May/Jun rolling window = ($0 + $0 + $0) / 3 = $0
-      expect(forecast.forecastMonths[2].month).toBe("Jun");
-      expect(forecast.forecastMonths[2].projectedMetrics.arrUsd).toBe(0);
+      // June: label should be "June 2026"
+      expect(forecast.forecastMonths[2].label).toBe("June 2026");
+      // June do-nothing: window is Apr/May/Jun = ($0 + $0 + $0) / 3 = $0
+      expect(forecast.forecastMonths[2].doNothing.avgArrUsd).toBe(0);
 
-      // Verify that the forecast shows degradation (April > May = June)
-      const aprArr = forecast.forecastMonths[0].projectedMetrics.arrUsd;
-      const mayArr = forecast.forecastMonths[1].projectedMetrics.arrUsd;
-      const junArr = forecast.forecastMonths[2].projectedMetrics.arrUsd;
+      // Verify degradation: April ARR > May ARR = June ARR
+      const aprArr = forecast.forecastMonths[0].doNothing.avgArrUsd;
+      const mayArr = forecast.forecastMonths[1].doNothing.avgArrUsd;
+      const junArr = forecast.forecastMonths[2].doNothing.avgArrUsd;
 
       expect(aprArr).toBeGreaterThan(mayArr);
       expect(mayArr).toBe(junArr);
@@ -78,13 +81,11 @@ describe("tierForecastHelper", () => {
       // May 2026: $20,000 ARR (deal continues)
       // Jun 2026: $20,000 ARR (deal continues)
 
+      // Only pass historical months (Jan/Feb/Mar) — future months are not in the map
       const allMonthsData = [
         { year: 2026, month: 1, arrUsd: 20000, demosTotal: 10, dialsTotal: 100 },
         { year: 2026, month: 2, arrUsd: 20000, demosTotal: 0, dialsTotal: 0 },
         { year: 2026, month: 3, arrUsd: 20000, demosTotal: 0, dialsTotal: 0 },
-        { year: 2026, month: 4, arrUsd: 20000, demosTotal: 0, dialsTotal: 0 },
-        { year: 2026, month: 5, arrUsd: 20000, demosTotal: 0, dialsTotal: 0 },
-        { year: 2026, month: 6, arrUsd: 20000, demosTotal: 0, dialsTotal: 0 },
       ];
 
       const currentMetrics = {
@@ -95,11 +96,15 @@ describe("tierForecastHelper", () => {
 
       const forecast = calculateTierForecast("gold", currentMetrics, allMonthsData, false);
 
-      // All months should maintain the same ARR (no degradation)
-      // Each rolling window: (20000 + 20000 + 20000) / 3 = 20000
-      expect(forecast.forecastMonths[0].projectedMetrics.arrUsd).toBe(20000);
-      expect(forecast.forecastMonths[1].projectedMetrics.arrUsd).toBe(20000);
-      expect(forecast.forecastMonths[2].projectedMetrics.arrUsd).toBe(20000);
+      // Do-nothing projection: each future month contributes 0 new ARR
+      // April window (Feb/Mar/Apr): (20000 + 20000 + 0) / 3 = 13,333
+      // May window   (Mar/Apr/May): (20000 + 0 + 0) / 3 = 6,667
+      // June window  (Apr/May/Jun): (0 + 0 + 0) / 3 = 0
+      expect(forecast.forecastMonths[0].doNothing.avgArrUsd).toBeCloseTo(13333, 0);
+      expect(forecast.forecastMonths[1].doNothing.avgArrUsd).toBeCloseTo(6667, 0);
+      expect(forecast.forecastMonths[2].doNothing.avgArrUsd).toBeCloseTo(0, 0);
+      // Gold AE should have null improveTo
+      expect(forecast.forecastMonths[0].improveTo).toBeNull();
     });
 
     it("should correctly round dials/week to whole numbers", () => {
@@ -126,12 +131,17 @@ describe("tierForecastHelper", () => {
 
       const forecast = calculateTierForecast("bronze", currentMetrics, allMonthsData, false);
 
-      // April rolling window: (74 + 0 + 0) / 3 / 4.33 = 5.7, rounded to 6
-      expect(forecast.forecastMonths[0].projectedMetrics.dialsPw).toBe(6);
+      // April do-nothing: window (Feb/Mar/Apr) = (74 + 0 + 0) / 12 = 6.17 dials/wk
+      expect(forecast.forecastMonths[0].doNothing.avgDialsPw).toBeCloseTo(6.17, 1);
 
-      // May and June should show 0 dials/week
-      expect(forecast.forecastMonths[1].projectedMetrics.dialsPw).toBe(0);
-      expect(forecast.forecastMonths[2].projectedMetrics.dialsPw).toBe(0);
+      // May and June do-nothing: window has 0 dials → 0 dials/week
+      expect(forecast.forecastMonths[1].doNothing.avgDialsPw).toBe(0);
+      expect(forecast.forecastMonths[2].doNothing.avgDialsPw).toBe(0);
+
+      // Bronze has no maintain targets — all 0
+      expect(forecast.forecastMonths[0].maintainCurrent.demosNeeded).toBe(0);
+      expect(forecast.forecastMonths[0].maintainCurrent.dialsNeeded).toBe(0);
+      expect(forecast.forecastMonths[0].maintainCurrent.arrNeeded).toBe(0);
     });
   });
 });

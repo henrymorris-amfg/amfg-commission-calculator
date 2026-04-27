@@ -1011,3 +1011,16 @@
 - [x] Add Pipedrive ID health check table to Data Audit page (green/red per AE)
 - [x] Add Test Skip Notification button to Data Audit page
 - [x] All 121 tests passing
+
+## Toby Team Lead Fix, Tad Bronze Fix, Tier Outlook Redesign - Apr 27 2026
+- [x] Toby Greer isTeamLeader=true fixed — corrected to false in DB
+- [x] Tad Tamulevicius Bronze is CORRECT — only March is a completed month (joined Mar 16); April is current month, not yet in rolling avg; his April numbers (28 demos, 718 dials) will push him to Gold in May
+- [x] Deleted Tad's 4 phantom future months (May–Aug 2026 with $25k ARR)
+- [x] Fixed computeRollingAverages to exclude pre-join months from ARR divisor (was dividing by 3 even when Feb/Jan were empty pre-join months)
+- [x] Redesigned Tier Outlook: month-by-month accordion (May/Jun/Jul) showing:
+     - "If idle" do-nothing tier projection
+     - Maintain current tier: exact demos/dials/ARR needed this calendar month
+     - Improve to next tier: exact demos/dials/ARR needed this calendar month
+     - Green "already met" badges when rolling window already covers the threshold
+- [x] Updated tierForecastHelper.test.ts to match new MonthTarget structure
+- [x] All 121 tests passing

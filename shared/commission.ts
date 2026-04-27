@@ -194,6 +194,19 @@ export function computeRollingAverages(
   if (last3Months.length === 0) {
     return { avgArrUsd: 0, avgDemosPw: 0, avgDialsPw: 0 };
   }
+
+  // Exclude months that are entirely before the join date from the ARR divisor.
+  // This prevents new joiners' ARR average being diluted by empty pre-join months
+  // that fall within the rolling window (e.g. AE joined March 16, Feb is in prev-3 but empty).
+  const activeMths = joinDate
+    ? last3Months.filter((m) => {
+        // A month is "active" if its last day is on or after the join date
+        const monthEnd = new Date(m.year, m.month, 0); // last day of month
+        return monthEnd >= joinDate;
+      })
+    : last3Months;
+  const activeN = activeMths.length > 0 ? activeMths.length : last3Months.length;
+
   const totalArr = last3Months.reduce((s, m) => s + m.arrUsd, 0);
   const totalDemos = last3Months.reduce((s, m) => s + m.demosTotal, 0);
   const totalDials = last3Months.reduce((s, m) => s + m.dialsTotal, 0);
@@ -214,7 +227,8 @@ export function computeRollingAverages(
   }
   
   return {
-    avgArrUsd: totalArr / n,
+    // Divide ARR by active months only (months on/after join date) to avoid dilution
+    avgArrUsd: totalArr / activeN,
     avgDemosPw: totalDemos / weeks,
     avgDialsPw: totalDials / weeks,
   };
