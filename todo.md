@@ -1033,3 +1033,23 @@
 - [x] Add "April — Live Tracking" section to TierForecastCard showing current month progress and on-track tier
 - [x] Tad now correctly shows GOLD (5.20 demos/wk, 227.75 dials/wk over 2.31 active weeks in March)
 - [x] All 121 tests passing
+
+## New Starter Week-Based Rolling Average Audit - Apr 27 2026
+- [ ] Audit new starters: Tad (Mar 16), Julian (Feb 4), Ben (Apr 1) — verify join dates in DB
+- [ ] Verify computeRollingAverages uses actual weeks since join date for all new starters, not calendar months
+- [ ] Fix computeRollingAverages to always use weeks-since-join for new starters (not just when n < 3)
+- [ ] Verify Tad tier with weeks-since-join (Mar 16 = 2.31 weeks active)
+- [ ] Verify Julian tier with weeks-since-join (Feb 4 = 11.57 weeks active)
+- [ ] Verify Ben tier with weeks-since-join (Apr 1 = 4.29 weeks active, or 0.29 if only counting to today Apr 27)
+- [ ] Verify all three show correct tiers on leaderboard and tier outlook
+- [ ] All 121 tests passing
+
+## New Starter Week-Based Rolling Average Audit - Apr 27 2026
+- [x] Audit new starters: Tad (Mar 16), Julian (Feb 4), Ben (Apr 1) — verified join dates in DB
+- [x] Fixed computeActiveWeeks to use today's date as end point for current month (not end of month)
+- [x] Verify computeRollingAverages uses actual weeks since join date for all new starters, not calendar months
+- [x] Tad: GOLD (6.00 weeks active: Mar 16-Apr 27) — 6.49 demos/wk, 202 dials/wk, $15,190 ARR
+- [x] Julian: BRONZE (11.71 weeks active: Feb 4-Apr 27) — 2.25 demos/wk, 226 dials/wk, $4,148 ARR
+- [x] Ben: BRONZE (3.71 weeks active: Apr 1-Apr 27) — 1.56 demos/wk, 69 dials/wk, $0 ARR (waived)
+- [x] All three now use weeks-since-join for rolling average divisor (not calendar months)
+- [x] All 121 tests passing

@@ -148,7 +148,8 @@ export interface MonthData {
  */
 export function computeActiveWeeks(
   months: MonthData[],
-  joinDate: Date | null
+  joinDate: Date | null,
+  today?: Date
 ): number {
   if (months.length === 0) return 12;
   if (!joinDate) return Math.min(months.length * 4, 12);
@@ -160,8 +161,11 @@ export function computeActiveWeeks(
 
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
   const MS_PER_WEEK = 7 * MS_PER_DAY;
+  const currentDate = today || new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
 
-  // Compute the span from the effective start to the end of the last month
+  // Compute the span from the effective start to the effective end
   const firstMonth = sorted[0];
   const lastMonth = sorted[sorted.length - 1];
 
@@ -169,10 +173,17 @@ export function computeActiveWeeks(
   const firstMonthStart = new Date(firstMonth.year, firstMonth.month - 1, 1);
   const effectiveStart = joinDate > firstMonthStart ? joinDate : firstMonthStart;
 
-  // Effective end: last day of the last month in the range
-  const lastMonthEnd = new Date(lastMonth.year, lastMonth.month, 0, 23, 59, 59, 999);
+  // Effective end: if last month is current month, use today; otherwise use last day of month
+  let effectiveEnd: Date;
+  if (lastMonth.year === currentYear && lastMonth.month === currentMonth) {
+    // Last month is current month: count only up to today
+    effectiveEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999);
+  } else {
+    // Last month is in the past: use last day of that month
+    effectiveEnd = new Date(lastMonth.year, lastMonth.month, 0, 23, 59, 59, 999);
+  }
 
-  const totalWeeks = Math.max(0.5, (lastMonthEnd.getTime() - effectiveStart.getTime()) / MS_PER_WEEK);
+  const totalWeeks = Math.max(0.5, (effectiveEnd.getTime() - effectiveStart.getTime()) / MS_PER_WEEK);
 
   return Math.min(totalWeeks, 12); // cap at 12 weeks (3 months)
 }
@@ -218,7 +229,8 @@ export function computeRollingAverages(
   let weeks = 12; // default for 3 full months of data
   if (joinDate != null && activeN < 3) {
     // New starter with fewer than 3 active months: use exact weeks worked since join date
-    weeks = computeActiveWeeks(activeMths.length > 0 ? activeMths : last3Months, joinDate);
+    // Pass today's date so current/incomplete months are counted only up to today
+    weeks = computeActiveWeeks(activeMths.length > 0 ? activeMths : last3Months, joinDate, new Date());
   } else if (joinDate != null && activeN >= 3) {
     // Established AE with 3+ active months: use standard 12 weeks
     weeks = 12;
