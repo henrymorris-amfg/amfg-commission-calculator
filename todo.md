@@ -960,3 +960,19 @@
 - [x] Fixed leaderboard to use year*100+month integer comparison for clean quarter filtering
 - [x] Fixed deals query in leaderboard with same integer comparison
 - [x] All 121 tests passing
+
+## VOIP Sync & McQuillen Deal - Apr 27 2026
+- [x] Re-run VOIP sync for Tad's April dials - VOIP API unreachable from sandbox (runs from deployed server)
+- [x] Investigated McQuillen deal missing from Julian Earl's recent deals
+  - Root cause: deal was never imported from Pipedrive (not in DB)
+  - Fixed Julian's Pipedrive user ID: was 25357908, corrected to 25094488
+  - Found McQuillen in Pipedrive: deal ID 30041, $12,444 USD, won April 17 2026
+  - Created McQuillen deal with correct payouts using calculateCommission
+  - Tier: Bronze (2.22 demos/wk, 222.99 dials/wk over 12.17 weeks)
+  - First payout: May 2026 = £2,185.52
+
+## Julian Earl Fixes - Apr 27 2026
+- [x] Julian's April demos already at 10 (confirmed)
+- [x] Fixed Julian's Pipedrive user ID to 25094488 (was 25357908)
+- [x] Found and imported McQuillen deal from Pipedrive
+- [x] All 121 tests passing
