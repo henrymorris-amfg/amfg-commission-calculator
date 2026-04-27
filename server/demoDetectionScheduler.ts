@@ -14,17 +14,17 @@ export function initializeDemoDetectionScheduler(): void {
     return;
   }
 
-  // Schedule for daily at 8 AM GMT
+  // Schedule for daily at 9 AM UTC
   // Cron format: second minute hour day month dayOfWeek
-  // 0 8 * * * = 8:00 AM every day
-  const cronExpression = "0 8 * * *";
+  // 0 9 * * * = 9:00 AM every day
+  const cronExpression = "0 9 * * *";
 
   scheduledJob = cron.schedule(cronExpression, async () => {
     console.log("[DemoDetectionScheduler] Running demo detection at", new Date().toISOString());
     await runDemoDetection();
   });
 
-  console.log("[DemoDetectionScheduler] Initialized - will run at 8 AM GMT every day");
+  console.log("[DemoDetectionScheduler] Initialized - will run at 9 AM UTC every day");
 }
 
 export function stopDemoDetectionScheduler(): void {

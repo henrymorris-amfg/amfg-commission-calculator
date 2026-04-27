@@ -930,3 +930,20 @@
 - [x] Fixed Tad's March metrics to show 12 demos from Pipedrive (was showing 0)
 - [x] Ran comprehensive reconciliation report: ALL AE demo counts now match between Pipedrive and metrics
 - [x] All 121 tests passing
+
+
+## Rolling Averages & Sync Schedule - Apr 27 2026
+- [x] Fix Rolling Averages panel on Activity Metrics page - new AEs now use weeks-since-join not 12 weeks
+  - Fixed MetricsPage.tsx to use joinDate-aware weeks denominator
+  - Fixed filter to include current month (was excluding it)
+- [x] Verify all AE profiles use correct rolling average logic
+  - Tad (March 2026): 2 months → 6.6 demos/wk, 204 dials/wk → GOLD ✓
+  - Ben Sears (March 2026): 2 months → 0 demos/wk → BRONZE ✓
+  - Julian Earl (Feb 2026): 3 months → standard 12-week rolling → BRONZE ✓
+  - All others: standard 12-week rolling ✓
+- [x] Check current VOIP/Pipedrive sync schedule - was 8am UTC
+- [x] Updated all sync schedules to 9am UTC:
+  - weeklySync.ts (main Pipedrive + VOIP sync): 0 9 * * *
+  - demoDetectionScheduler.ts: 0 9 * * *
+  - tierChangeScheduler.ts: 5 9 * * * (5 mins after main sync)
+- [x] All 121 tests passing

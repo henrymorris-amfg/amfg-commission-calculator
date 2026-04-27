@@ -556,29 +556,29 @@ function computeNextMonday7amUtc(): Date {
   return next;
 }
 
-function computeNextDaily8amUtc(): Date {
+function computeNextDaily9amUtc(): Date {
   const now = new Date();
   const next = new Date(now);
-  if (now.getUTCHours() < 8) {
-    next.setUTCHours(8, 0, 0, 0);
+  if (now.getUTCHours() < 9) {
+    next.setUTCHours(9, 0, 0, 0);
   } else {
     next.setUTCDate(now.getUTCDate() + 1);
-    next.setUTCHours(8, 0, 0, 0);
+    next.setUTCHours(9, 0, 0, 0);
   }
   return next;
 }
 
 export function startWeeklySyncScheduler(): void {
-  // Daily at 08:00 UTC — Pipedrive ARR, VOIP dials, Spreadsheet demos
-  // Override with DAILY_SYNC_CRON env var (e.g. "0 8 * * *")
-  const cronExpression = process.env.DAILY_SYNC_CRON || "0 8 * * *";
+  // Daily at 09:00 UTC — Pipedrive ARR, VOIP dials, Spreadsheet demos
+  // Override with DAILY_SYNC_CRON env var (e.g. "0 9 * * *")
+  const cronExpression = process.env.DAILY_SYNC_CRON || "0 9 * * *";
 
   const task = cron.schedule(
     cronExpression,
     async () => {
       try {
         lastSyncResult = await runWeeklySync();
-        nextSyncTime = computeNextDaily8amUtc();
+        nextSyncTime = computeNextDaily9amUtc();
       } catch (err) {
         console.error("[DailySync] Unhandled error:", err);
       }
@@ -588,7 +588,7 @@ export function startWeeklySyncScheduler(): void {
     }
   );
 
-  nextSyncTime = computeNextDaily8amUtc();
+  nextSyncTime = computeNextDaily9amUtc();
 
   console.log(
     `[DailySync] Scheduler started. Next run: ${nextSyncTime.toISOString()} ` +

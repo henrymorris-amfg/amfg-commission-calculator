@@ -16,15 +16,15 @@ export function initializeTierChangeScheduler(): void {
     return;
   }
 
-  // Run daily at 8:05 AM GMT (5 minutes after the Pipedrive sync to ensure fresh data)
-  const cronExpression = "5 8 * * *";
+  // Run daily at 9:05 AM UTC (5 minutes after the Pipedrive sync to ensure fresh data)
+  const cronExpression = "5 9 * * *";
 
   scheduledJob = cron.schedule(cronExpression, async () => {
     console.log("[TierChangeScheduler] Running tier change check at", new Date().toISOString());
     await runTierChangeCheck();
   });
 
-  console.log("[TierChangeScheduler] Initialized — will run at 08:05 AM GMT every day");
+  console.log("[TierChangeScheduler] Initialized — will run at 09:05 AM UTC every day");
 }
 
 export function stopTierChangeScheduler(): void {

@@ -97,18 +97,36 @@ export default function MetricsPage() {
     return b.month - a.month;
   });
 
-  const targetDate = new Date(year, month - 1, 1);
-  const last3 = sortedMetrics
-    .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
-    .slice(0, 3);
+  // Use year/month integer comparison to avoid timezone issues
+  const targetYearMonth = year * 100 + month;
+  const joinDate = ae.joinDate ? new Date(ae.joinDate) : null;
+  const joinYearMonth = joinDate ? joinDate.getFullYear() * 100 + (joinDate.getMonth() + 1) : 0;
 
-  const last6 = sortedMetrics
-    .filter((m) => new Date(m.year, m.month - 1, 1) < targetDate)
-    .slice(0, 6);
+  // Months from join date up to and including the target month
+  const metricsFromJoin = sortedMetrics.filter((m) => {
+    const ym = m.year * 100 + m.month;
+    return ym <= targetYearMonth && ym >= joinYearMonth;
+  });
+
+  // For rolling averages: use up to 3 months if AE has 3+ months of data, else use all available
+  const monthsAvailable = metricsFromJoin.length;
+  const useRolling3 = monthsAvailable >= 3;
+  const last3 = metricsFromJoin.slice(0, 3);
+  const last6 = metricsFromJoin.slice(0, 6);
+
+  // Compute weeks denominator: if < 3 months tenure, use weeks since join; else use 12 weeks
+  let weeksDenominator = 12;
+  if (!useRolling3 && joinDate) {
+    // Weeks from join date to end of target month
+    const endOfTargetMonth = new Date(year, month, 0); // last day of target month
+    const startDate = joinDate < endOfTargetMonth ? joinDate : endOfTargetMonth;
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    weeksDenominator = Math.max(1, (endOfTargetMonth.getTime() - startDate.getTime()) / msPerWeek);
+  }
 
   const avgArr = last3.length > 0 ? last3.reduce((s, m) => s + m.arrUsd, 0) / last3.length : null;
-  const avgDemosPw = last3.length > 0 ? last3.reduce((s, m) => s + m.demosTotal, 0) / 12 : null;
-  const avgDialsPw = last3.length > 0 ? last3.reduce((s, m) => s + m.dialsTotal, 0) / 12 : null;
+  const avgDemosPw = last3.length > 0 ? last3.reduce((s, m) => s + m.demosTotal, 0) / weeksDenominator : null;
+  const avgDialsPw = last3.length > 0 ? last3.reduce((s, m) => s + m.dialsTotal, 0) / weeksDenominator : null;
   const withRetention = last6.filter((m) => m.retentionRate != null);
   const avgRetention = withRetention.length > 0
     ? withRetention.reduce((s, m) => s + (m.retentionRate ?? 0), 0) / withRetention.length
