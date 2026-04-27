@@ -114,14 +114,18 @@ export default function MetricsPage() {
   const last3 = metricsFromJoin.slice(0, 3);
   const last6 = metricsFromJoin.slice(0, 6);
 
-  // Compute weeks denominator: if < 3 months tenure, use weeks since join; else use 12 weeks
+  // Compute weeks denominator: if < 3 months tenure, use exact weeks since join; else use 12 weeks
   let weeksDenominator = 12;
-  if (!useRolling3 && joinDate) {
-    // Weeks from join date to end of target month
-    const endOfTargetMonth = new Date(year, month, 0); // last day of target month
-    const startDate = joinDate < endOfTargetMonth ? joinDate : endOfTargetMonth;
+  if (!useRolling3 && joinDate && last3.length > 0) {
+    // Use exact same logic as computeActiveWeeks in shared/commission.ts
+    const sortedLast3 = [...last3].sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+    const firstMonth = sortedLast3[0];
+    const lastMonthItem = sortedLast3[sortedLast3.length - 1];
+    const firstMonthStart = new Date(firstMonth.year, firstMonth.month - 1, 1);
+    const effectiveStart = joinDate > firstMonthStart ? joinDate : firstMonthStart;
+    const lastMonthEnd = new Date(lastMonthItem.year, lastMonthItem.month, 0, 23, 59, 59, 999);
     const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-    weeksDenominator = Math.max(1, (endOfTargetMonth.getTime() - startDate.getTime()) / msPerWeek);
+    weeksDenominator = Math.min(12, Math.max(0.5, (lastMonthEnd.getTime() - effectiveStart.getTime()) / msPerWeek));
   }
 
   const avgArr = last3.length > 0 ? last3.reduce((s, m) => s + m.arrUsd, 0) / last3.length : null;

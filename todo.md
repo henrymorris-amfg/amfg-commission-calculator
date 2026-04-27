@@ -947,3 +947,16 @@
   - demoDetectionScheduler.ts: 0 9 * * *
   - tierChangeScheduler.ts: 5 9 * * * (5 mins after main sync)
 - [x] All 121 tests passing
+
+
+## Exact Weeks & Leaderboard Fix - Apr 27 2026
+- [x] Fix rolling averages to use exact weeks since join date
+  - computeActiveWeeks now uses exact days/7 (e.g. Tad March 16 = 2.31 weeks, not 2.06)
+  - Spans from join date to end of last month in range
+  - March only: 2.31 weeks; March+April: 6.60 weeks
+- [x] Updated computeRollingAverages in shared/commission.ts
+- [x] Fixed MetricsPage.tsx to use same exact weeks logic
+- [x] Diagnosed leaderboard Q2 bug: broken OR/AND date range query matched rows outside quarter
+- [x] Fixed leaderboard to use year*100+month integer comparison for clean quarter filtering
+- [x] Fixed deals query in leaderboard with same integer comparison
+- [x] All 121 tests passing

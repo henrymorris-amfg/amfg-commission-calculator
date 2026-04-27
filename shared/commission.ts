@@ -158,27 +158,23 @@ export function computeActiveWeeks(
     a.year !== b.year ? a.year - b.year : a.month - b.month
   );
 
-  let totalWeeks = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    const m = sorted[i];
-    const monthStart = new Date(m.year, m.month - 1, 1);
-    const monthEnd = new Date(m.year, m.month, 0); // last day of month
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const MS_PER_WEEK = 7 * MS_PER_DAY;
 
-    if (i === 0 && joinDate > monthStart) {
-      // First month: only count days from join date to end of month
-      const effectiveStart = joinDate > monthStart ? joinDate : monthStart;
-      const daysInMonth = monthEnd.getDate();
-      const daysWorked = Math.max(
-        0,
-        (monthEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24) + 1
-      );
-      totalWeeks += (daysWorked / daysInMonth) * 4;
-    } else {
-      totalWeeks += 4;
-    }
-  }
+  // Compute the span from the effective start to the end of the last month
+  const firstMonth = sorted[0];
+  const lastMonth = sorted[sorted.length - 1];
 
-  return Math.min(Math.max(totalWeeks, 0.5), 12); // at least 0.5 weeks, cap at 12
+  // Effective start: whichever is later — join date or start of first month
+  const firstMonthStart = new Date(firstMonth.year, firstMonth.month - 1, 1);
+  const effectiveStart = joinDate > firstMonthStart ? joinDate : firstMonthStart;
+
+  // Effective end: last day of the last month in the range
+  const lastMonthEnd = new Date(lastMonth.year, lastMonth.month, 0, 23, 59, 59, 999);
+
+  const totalWeeks = Math.max(0.5, (lastMonthEnd.getTime() - effectiveStart.getTime()) / MS_PER_WEEK);
+
+  return Math.min(totalWeeks, 12); // cap at 12 weeks (3 months)
 }
 
 /**

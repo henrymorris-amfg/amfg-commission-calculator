@@ -2377,25 +2377,16 @@ export const appRouter = router({
           .where(eq(aeProfiles.isActive, true));
 
         // Get metrics for all AEs in the period
+        // Use year*100+month integer comparison to avoid cross-year edge cases
+        const fromYearMonth = fromYear * 100 + fromMonth;
+        const toYearMonth = toYear * 100 + toMonth;
         const metricsRows = await db
           .select()
           .from(monthlyMetrics)
           .where(
             and(
-              or(
-                and(
-                  eq(monthlyMetrics.year, fromYear),
-                  gte(monthlyMetrics.month, fromMonth)
-                ),
-                and(
-                  gt(monthlyMetrics.year, fromYear),
-                  lt(monthlyMetrics.year, toYear)
-                ),
-                and(
-                  eq(monthlyMetrics.year, toYear),
-                  lte(monthlyMetrics.month, toMonth)
-                )
-              )
+              gte(sql`${monthlyMetrics.year} * 100 + ${monthlyMetrics.month}`, fromYearMonth),
+              lte(sql`${monthlyMetrics.year} * 100 + ${monthlyMetrics.month}`, toYearMonth)
             )
           );
 
@@ -2407,20 +2398,8 @@ export const appRouter = router({
           .where(
             and(
               eq(deals.isChurned, false),
-              or(
-                and(
-                  eq(deals.startYear, fromYear),
-                  gte(deals.startMonth, fromMonth)
-                ),
-                and(
-                  gt(deals.startYear, fromYear),
-                  lt(deals.startYear, toYear)
-                ),
-                and(
-                  eq(deals.startYear, toYear),
-                  lte(deals.startMonth, toMonth)
-                )
-              )
+              gte(sql`${deals.startYear} * 100 + ${deals.startMonth}`, fromYearMonth),
+              lte(sql`${deals.startYear} * 100 + ${deals.startMonth}`, toYearMonth)
             )
           );
 
