@@ -258,52 +258,35 @@ const PIPEDRIVE_USER_ID_OVERRIDES: Record<string, number> = {
 /**
  * Find the Pipedrive user ID for an AE.
  * Priority order:
- *  1. Stored pipedriveUserId in the database (most reliable)
- *  2. Hardcoded overrides (for display name mismatches)
- *  3. Live name-matching against Pipedrive API (fallback only)
- * Returns null if no match found.
+ *  1. Stored pipedriveUserId in the database (most reliable, always used if present)
+ *  2. Hardcoded overrides (for display name mismatches, e.g. Tad)
+ *
+ * IMPORTANT: Live name-matching has been intentionally removed. It was the root
+ * cause of wrong user IDs being used (e.g. Ben Sears getting Janos Rosenberg's ID).
+ * If storedId is null and no override exists, this function returns null and the
+ * caller skips that AE — surfacing the gap loudly rather than guessing silently.
+ * To fix: set pipedriveUserId on the AE profile in the database.
  */
 export async function findPipedriveUserId(aeName: string, storedId?: number | null): Promise<number | null> {
-  // 1. Use stored ID from database — most reliable, avoids name-matching failures
+  // 1. Use stored ID from database — always authoritative
   if (storedId) {
     console.log(`[Pipedrive Sync] Using stored pipedriveUserId for "${aeName}": ${storedId}`);
     return storedId;
   }
 
-  // 2. Check hardcoded overrides — handles cases where Pipedrive display name
-  // differs from the full name stored in the commission calculator (e.g. Tad).
+  // 2. Hardcoded overrides for display name mismatches
   if (PIPEDRIVE_USER_ID_OVERRIDES[aeName] !== undefined) {
     const overrideId = PIPEDRIVE_USER_ID_OVERRIDES[aeName];
     console.log(`[Pipedrive Sync] Using ID override for "${aeName}": ${overrideId}`);
     return overrideId;
   }
 
-  // 3. Fall back to live name-matching (only if no stored ID or override)
-  const resp = (await pipedriveGet("users")) as { data: PipedriveUser[] | null };
-  const users = resp.data || [];
-  console.log(`[Pipedrive Sync] Looking for user: "${aeName}" among ${users.length} Pipedrive users (no stored ID)`);
-
-  // Exact match first
-  const exact = users.find(
-    (u) => u.name.toLowerCase() === aeName.toLowerCase()
+  // No stored ID and no override — skip this AE rather than guess via name-matching.
+  // This prevents wrong data from being attributed to the wrong AE.
+  console.warn(
+    `[Pipedrive Sync] WARNING: No pipedriveUserId stored for "${aeName}" and no override defined. ` +
+    `Skipping Pipedrive sync for this AE. Set pipedriveUserId in ae_profiles to fix.`
   );
-  if (exact) {
-    console.log(`[Pipedrive Sync] Found exact match: ${exact.name} (ID: ${exact.id})`);
-    return exact.id;
-  }
-
-  // Partial match (first name + last name)
-  const nameParts = aeName.toLowerCase().split(" ");
-  const partial = users.find((u) => {
-    const uParts = u.name.toLowerCase().split(" ");
-    return nameParts.every((part) => uParts.some((up) => up.includes(part)));
-  });
-  if (partial) {
-    console.log(`[Pipedrive Sync] Found partial match: ${partial.name} (ID: ${partial.id})`);
-    return partial.id;
-  }
-
-  console.log(`[Pipedrive Sync] No user found for "${aeName}"`);
   return null;
 }
 

@@ -985,3 +985,14 @@
 - [x] Pull Ben Sears April demos from Pipedrive (6 demos found and imported)
 - [x] Ensure sync is fully automatic and seamless
 - [x] All 121 tests passing
+
+## Pipedrive ID Hardening & Full Re-sync - Apr 27 2026
+- [x] Remove live name-matching fallback from findPipedriveUserId — now only uses stored DB ID or hardcoded overrides
+- [x] If no stored ID and no override: logs a loud WARNING and returns null (skips AE) instead of guessing
+- [x] This permanently prevents wrong user IDs from being attributed to wrong AEs
+- [x] Full Pipedrive re-sync for Henry Morris (356 demos, 2023-10 to 2026-03 — all counts unchanged, data was correct)
+- [x] Full Pipedrive re-sync for Joe Payne (170 demos, 2025-06 to 2026-04 — April updated: 7→11 demos)
+- [x] Full Pipedrive re-sync for Toby Greer (125 demos, 2025-08 to 2026-04 — all counts unchanged, data was correct)
+- [x] Verified Ben Sears April tier: BRONZE (1.56 demos/wk, 68.70 dials/wk — both below Silver threshold)
+- [x] Deleted phantom March 2026 row for Ben Sears (he joined April 1, March row had 0/0/0 data)
+- [x] All 121 tests passing
