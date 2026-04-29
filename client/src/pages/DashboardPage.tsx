@@ -7,7 +7,7 @@ import AppLayout from "@/components/AppLayout";
 import { FlaggedDemosAlert } from "@/components/FlaggedDemosAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MONTH_NAMES, TIER_COMMISSION_RATE } from "../../../shared/commission";
+import { MONTH_NAMES, TIER_COMMISSION_RATE, STANDARD_TARGETS, TEAM_LEADER_TARGETS } from "../../../shared/commission";
 import {
   PoundSterling,
   TrendingUp,
@@ -244,28 +244,20 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="px-5 py-4" style={{ background: "oklch(0.17 0.018 250)" }}>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-medium">Rolling Averages</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-medium">Rolling Averages vs Next Tier</p>
             {tierLoading ? (
               <div className="grid grid-cols-3 gap-3">
                 {[1,2,3].map(i => <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />)}
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl p-3 bg-secondary/40 border border-border/50 text-center">
-                  <p className="text-lg font-bold text-foreground">{tierData?.avgDemosPw?.toFixed(1) ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">demos/wk</p>
-                </div>
-                <div className="rounded-xl p-3 bg-secondary/40 border border-border/50 text-center">
-                  <p className="text-lg font-bold text-foreground">{tierData?.avgDialsPw?.toFixed(0) ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">dials/wk</p>
-                </div>
-                <div className="rounded-xl p-3 bg-secondary/40 border border-border/50 text-center">
-                  <p className="text-lg font-bold text-foreground">
-                    ${tierData?.avgArrUsd ? tierData.avgArrUsd.toLocaleString(undefined, { maximumFractionDigits: 0 }) : "—"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">ARR/mo</p>
-                </div>
-              </div>
+              <TierMetricsGrid
+                tier={tier}
+                avgDemosPw={tierData?.avgDemosPw ?? 0}
+                avgDialsPw={tierData?.avgDialsPw ?? 0}
+                avgArrUsd={tierData?.avgArrUsd ?? 0}
+                isTeamLeader={tierData?.isTeamLeader ?? false}
+                isNewJoiner={tierData?.isNewJoiner ?? false}
+              />
             )}
           </div>
         </div>
@@ -428,7 +420,107 @@ export default function DashboardPage() {
   );
 }
 
-/* ─── Stat Tile Helper ────────────────────────────────────────────────────── */
+/* ─── Tier Metrics Grid (green/red vs next tier) ────────────────────────────────── */
+function TierMetricsGrid({
+  tier,
+  avgDemosPw,
+  avgDialsPw,
+  avgArrUsd,
+  isTeamLeader,
+  isNewJoiner,
+}: {
+  tier: "bronze" | "silver" | "gold";
+  avgDemosPw: number;
+  avgDialsPw: number;
+  avgArrUsd: number;
+  isTeamLeader: boolean;
+  isNewJoiner: boolean;
+}) {
+  const targets = isTeamLeader ? TEAM_LEADER_TARGETS : STANDARD_TARGETS;
+
+  // Determine the NEXT tier's thresholds to compare against
+  // Bronze → compare vs Silver thresholds
+  // Silver → compare vs Gold thresholds
+  // Gold → already at max, show all green vs Gold thresholds
+  const nextTierKey = tier === "bronze" ? "silver" : "gold";
+  const nextTierTargets = targets[nextTierKey];
+  const nextTierLabel = tier === "gold" ? "Gold" : tier === "bronze" ? "Silver" : "Gold";
+
+  const GREEN = "oklch(0.72 0.19 145)";
+  const RED = "oklch(0.65 0.22 25)";
+
+  const metsDemos = avgDemosPw >= nextTierTargets.demosPw;
+  const metsDials = avgDialsPw >= nextTierTargets.dialsPw;
+  // New joiners have ARR waived, so always green for ARR
+  const metsArr = isNewJoiner || avgArrUsd >= nextTierTargets.arrUsd;
+
+  const metrics = [
+    {
+      label: "demos/wk",
+      value: avgDemosPw.toFixed(1),
+      target: nextTierTargets.demosPw,
+      targetLabel: `${nextTierTargets.demosPw}`,
+      achieved: metsDemos,
+    },
+    {
+      label: "dials/wk",
+      value: Math.round(avgDialsPw).toString(),
+      target: nextTierTargets.dialsPw,
+      targetLabel: `${nextTierTargets.dialsPw}`,
+      achieved: metsDials,
+    },
+    {
+      label: "ARR/mo",
+      value: `$${avgArrUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+      target: nextTierTargets.arrUsd,
+      targetLabel: `$${nextTierTargets.arrUsd.toLocaleString()}`,
+      achieved: metsArr,
+      waived: isNewJoiner,
+    },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-3">
+        {metrics.map((m) => (
+          <div
+            key={m.label}
+            className="rounded-xl p-3 border text-center"
+            style={{
+              borderColor: m.achieved
+                ? "oklch(0.72 0.19 145 / 0.3)"
+                : "oklch(0.65 0.22 25 / 0.3)",
+              background: m.achieved
+                ? "oklch(0.72 0.19 145 / 0.06)"
+                : "oklch(0.65 0.22 25 / 0.06)",
+            }}
+          >
+            <p
+              className="text-lg font-bold"
+              style={{ color: m.achieved ? GREEN : RED }}
+            >
+              {m.value}
+            </p>
+            <p className="text-xs text-muted-foreground">{m.label}</p>
+            <p
+              className="text-[10px] mt-1 font-medium"
+              style={{ color: m.achieved ? GREEN : RED }}
+            >
+              {m.waived ? "waived" : `${nextTierLabel}: ${m.targetLabel}`}
+            </p>
+          </div>
+        ))}
+      </div>
+      {tier === "gold" && (
+        <p className="text-xs text-center" style={{ color: GREEN }}>
+          All {nextTierLabel} thresholds met ✔
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ─── Stat Tile Helper ────────────────────────────────────────────────────────────────────── */
 function StatTile({ label, value, sub, icon: Icon }: { label: string; value: string | number; sub: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="rounded-xl p-3 bg-secondary/30 border border-border/30">

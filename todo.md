@@ -1082,3 +1082,16 @@
 - [x] Added allTimeGbp to dashboardSummary procedure
 - [x] Clean single-column layout, simpler the better
 - [x] All 121 tests passing
+
+## Ben Sears VOIP Verification - Apr 29 2026
+- [x] Query DB for Ben's VOIP dials data (monthlyMetrics table)
+- [x] Query VOIP Studio API — Ben NOT found as a user (only Tad exists)
+- [x] Root cause: Ben has not been added to VOIP Studio yet
+- [x] Report findings to user — 265 dials in DB are manually entered, not from VOIP sync
+
+## Commission Tier Section - Green/Red Next Tier Comparison - Apr 29 2026
+- [x] Show next tier thresholds alongside current rolling averages
+- [x] Color each metric GREEN if it meets/exceeds next tier threshold
+- [x] Color each metric RED if it falls short of next tier threshold
+- [x] Handle Gold tier (already at max — show all green with checkmark)
+- [x] All 121 tests passing
