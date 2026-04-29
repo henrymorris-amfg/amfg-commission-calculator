@@ -1063,7 +1063,22 @@
 - [x] All 121 tests passing
 
 ## Remove Onboarding Fee ARR Reduction - Apr 27 2026
-- [ ] Remove $5k ARR reduction logic from calculateCommission function (onboardingFeePaid check)
-- [ ] Recalculate all active deal commission payouts with full ARR (no reduction)
-- [ ] Verify all AE YTD earnings are updated correctly
-- [ ] All 121 tests passing
+- [x] Remove $5k ARR reduction logic from calculateCommission function (onboardingFeePaid check)
+- [x] Remove £500 onboarding deduction from payout calculation
+- [x] Recalculate all 75 active deal commission payouts with full ARR (no reduction)
+- [x] Updated commission.test.ts and lockedFxPayoutHelper.test.ts
+- [x] All 121 tests passing
+
+## Dashboard Simplification - Apr 29 2026
+- [x] Design simplified 5-section dashboard layout (earnings, VOIP activity, current tier, recent deals, commission forecast)
+- [x] Remove Tier Outlook card from AE dashboard
+- [x] Remove Won Deals widget from AE dashboard
+- [x] Remove EarningsHeroCard, WeeklyActivityStrip, TierForecastCard imports
+- [x] Section 1: Commission Earnings (This Month, YTD, Locked-in, All Time) — 4 clean cards
+- [x] Section 2: VOIP Live Activity (today dials, this week dials, connect rate, talk time)
+- [x] Section 3: Current Tier (badge + rolling averages: demos/wk, dials/wk, ARR/mo)
+- [x] Section 4: Recent Deals (last 5, name, value, tier)
+- [x] Section 5: Commission Forecast (annual/monthly calculator)
+- [x] Added allTimeGbp to dashboardSummary procedure
+- [x] Clean single-column layout, simpler the better
+- [x] All 121 tests passing

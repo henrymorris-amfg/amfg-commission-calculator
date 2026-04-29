@@ -1311,6 +1311,11 @@ export const appRouter = router({
         )
         .reduce((s, p) => s + Number(p.netCommissionGbp), 0);
 
+      // All-time: sum of all past + current payouts
+      const allTimeGbp = allPayouts
+        .filter((p) => p.payoutYear < currentYear || (p.payoutYear === currentYear && p.payoutMonth <= currentMonth))
+        .reduce((s, p) => s + Number(p.netCommissionGbp), 0);
+
       // Best single month ever (past + current)
       const monthTotals = new Map<string, number>();
       for (const p of allPayouts) {
@@ -1406,6 +1411,7 @@ export const appRouter = router({
         mtdGbp,
         ytdGbp,
         pipelineGbp,
+        allTimeGbp,
         bestMonthGbp,
         streakMonths,
         next3Months,
