@@ -1179,88 +1179,67 @@ export const appRouter = router({
       };
     }),
 
-    // Refresh payouts: recompute for all deals (handles churn + contract type changes)
+    // Refresh payouts: recompute for all deals using the canonical calculatePayouts logic
     refreshAll: publicProcedure.mutation(async ({ ctx }) => {
       const aeId = getAeIdFromCtx(ctx);
       if (!aeId) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
 
+      const { calculatePayouts } = await import("./resyncPayouts");
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const allDeals = await getDealsForAe(aeId);
-      const { calculateCommission } = await import("../shared/commission");
-      const { getCurrentFxRates } = await import("./fxService");
 
       let payoutsRefreshed = 0;
       let payoutsDeleted = 0;
 
+      // Fetch active commission structure for rates
+      const activeStructure = await getActiveCommissionStructure();
+
       for (const deal of allDeals) {
         // Delete all existing payouts for this deal
-        const existingPayouts = await db.select().from(commissionPayouts).where(eq(commissionPayouts.dealId, deal.id));
-        for (const p of existingPayouts) {
-          await db.delete(commissionPayouts).where(eq(commissionPayouts.id, p.id));
-          payoutsDeleted++;
-        }
+        await db.delete(commissionPayouts).where(eq(commissionPayouts.dealId, deal.id));
+        payoutsDeleted++;
 
         // Skip if churned — don't regenerate payouts
         if (deal.isChurned) continue;
 
-        // Recalculate commission payouts
-        const arrUsd = Number(deal.arrUsd);
-        let fxRate = 1.0;
-        if (deal.fxRateLockedAtCreation) {
-          fxRate = Number(deal.fxRateLockedAtCreation);
-        } else {
-          const rates = await getCurrentFxRates();
-          fxRate = rates.GBP; // GBP is the USD to GBP rate
-        }
-
-        const activeStructure = await getActiveCommissionStructure();
-        const bronzeRate = Number(activeStructure?.bronzeRate || 0.13);
-        const silverRate = Number(activeStructure?.silverRate || 0.16);
-        const goldRate = Number(activeStructure?.goldRate || 0.19);
-        const tierRate = deal.tierAtStart === "silver" ? silverRate : deal.tierAtStart === "gold" ? goldRate : bronzeRate;
-
-        const commissionResult = calculateCommission({
-          arrUsd,
+        // Use canonical calculatePayouts from resyncPayouts.ts
+        const payouts = calculatePayouts({
+          id: deal.id,
+          aeId: deal.aeId,
+          customerName: deal.customerName,
+          billingFrequency: deal.billingFrequency,
           contractType: deal.contractType,
-          tier: deal.tierAtStart,
+          contractStartDate: deal.contractStartDate ?? null,
+          startYear: deal.startYear,
+          startMonth: deal.startMonth,
+          arrUsd: deal.arrUsd,
+          tierAtStart: deal.tierAtStart,
           isReferral: deal.isReferral,
           onboardingFeePaid: deal.onboardingFeePaid,
-          fxRateUsdToGbp: fxRate,
+          fxRateAtWon: deal.fxRateAtWon ?? null,
+          fxRateAtEntry: deal.fxRateAtEntry ?? null,
+          bronzeRate: activeStructure?.bronzeRate ?? null,
+          silverRate: activeStructure?.silverRate ?? null,
+          goldRate: activeStructure?.goldRate ?? null,
+          onboardingDeductionGbp: activeStructure?.onboardingDeductionGbp ?? null,
+          monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : null,
         });
 
-        // Generate payout records
-        const startYear = deal.startYear;
-        const startMonth = deal.startMonth;
-
-        for (let i = 0; i < commissionResult.payoutSchedule.length; i++) {
-          const payout = commissionResult.payoutSchedule[i];
-          const payoutMonthOffset = i + 1; // First payout is 1 month after contract start
-          let payoutYear = startYear;
-          let payoutMonth = startMonth + payoutMonthOffset;
-
-          while (payoutMonth > 12) {
-            payoutMonth -= 12;
-            payoutYear += 1;
-          }
-
-          const netCommissionGbp = Number(payout) * fxRate;
-          const referralDeduction = deal.isReferral ? Number(payout) * 0.5 : 0;
-          const onboardingDeduction = deal.onboardingFeePaid ? 0 : 500 / fxRate; // GBP 500 deduction if not paid
-
+        for (const p of payouts) {
           await db.insert(commissionPayouts).values({
             aeId,
             dealId: deal.id,
-            payoutYear,
-            payoutMonth,
-            payoutNumber: i + 1,
-            grossCommissionUsd: payout.toString(),
-            referralDeductionUsd: referralDeduction.toString(),
-            onboardingDeductionGbp: onboardingDeduction.toString(),
-            netCommissionUsd: payout.toString(),
-            fxRateUsed: fxRate.toString(),
-            netCommissionGbp: netCommissionGbp.toString(),
+            payoutYear: p.year,
+            payoutMonth: p.month,
+            payoutNumber: p.payoutNumber,
+            grossCommissionUsd: p.grossUsd.toFixed(2),
+            referralDeductionUsd: p.referralDeductionUsd.toFixed(2),
+            onboardingDeductionGbp: p.onboardingDeductionGbp.toFixed(2),
+            netCommissionUsd: p.netUsd.toFixed(2),
+            fxRateUsed: p.fxRate.toFixed(6),
+            netCommissionGbp: p.netGbp.toFixed(2),
           });
           payoutsRefreshed++;
         }

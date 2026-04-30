@@ -1102,3 +1102,24 @@
 - [x] Add /api/scheduled/voip-sync endpoint for scheduled task
 - [x] Set up daily 9am GMT scheduled VOIP sync (previous day's data)
 - [x] All 121 tests passing
+
+## Payout Calendar & Commission Earnings Fix - Apr 30 2026
+- [ ] Audit current payout calculation logic and Henry's deals data
+- [ ] Rewrite payout logic: annual=1 payment 1 month after contract start, monthly=13 payments monthly from 1 month after contract start
+- [ ] Commission = tier% x deal ARR (annual) or tier% x deal ARR / 12 (monthly)
+- [ ] Tier% determined by AE's tier at the time of contract start date
+- [ ] Update Commission Earnings widget (This Month, YTD, Locked-in, All Time)
+- [ ] Update Payout Calendar widget
+- [ ] Verify against Henry Morris's actual deals
+- [ ] All tests passing
+
+## Payout Calendar & Commission Earnings Fix - Apr 30 2026
+- [x] Audit root cause: all deals generating payouts in current month (not historical dates)
+- [x] Fix MONTHLY_CONTRACT_PAYOUT_MONTHS constant from 12 to 13 in shared/commission.ts
+- [x] Rewrite resyncPayouts.ts: annual=1 payout (1 month after start), monthly=13 payouts
+- [x] Fix FX rate direction: stored fxRateAtWon is USD/GBP (divide, not multiply) to get GBP
+- [x] Fix refreshAll procedure to use canonical calculatePayouts logic from resyncPayouts.ts
+- [x] Re-run full payout resync — 87 payouts created with correct historical dates
+- [x] Henry April 2026: £5,989 (was £23,584 — inflated by wrong dates + wrong FX direction)
+- [x] Update failing test (monthly silver contract: 12 → 13 payouts)
+- [x] All 121 tests passing
