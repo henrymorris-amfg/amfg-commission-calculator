@@ -1123,3 +1123,12 @@
 - [x] Henry April 2026: £5,989 (was £23,584 — inflated by wrong dates + wrong FX direction)
 - [x] Update failing test (monthly silver contract: 12 → 13 payouts)
 - [x] All 121 tests passing
+
+## Monthly Deal Payout Fix - Apr 30 2026
+- [x] Root cause: billingFrequency stuck at "annual" for 29/74 deals — contractType is correct source of truth
+- [x] Fix resyncPayouts.ts to use contractType (not billingFrequency) as authoritative field
+- [x] Fix FX direction: fxRateAtWon/fxRateAtEntry is GBP/USD (multiply), not USD/GBP (divide)
+- [x] Fix onboarding deduction: deduct £500 when onboardingFeePaid=false, not when true
+- [x] Re-run full payout resync: 193 records created (was 87)
+- [x] Laserhub verified: £157.60/month × 13 months (matches expected ~£155)
+- [x] All 121 tests passing

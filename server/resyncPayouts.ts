@@ -169,8 +169,10 @@ export function calculatePayouts(deal: {
     return payouts;
   }
 
-  // Source of truth: billingFrequency (from Pipedrive) takes precedence over legacy contractType
-  const dealType = (deal.billingFrequency ?? deal.contractType ?? "annual").toLowerCase();
+  // Source of truth: contractType is set correctly during Pipedrive import.
+  // billingFrequency is often stuck at 'annual' due to Pipedrive not always sending it.
+  // Use contractType as the authoritative field; billingFrequency is a secondary hint.
+  const dealType = (deal.contractType ?? deal.billingFrequency ?? "annual").toLowerCase();
 
   const arrUsd = parseFloat(deal.arrUsd);
   if (isNaN(arrUsd) || arrUsd <= 0) return payouts;
@@ -186,21 +188,23 @@ export function calculatePayouts(deal: {
   // Full annual commission amount
   const grossAnnualCommissionUsd = arrUsd * commissionRate;
 
-  // FX rate stored as USD per GBP (e.g. 1.35 means £1 = $1.35)
-  // To convert USD → GBP: divide USD by fxRate
+  // FX rate stored as GBP per USD (e.g. 0.755 means $1 = £0.755)
+  // To convert USD → GBP: multiply USD by fxRate
   // Prefer fxRateAtWon (locked at deal won time), fallback to fxRateAtEntry
-  const fxRateUsdPerGbp = deal.fxRateAtWon
+  const fxRateGbpPerUsd = deal.fxRateAtWon
     ? parseFloat(deal.fxRateAtWon)
     : deal.fxRateAtEntry
       ? parseFloat(deal.fxRateAtEntry)
-      : 1.35; // last-resort fallback (~current USD/GBP)
+      : 0.755; // last-resort fallback (~current GBP/USD)
 
   // Referral deduction (50% of gross, applied to full annual amount)
   const referralDeductionUsd = deal.isReferral ? grossAnnualCommissionUsd * 0.5 : 0;
   const netAnnualAfterReferralUsd = grossAnnualCommissionUsd - referralDeductionUsd;
 
   // Onboarding fee deduction (GBP, first payout only)
-  const onboardingDeductionGbp = deal.onboardingFeePaid
+  // Deduct £500 when onboardingFeePaid=false (customer hasn't paid, AMFG deducts from AE commission)
+  // No deduction when onboardingFeePaid=true (customer has paid, AE keeps full commission)
+  const onboardingDeductionGbp = !deal.onboardingFeePaid
     ? parseFloat(deal.onboardingDeductionGbp ?? "500")
     : 0;
 
@@ -208,9 +212,9 @@ export function calculatePayouts(deal: {
     // ─── ANNUAL: single payout 1 month after contract start ───────────────────
     const { year: payoutYear, month: payoutMonth } = addMonthsToYearMonth(startYear, startMonth, 1);
 
-    // USD → GBP: divide by fxRateUsdPerGbp
-    const netGbp = Math.max(0, (netAnnualAfterReferralUsd / fxRateUsdPerGbp) - onboardingDeductionGbp);
-    const netUsd = netGbp * fxRateUsdPerGbp;
+    // USD → GBP: multiply by fxRateGbpPerUsd (e.g. $2505 × 0.755 = £1891)
+    const netGbp = Math.max(0, (netAnnualAfterReferralUsd * fxRateGbpPerUsd) - onboardingDeductionGbp);
+    const netUsd = netGbp / fxRateGbpPerUsd;
 
     payouts.push({
       month: payoutMonth,
@@ -219,7 +223,7 @@ export function calculatePayouts(deal: {
       netGbp,
       netUsd,
       payoutNumber: 1,
-      fxRate: fxRateUsdPerGbp,
+      fxRate: fxRateGbpPerUsd,
       referralDeductionUsd,
       onboardingDeductionGbp,
     });
@@ -237,9 +241,9 @@ export function calculatePayouts(deal: {
 
       // Onboarding deduction applied to first payout only
       const thisOnboardingDeduction = i === 1 ? onboardingDeductionGbp : 0;
-      // USD → GBP: divide by fxRateUsdPerGbp
-      const netGbp = Math.max(0, (monthlyNetAfterReferralUsd / fxRateUsdPerGbp) - thisOnboardingDeduction);
-      const netUsd = netGbp * fxRateUsdPerGbp;
+      // USD → GBP: multiply by fxRateGbpPerUsd
+      const netGbp = Math.max(0, (monthlyNetAfterReferralUsd * fxRateGbpPerUsd) - thisOnboardingDeduction);
+      const netUsd = netGbp / fxRateGbpPerUsd;
 
       payouts.push({
         month: payoutMonth,
@@ -248,7 +252,7 @@ export function calculatePayouts(deal: {
         netGbp,
         netUsd,
         payoutNumber: i,
-        fxRate: fxRateUsdPerGbp,
+        fxRate: fxRateGbpPerUsd,
         referralDeductionUsd: monthlyReferralDeductionUsd,
         onboardingDeductionGbp: thisOnboardingDeduction,
       });
