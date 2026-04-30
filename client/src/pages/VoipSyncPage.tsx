@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Users,
   Loader2,
+  RefreshCw,
+  Calendar,
 } from "lucide-react";
 
 const MONTH_NAMES = [
@@ -56,6 +58,38 @@ export default function VoipSyncPage() {
     { retry: false, throwOnError: false, enabled: !!ae }
   );
   const importMutation = trpc.voipSync.import.useMutation();
+  const triggerSyncMutation = trpc.spreadsheetSync.triggerSync.useMutation();
+  const syncStatusQuery = trpc.spreadsheetSync.syncStatus.useQuery(undefined, {
+    retry: false,
+    throwOnError: false,
+    enabled: !!ae,
+  });
+  const [syncAllResult, setSyncAllResult] = useState<{
+    success: boolean;
+    timestamp: string;
+    voipRecords: number;
+    spreadsheetRecords: number;
+    pipedriveRecords: number;
+    unmatchedAes: string[];
+  } | null>(null);
+
+  const handleSyncAll = async () => {
+    try {
+      const result = await triggerSyncMutation.mutateAsync();
+      setSyncAllResult({
+        success: result.success,
+        timestamp: result.timestamp,
+        voipRecords: (result as any).voip?.recordsUpdated ?? 0,
+        spreadsheetRecords: result.spreadsheet?.recordsUpdated ?? 0,
+        pipedriveRecords: result.pipedrive?.recordsUpdated ?? 0,
+        unmatchedAes: (result as any).voip?.unmatchedAes ?? [],
+      });
+      // Refresh status after sync
+      syncStatusQuery.refetch();
+    } catch {
+      // Error handled by mutation state
+    }
+  };
 
   // useMemo hooks — MUST be above any early return
   const previewData = previewQuery.data;
@@ -112,6 +146,102 @@ export default function VoipSyncPage() {
           <p className="text-muted-foreground mt-1">
             Pull real dialling data from VoIPstudio — dials, connection rates, and talk time per AE.
           </p>
+        </div>
+
+        {/* Sync All Now + Last Sync Status */}
+        <div className="rounded-2xl bg-card border border-border p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <RefreshCw className="w-4 h-4 text-primary" />
+                <h3 className="text-base font-semibold text-foreground">Full Data Sync</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Pulls VOIP dials, Pipedrive ARR, and spreadsheet demos for all AEs from their join dates.
+              </p>
+              {syncStatusQuery.data?.lastRun && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <Calendar className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Last synced: {new Date(syncStatusQuery.data.lastRun.timestamp).toLocaleString()}
+                  </span>
+                  {syncStatusQuery.data.lastRun.spreadsheet.success && syncStatusQuery.data.lastRun.pipedrive.success ? (
+                    <CheckCircle className="w-3 h-3" style={{ color: "oklch(0.70 0.18 145)" }} />
+                  ) : (
+                    <AlertTriangle className="w-3 h-3" style={{ color: "oklch(0.82 0.14 75)" }} />
+                  )}
+                </div>
+              )}
+              {!syncStatusQuery.data?.lastRun && !syncStatusQuery.isLoading && (
+                <p className="text-xs text-muted-foreground mt-2">No sync has run since server start.</p>
+              )}
+              {syncStatusQuery.data?.schedule?.nextRunAt && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Next auto-sync: {new Date(syncStatusQuery.data.schedule.nextRunAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+            <Button
+              onClick={handleSyncAll}
+              disabled={triggerSyncMutation.isPending}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 flex-shrink-0"
+            >
+              {triggerSyncMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Syncing all...</>
+              ) : (
+                <><RefreshCw className="w-4 h-4" />Sync All Now</>
+              )}
+            </Button>
+          </div>
+
+          {/* Sync All Result */}
+          {syncAllResult && (
+            <div className="mt-4 p-4 rounded-lg"
+              style={{
+                background: syncAllResult.success ? "oklch(0.55 0.18 145 / 0.08)" : "oklch(0.55 0.22 25 / 0.08)",
+                border: `1px solid ${syncAllResult.success ? "oklch(0.55 0.18 145 / 0.3)" : "oklch(0.55 0.22 25 / 0.3)"}`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {syncAllResult.success ? (
+                  <CheckCircle className="w-4 h-4" style={{ color: "oklch(0.70 0.18 145)" }} />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" style={{ color: "oklch(0.70 0.22 25)" }} />
+                )}
+                <span className="text-sm font-semibold" style={{ color: syncAllResult.success ? "oklch(0.70 0.18 145)" : "oklch(0.70 0.22 25)" }}>
+                  {syncAllResult.success ? "Sync complete" : "Sync completed with warnings"}
+                </span>
+                <span className="text-xs text-muted-foreground ml-auto">{new Date(syncAllResult.timestamp).toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-2 rounded-lg bg-secondary/50">
+                  <p className="text-lg font-bold text-foreground">{syncAllResult.voipRecords}</p>
+                  <p className="text-xs text-muted-foreground">VOIP records</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-secondary/50">
+                  <p className="text-lg font-bold text-foreground">{syncAllResult.spreadsheetRecords}</p>
+                  <p className="text-xs text-muted-foreground">Demo records</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-secondary/50">
+                  <p className="text-lg font-bold text-foreground">{syncAllResult.pipedriveRecords}</p>
+                  <p className="text-xs text-muted-foreground">ARR records</p>
+                </div>
+              </div>
+              {syncAllResult.unmatchedAes.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  AEs not found in VoIPstudio: {syncAllResult.unmatchedAes.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
+          {triggerSyncMutation.isError && (
+            <div className="mt-4 flex items-start gap-2 p-3 rounded-lg"
+              style={{ background: "oklch(0.55 0.22 25 / 0.08)", border: "1px solid oklch(0.55 0.22 25 / 0.3)" }}>
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "oklch(0.70 0.22 25)" }} />
+              <p className="text-xs" style={{ color: "oklch(0.70 0.22 25)" }}>{triggerSyncMutation.error.message}</p>
+            </div>
+          )}
         </div>
 
         {/* Connection Status */}

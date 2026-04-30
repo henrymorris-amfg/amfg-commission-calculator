@@ -447,17 +447,23 @@ export const spreadsheetSyncRouter = router({
 
     const lastResult = getLastSyncResult();
     const nextTime = getNextSyncTime();
-    const cronExpression = process.env.WEEKLY_SYNC_CRON || "0 20 * * 1";
+    const cronExpression = process.env.DAILY_SYNC_CRON || "0 9 * * *";
 
     return {
       schedule: {
         cronExpression,
-        description: "Every Monday at 20:00 UTC (after the 7pm Sales Report update)",
+        description: "Every day at 09:00 UTC",
         nextRunAt: nextTime?.toISOString() ?? null,
       },
       lastRun: lastResult
         ? {
             timestamp: lastResult.timestamp,
+            voip: {
+              success: lastResult.voipSync.success,
+              recordsUpdated: lastResult.voipSync.recordsUpdated,
+              unmatchedAes: lastResult.voipSync.unmatchedAes,
+              error: lastResult.voipSync.error ?? null,
+            },
             spreadsheet: {
               success: lastResult.spreadsheetSync.success,
               recordsUpdated: lastResult.spreadsheetSync.recordsUpdated,
@@ -495,8 +501,9 @@ export const spreadsheetSyncRouter = router({
 
     const result = await runWeeklySync();
     return {
-      success: result.spreadsheetSync.success && result.pipedriveSync.success,
+      success: result.voipSync.success && result.spreadsheetSync.success && result.pipedriveSync.success,
       timestamp: result.timestamp,
+      voip: result.voipSync,
       spreadsheet: result.spreadsheetSync,
       pipedrive: result.pipedriveSync,
     };

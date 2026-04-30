@@ -1095,3 +1095,10 @@
 - [x] Color each metric RED if it falls short of next tier threshold
 - [x] Handle Gold tier (already at max — show all green with checkmark)
 - [x] All 121 tests passing
+
+## VOIP Sync Improvements - Apr 30 2026
+- [x] Verify new VOIP numbers show correctly across all AE profiles
+- [x] Fix admin in-app VOIP sync button to use admin token for all AEs (Sync All Now button)
+- [x] Add /api/scheduled/voip-sync endpoint for scheduled task
+- [x] Set up daily 9am GMT scheduled VOIP sync (previous day's data)
+- [x] All 121 tests passing
