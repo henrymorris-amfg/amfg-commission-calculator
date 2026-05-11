@@ -3,7 +3,7 @@ services:
   name: amfg-commission-calculator
   env: node
   plan: starter
-  buildCommand: npm ci && npm run build
-  startCommand: npm run start
+  buildCommand: pnpm install --frozen-lockfile && pnpm run build
+  startCommand: pnpm run start
   healthCheckPath: /api/scheduled/sync-status
   autoDeploy: true
