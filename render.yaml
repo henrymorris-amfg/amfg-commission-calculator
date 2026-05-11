@@ -1,0 +1,9 @@
+services:
+- type: web
+  name: amfg-commission-calculator
+  env: node
+  plan: starter
+  buildCommand: npm ci && npm run build
+  startCommand: npm run start
+  healthCheckPath: /api/scheduled/sync-status
+  autoDeploy: true

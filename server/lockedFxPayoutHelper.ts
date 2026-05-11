@@ -36,12 +36,9 @@ export function recalculatePayoutsWithLockedRate(
     tier,
     contractType: deal.contractType as "annual" | "monthly",
     arrUsd: Number(deal.arrUsd),
-    onboardingFeePaid: deal.onboardingFeePaid,
     isReferral: deal.isReferral,
     fxRateUsdToGbp: Number(lockedFxRate),
     monthlyPayoutMonths: activeStructure?.monthlyPayoutMonths,
-    onboardingDeductionGbp: activeStructure?.onboardingDeductionGbp,
-    onboardingArrReductionUsd: activeStructure?.onboardingArrReductionUsd,
   });
 
   return {

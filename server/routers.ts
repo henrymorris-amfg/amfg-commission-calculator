@@ -710,12 +710,9 @@ export const appRouter = router({
           contractType: input.contractType,
           arrUsd,
           tier,
-          onboardingFeePaid: input.onboardingFeePaid,
           isReferral: input.isReferral,
           fxRateUsdToGbp: fxRate,
           monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
-          onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
-          onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
         });
 
         // Get live FX rates and lock GBP rate at deal creation
@@ -735,7 +732,7 @@ export const appRouter = router({
           originalCurrency,
           arrUsd: String(arrUsd),
           conversionRate: String(conversionRate),
-          onboardingFeePaid: input.onboardingFeePaid,
+
           isReferral: input.isReferral,
           tierAtStart: tier,
           fxRateAtEntry: String(fxRate),
@@ -759,7 +756,7 @@ export const appRouter = router({
             payoutNumber: p.payoutNumber,
             grossCommissionUsd: String(p.grossCommissionUsd),
             referralDeductionUsd: String(p.referralDeductionUsd),
-            onboardingDeductionGbp: String(p.onboardingDeductionGbp),
+            onboardingDeductionGbp: "0",
             netCommissionUsd: String(p.netCommissionUsd),
             fxRateUsed: String(fxRate),
             netCommissionGbp: String(p.netCommissionGbp),
@@ -840,12 +837,9 @@ export const appRouter = router({
             contractType: input.contractType,
             arrUsd: Number(deal.arrUsd),
             tier: deal.tierAtStart as Tier,
-            onboardingFeePaid: deal.onboardingFeePaid,
             isReferral: deal.isReferral,
             fxRateUsdToGbp: Number(deal.fxRateAtWon ?? deal.fxRateAtEntry ?? 0.7850),
             monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
-            onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
-            onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
           });
 
           // Delete old payouts
@@ -862,7 +856,7 @@ export const appRouter = router({
               payoutNumber: p.payoutNumber,
               grossCommissionUsd: p.grossCommissionUsd.toString(),
               referralDeductionUsd: p.referralDeductionUsd.toString(),
-              onboardingDeductionGbp: p.onboardingDeductionGbp.toString(),
+              onboardingDeductionGbp: "0",
               netCommissionUsd: p.netCommissionUsd.toString(),
               fxRateUsed: (deal.fxRateAtWon ?? deal.fxRateAtEntry).toString(),
               netCommissionGbp: p.netCommissionGbp.toString(),
@@ -910,12 +904,9 @@ export const appRouter = router({
           contractType: deal.contractType,
           arrUsd: Number(deal.arrUsd),
           tier: deal.tierAtStart as Tier,
-          onboardingFeePaid: deal.onboardingFeePaid,
           isReferral: deal.isReferral,
           fxRateUsdToGbp: Number(deal.fxRateAtWon ?? deal.fxRateAtEntry ?? 0.7850),
           monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
-          onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
-          onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
         });
 
         // Delete old payouts
@@ -932,7 +923,7 @@ export const appRouter = router({
             payoutNumber: p.payoutNumber,
             grossCommissionUsd: p.grossCommissionUsd.toString(),
             referralDeductionUsd: p.referralDeductionUsd.toString(),
-            onboardingDeductionGbp: p.onboardingDeductionGbp.toString(),
+            onboardingDeductionGbp: "0",
             netCommissionUsd: p.netCommissionUsd.toString(),
             fxRateUsed: (deal.fxRateAtWon ?? deal.fxRateAtEntry).toString(),
             netCommissionGbp: p.netCommissionGbp.toString(),

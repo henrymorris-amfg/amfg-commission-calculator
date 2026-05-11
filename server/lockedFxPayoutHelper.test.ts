@@ -104,10 +104,11 @@ describe("Locked FX Payout Helper", () => {
     });
 
     const firstPayout = result.commResult.payoutSchedule[0];
-    expect(firstPayout.onboardingDeductionGbp).toBe(0); // No deduction applied
+    // onboardingDeductionGbp field removed from PayoutScheduleItem (policy removed)
+    expect(firstPayout).not.toHaveProperty('onboardingDeductionGbp');
   });
 
-  it("should format payout info correctly (no onboarding deduction)", () => {
+  it("should format payout info correctly", () => {
     const formatted = formatPayoutInfo(mockDeal, 0.78, 0.80);
 
     expect(formatted.dealId).toBe(1);

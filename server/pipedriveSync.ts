@@ -968,12 +968,9 @@ export const pipedriveSyncRouter = router({
               contractType,
               arrUsd,
               tier,
-              onboardingFeePaid: true,
               isReferral: false,
               fxRateUsdToGbp: usdToGbp,
               monthlyPayoutMonths: activeStructure ? Number(activeStructure.monthlyPayoutMonths) : undefined,
-              onboardingDeductionGbp: activeStructure ? Number(activeStructure.onboardingDeductionGbp) : undefined,
-              onboardingArrReductionUsd: activeStructure ? Number(activeStructure.onboardingArrReductionUsd) : undefined,
             });
 
             // Create deal record
@@ -990,7 +987,7 @@ export const pipedriveSyncRouter = router({
               originalAmount: String(Math.round(originalArr)),
               originalCurrency: originalCurrency as "USD" | "EUR" | "GBP",
               originalArr: String(Math.round(originalArr)),
-              onboardingFeePaid: true,
+
               isReferral: false,
               tierAtStart: tier,
               fxRateAtEntry: String(usdToGbp),
@@ -1015,7 +1012,7 @@ export const pipedriveSyncRouter = router({
                 payoutNumber: p.payoutNumber,
                 grossCommissionUsd: String(p.grossCommissionUsd),
                 referralDeductionUsd: String(p.referralDeductionUsd),
-                onboardingDeductionGbp: String(p.onboardingDeductionGbp),
+                onboardingDeductionGbp: "0",
                 netCommissionUsd: String(p.netCommissionUsd),
                 fxRateUsed: String(usdToGbp),
                 netCommissionGbp: String(p.netCommissionGbp),

@@ -202,30 +202,31 @@ describe("calculateCommission", () => {
       contractType: "annual",
       arrUsd: 24_000,
       tier: "gold",
-      onboardingFeePaid: false,
       isReferral: false,
       fxRateUsdToGbp: fxRate,
     });
-    // Effective ARR = 24000 (no reduction)
+    // Effective ARR = 24000
     expect(result.effectiveArrUsd).toBe(24_000);
     const grossUsd = 24_000 * 0.19;
-    const netGbp = grossUsd * fxRate; // No £500 deduction
-    expect(result.payoutSchedule[0].onboardingDeductionGbp).toBe(0);
+    const netGbp = grossUsd * fxRate;
     expect(result.payoutSchedule[0].netCommissionGbp).toBeCloseTo(netGbp);
+    // onboardingDeductionGbp field removed (policy removed)
+    expect(result.payoutSchedule[0]).not.toHaveProperty('onboardingDeductionGbp');
   });
 
-  it("missing onboarding fee on monthly: no ARR reduction, no deduction", () => {
+  it("monthly contract generates 13 payouts (onboarding policy removed)", () => {
     const result = calculateCommission({
       contractType: "monthly",
       arrUsd: 12_000,
       tier: "bronze",
-      onboardingFeePaid: false,
       isReferral: false,
       fxRateUsdToGbp: fxRate,
     });
-    // No onboarding deduction applied
+    // Should generate 13 monthly payouts
+    expect(result.payoutSchedule.length).toBe(13);
+    // Each payout should have no onboarding deduction field (removed from interface)
     for (let i = 0; i < result.payoutSchedule.length; i++) {
-      expect(result.payoutSchedule[i].onboardingDeductionGbp).toBe(0);
+      expect(result.payoutSchedule[i]).not.toHaveProperty('onboardingDeductionGbp');
     }
   });
 

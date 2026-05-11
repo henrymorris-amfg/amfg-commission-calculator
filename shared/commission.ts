@@ -264,20 +264,16 @@ export interface CommissionInput {
   contractType: "annual" | "monthly";
   arrUsd: number;
   tier: Tier;
-  onboardingFeePaid: boolean;
   isReferral: boolean;
   fxRateUsdToGbp: number; // e.g. 0.79 means 1 USD = 0.79 GBP
   // Optional overrides from versioned commission structure
   monthlyPayoutMonths?: number;         // default: MONTHLY_CONTRACT_PAYOUT_MONTHS
-  onboardingDeductionGbp?: number;      // default: ONBOARDING_DEDUCTION_GBP
-  onboardingArrReductionUsd?: number;   // default: 5000
 }
 
 export interface PayoutScheduleItem {
   payoutNumber: number; // 1-based
   grossCommissionUsd: number;
   referralDeductionUsd: number;
-  onboardingDeductionGbp: number;
   netCommissionUsd: number;
   netCommissionGbp: number;
 }
@@ -289,15 +285,12 @@ export interface CommissionResult {
   totalGrossUsd: number;
   totalNetUsd: number;
   totalNetGbp: number;
-  effectiveArrUsd: number; // ARR after onboarding deduction if applicable
+  effectiveArrUsd: number;
 }
 
 export function calculateCommission(input: CommissionInput): CommissionResult {
   const rate = TIER_COMMISSION_RATE[input.tier];
 
-  // Use versioned overrides if provided, otherwise fall back to constants
-  const arrReductionUsd = input.onboardingArrReductionUsd ?? 5_000;
-  const deductionGbp = input.onboardingDeductionGbp ?? ONBOARDING_DEDUCTION_GBP;
   const payoutMonths = input.monthlyPayoutMonths ?? MONTHLY_CONTRACT_PAYOUT_MONTHS;
 
   // Use full ARR for commission calculation (no reduction based on onboarding fee status)
@@ -323,20 +316,15 @@ export function calculateCommission(input: CommissionInput): CommissionResult {
     // Referral: 50% reduction on commission
     const referralDeductionUsd = input.isReferral ? grossCommissionUsd * 0.5 : 0;
 
-    // No onboarding deduction applied
-    const onboardingDeductionGbp = 0;
-
     const netCommissionUsd = grossCommissionUsd - referralDeductionUsd;
-    const netCommissionGbp =
-      netCommissionUsd * input.fxRateUsdToGbp - onboardingDeductionGbp;
+    const netCommissionGbp = netCommissionUsd * input.fxRateUsdToGbp;
 
     payoutSchedule.push({
       payoutNumber: i,
       grossCommissionUsd,
       referralDeductionUsd,
-      onboardingDeductionGbp,
       netCommissionUsd,
-      netCommissionGbp: Math.max(0, netCommissionGbp),
+      netCommissionGbp,
     });
   }
 

@@ -201,20 +201,13 @@ export function calculatePayouts(deal: {
   const referralDeductionUsd = deal.isReferral ? grossAnnualCommissionUsd * 0.5 : 0;
   const netAnnualAfterReferralUsd = grossAnnualCommissionUsd - referralDeductionUsd;
 
-  // Onboarding fee deduction (GBP, first payout only)
-  // Deduct £500 when onboardingFeePaid=false (customer hasn't paid, AMFG deducts from AE commission)
-  // No deduction when onboardingFeePaid=true (customer has paid, AE keeps full commission)
-  const onboardingDeductionGbp = !deal.onboardingFeePaid
-    ? parseFloat(deal.onboardingDeductionGbp ?? "500")
-    : 0;
-
   if (dealType === "annual") {
     // ─── ANNUAL: single payout 1 month after contract start ───────────────────
     const { year: payoutYear, month: payoutMonth } = addMonthsToYearMonth(startYear, startMonth, 1);
 
     // USD → GBP: multiply by fxRateGbpPerUsd (e.g. $2505 × 0.755 = £1891)
-    const netGbp = Math.max(0, (netAnnualAfterReferralUsd * fxRateGbpPerUsd) - onboardingDeductionGbp);
-    const netUsd = netGbp / fxRateGbpPerUsd;
+    const netGbp = netAnnualAfterReferralUsd * fxRateGbpPerUsd;
+    const netUsd = netAnnualAfterReferralUsd;
 
     payouts.push({
       month: payoutMonth,
@@ -225,7 +218,7 @@ export function calculatePayouts(deal: {
       payoutNumber: 1,
       fxRate: fxRateGbpPerUsd,
       referralDeductionUsd,
-      onboardingDeductionGbp,
+      onboardingDeductionGbp: 0,
     });
 
   } else if (dealType === "monthly") {
@@ -239,11 +232,9 @@ export function calculatePayouts(deal: {
     for (let i = 1; i <= numPayouts; i++) {
       const { year: payoutYear, month: payoutMonth } = addMonthsToYearMonth(startYear, startMonth, i);
 
-      // Onboarding deduction applied to first payout only
-      const thisOnboardingDeduction = i === 1 ? onboardingDeductionGbp : 0;
       // USD → GBP: multiply by fxRateGbpPerUsd
-      const netGbp = Math.max(0, (monthlyNetAfterReferralUsd * fxRateGbpPerUsd) - thisOnboardingDeduction);
-      const netUsd = netGbp / fxRateGbpPerUsd;
+      const netGbp = monthlyNetAfterReferralUsd * fxRateGbpPerUsd;
+      const netUsd = monthlyNetAfterReferralUsd;
 
       payouts.push({
         month: payoutMonth,
@@ -254,7 +245,7 @@ export function calculatePayouts(deal: {
         payoutNumber: i,
         fxRate: fxRateGbpPerUsd,
         referralDeductionUsd: monthlyReferralDeductionUsd,
-        onboardingDeductionGbp: thisOnboardingDeduction,
+        onboardingDeductionGbp: 0,
       });
     }
   }

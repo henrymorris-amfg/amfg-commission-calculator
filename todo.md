@@ -1132,3 +1132,12 @@
 - [x] Re-run full payout resync: 193 records created (was 87)
 - [x] Laserhub verified: £157.60/month × 13 months (matches expected ~£155)
 - [x] All 121 tests passing
+
+## Onboarding Fee Removal & Tier Widget Update - Apr 30 2026
+- [ ] Remove £500 onboarding deduction from resyncPayouts.ts
+- [ ] Remove £500 onboarding deduction from shared/commission.ts (calculateCommission)
+- [ ] Remove £500 onboarding deduction from routers.ts (refreshAll + deal creation)
+- [ ] Remove onboardingDeductionGbp column from commission_structures table / set to 0
+- [ ] Re-run full payout resync — verify no onboarding deductions in any payout record
+- [ ] Update Commission Tier widget to show rolling average time period (12 weeks or weeks-since-join for new starters)
+- [ ] All tests passing
